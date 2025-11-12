@@ -38,7 +38,7 @@ function formatSubmission(queue: QueueAction[], username: string) {
 export function generateSubmissionUrl() {
   const queue = getQueue();
   if (queue.length === 0) {
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NEXT_PUBLIC_SUBMISSION_MODE !== 'live') {
       alert("Submission queue is empty.");
     }
     return;
@@ -49,12 +49,10 @@ export function generateSubmissionUrl() {
   const submissionContent = formatSubmission(queue, username);
 
   const jsonContent = JSON.stringify(submissionContent, null, 2);
-  // Base64 encode is not strictly necessary for URL value, but good for complex content
-  // const encodedContent = btoa(jsonContent);
 
   const repoUrl = process.env.NEXT_PUBLIC_GITHUB_REPO_URL;
   if (!repoUrl) {
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NEXT_PUBLIC_SUBMISSION_MODE !== 'live') {
       alert("Error: GitHub repository URL is not configured.");
       console.error("NEXT_PUBLIC_GITHUB_REPO_URL is not set.");
     }
@@ -68,7 +66,7 @@ export function generateSubmissionUrl() {
 
   const url = `${repoUrl}/new/main?filename=${filepath}&value=${encodeURIComponent(jsonContent)}`;
 
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.NEXT_PUBLIC_SUBMISSION_MODE !== 'live') {
     console.log("Submission URL:", url);
     console.log("Submission Content:", jsonContent);
     alert(`In development mode: You would be redirected to GitHub to create a new file named ${filename}. Check the console for the URL and content.`);

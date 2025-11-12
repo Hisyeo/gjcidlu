@@ -1,12 +1,39 @@
 {
+  "document-v-123": {
+    "$pos": "verb",
+    "$desc": "to write about something, film it, or take photographs of it, in order to record information about it",
+    "xe-sobis-bi-cukto": {
+      "submitter": "user-1",
+      "created": "2023-10-01T10:00:00.000Z",
+      "contents": [1, 1, 2, 3]
+    },
+    "sobis": {
+      "submitter": "user-2",
+      "created": "2023-10-02T11:00:00.000Z",
+      "contents": [1, 4]
+    }
+  },
+  "document-n-456": {
+    "$pos": "noun",
+    "$desc": "a piece of paper that has official information on it",
+    "cukto": {
+      "submitter": "user-3",
+      "created": "2023-10-03T12:00:00.000Z",
+      "contents": [1, 5]
+    },
+    "cukto-centik": {
+      "submitter": "user-4",
+      "created": "2023-10-04T13:00:00.000Z",
+      "contents": [1, 5, 6]
+    }
+  },
   "ephemeral-628": {
     "$pos": "adjective",
     "$desc": "Lasting for a very short time",
     "2C0-L2149_21412": {
       "submitter": "user-415",
       "created": "2022-10-31T09:00:00.594Z",
-      "contents": [1,
-                   123, 412, 41]
+      "contents": [1, 123, 412, 41]
     },
     "20K212-412_212VCD123": {
         "submitter": "user-415",

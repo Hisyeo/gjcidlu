@@ -1,0 +1,33 @@
+name: 'Aggregate Submissions'
+
+on:
+  pull_request:
+    types: [closed] # Run only when a PR is closed
+    branches: [ main ] # Only for PRs merging into 'main'
+
+jobs:
+  aggregate:
+    # Only run on merged PRs
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 'Checkout repository'
+        uses: actions/checkout@v4
+
+      - name: 'Set up Node.js'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 'Run aggregation script'
+        run: node scripts/aggregate.mjs "${{ github.event.pull_request.user.login }}"
+
+      - name: 'Commit and push changes'
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'chore: Aggregate new submissions'
+          file_pattern: 'rsc/published/*.json rsc/processed/* rsc/submitted/*'
+          commit_user_name: 'yôn Gicîdolû Bot'
+          commit_user_email: 'actions@github.com'
+          commit_author: 'yôn Gicîdolû Bot <actions@github.com>'

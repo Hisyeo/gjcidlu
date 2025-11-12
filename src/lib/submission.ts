@@ -38,7 +38,9 @@ function formatSubmission(queue: QueueAction[], username: string) {
 export function generateSubmissionUrl() {
   const queue = getQueue();
   if (queue.length === 0) {
-    alert("Submission queue is empty.");
+    if (process.env.NODE_ENV === 'development') {
+      alert("Submission queue is empty.");
+    }
     return;
   }
 
@@ -47,12 +49,15 @@ export function generateSubmissionUrl() {
   const submissionContent = formatSubmission(queue, username);
 
   const jsonContent = JSON.stringify(submissionContent, null, 2);
-  const encodedContent = btoa(jsonContent); // Base64 encode
+  // Base64 encode is not strictly necessary for URL value, but good for complex content
+  // const encodedContent = btoa(jsonContent);
 
   const repoUrl = process.env.NEXT_PUBLIC_GITHUB_REPO_URL;
   if (!repoUrl) {
-    alert("Error: GitHub repository URL is not configured.");
-    console.error("NEXT_PUBLIC_GITHUB_REPO_URL is not set.");
+    if (process.env.NODE_ENV === 'development') {
+      alert("Error: GitHub repository URL is not configured.");
+      console.error("NEXT_PUBLIC_GITHUB_REPO_URL is not set.");
+    }
     return;
   }
 
@@ -63,13 +68,13 @@ export function generateSubmissionUrl() {
 
   const url = `${repoUrl}/new/main?filename=${filepath}&value=${encodeURIComponent(jsonContent)}`;
 
-  // For debugging:
-  console.log("Submission URL:", url);
-  console.log("Submission Content:", jsonContent);
-
-  // To prevent accidental submissions during development, we'll just log it.
-  // In production, you would use: window.location.href = url;
-  alert(`In a real app, you would be redirected to GitHub to create a new file named ${filename}. Check the console for the URL and content.`);
+  if (process.env.NODE_ENV === 'development') {
+    console.log("Submission URL:", url);
+    console.log("Submission Content:", jsonContent);
+    alert(`In development mode: You would be redirected to GitHub to create a new file named ${filename}. Check the console for the URL and content.`);
+  } else {
+    window.location.href = url;
+  }
 
   clearQueue();
 }

@@ -1,0 +1,41 @@
+name: 'Rebuild Static Site'
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'rsc/published/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 'Checkout repository'
+        uses: actions/checkout@v4
+
+      - name: 'Set up Node.js'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 'Install dependencies'
+        run: npm install
+
+      - name: 'Build static site'
+        run: npm run build
+
+      - name: 'Commit and push built site'
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'chore: Rebuild static site'
+          # The 'gen' directory is specified as distDir in next.config.mjs
+          # This action will automatically commit the changes in that directory.
+          # No file_pattern is needed if the action defaults to committing all changes.
+          # To be safe, we can specify it.
+          file_pattern: 'gen/**'
+          commit_user_name: 'yôn Gicîdolû Bot'
+          commit_user_email: 'actions@github.com'
+          commit_author: 'yôn Gicîdolû Bot <actions@github.com>'

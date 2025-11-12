@@ -1,0 +1,19 @@
+{
+  "ephemeral-628": {
+    "$pos": "adjective",
+    "$desc": "Lasting for a very short time",
+    "2C0-L2149_21412": {
+      "submitter": "user-415",
+      "created": "2022-10-31T09:00:00.594Z",
+      "contents": [1,
+                   123, 412, 41]
+    },
+    "20K212-412_212VCD123": {
+        "submitter": "user-415",
+        "created": "2023-08-23T08:12:38.413Z",
+        "original": "entry-467",
+        "contents": [1, 123, 412, 41, 53]
+    }
+  },
+  "banana-143": {}
+}

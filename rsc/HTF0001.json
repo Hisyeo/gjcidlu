@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "encodings": [
+    {
+      "type": "word",
+      "latin": "noyo",
+      "abugida": "ƨɀ",
+      "syllabary": "ny"
+    },
+    {
+      "type": "syllable",
+      "latin": "no",
+      "abugida": "ƨ",
+      "syllabary": "n"
+    },
+    {
+      "type": "syllable",
+      "latin": "yo",
+      "abugida": "ɀ",
+      "syllabary": "y"
+    },
+    {
+      "type": "punctuation",
+      "latin": " ",
+      "abugida": " ",
+      "syllabary": " "
+    },
+    {
+      "type": "punctuation",
+      "latin": ".",
+      "abugida": ":",
+      "syllabary": "."
+    },
+    {
+      "type": "punctuation",
+      "latin": ",",
+      "abugida": "､",
+      "syllabary": ","
+    }
+  ]
+}

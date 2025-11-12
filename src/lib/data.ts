@@ -21,6 +21,10 @@ interface VotesData {
 export type VoteCounts = Record<VoteType, number>;
 export type AggregatedVotes = Record<string, VoteCounts>; // Record<entryId, VoteCounts>
 
+export interface TermWithDetails extends Term {
+    topTranslations: Record<VoteType, string | null>;
+}
+
 async function readJsonFile(filePath: string) {
     try {
         const jsonContent = await fs.readFile(filePath, 'utf-8');
@@ -69,7 +73,6 @@ export async function getAggregatedVotesForTerm(termId: string): Promise<Aggrega
         for (const voteType in userVotes) {
             const votes = userVotes[voteType as VoteType];
             if (votes && votes.length > 0) {
-                // The last vote in the array is the most recent one
                 const latestVote = votes[votes.length - 1];
                 const entryId = latestVote.entry;
 
@@ -81,4 +84,41 @@ export async function getAggregatedVotesForTerm(termId: string): Promise<Aggrega
         }
     }
     return aggregatedVotes;
+}
+
+export async function getTermsWithDetails(): Promise<TermWithDetails[]> {
+    const terms = await getTerms();
+
+    const detailedTerms = await Promise.all(terms.map(async (term) => {
+        const aggregatedVotes = await getAggregatedVotesForTerm(term.id);
+
+        const topTranslations: Record<VoteType, string | null> = {
+            overall: null,
+            minimal: null,
+            specific: null,
+            humorous: null,
+        };
+
+        const voteTypes: VoteType[] = ['overall', 'minimal', 'specific', 'humorous'];
+        for (const type of voteTypes) {
+            let maxVotes = 0;
+            let winnerId: string | null = null;
+
+            for (const entryId in aggregatedVotes) {
+                const count = aggregatedVotes[entryId][type];
+                if (count > maxVotes) {
+                    maxVotes = count;
+                    winnerId = entryId;
+                }
+            }
+            topTranslations[type] = winnerId;
+        }
+
+        return {
+            ...term,
+            topTranslations,
+        };
+    }));
+
+    return detailedTerms;
 }

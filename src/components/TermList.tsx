@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Term } from '@/lib/types';
+import { TermWithDetails } from '@/lib/data';
 
 interface TermListProps {
-  initialTerms: Term[];
+  initialTerms: TermWithDetails[];
 }
 
 export default function TermList({ initialTerms }: TermListProps) {
@@ -48,16 +48,23 @@ export default function TermList({ initialTerms }: TermListProps) {
             
             <hr className="my-4 border-gray-100" />
             
-            {/* This part would need real data fetching to be accurate */}
             <h3 className="mb-3 text-sm font-semibold text-gray-500 uppercase">Top Translations</h3>
             <div className="grid grid-cols-2 gap-x-4 gap-y-2">
               <div>
                 <span className="text-xs text-gray-400">Overall</span>
-                <p className="text-lg font-medium text-blue-600">(No votes)</p>
+                <p className="text-lg font-medium text-blue-600">{term.topTranslations.overall || '(No votes)'}</p>
               </div>
               <div>
                 <span className="text-xs text-gray-400">Minimal</span>
-                <p className="text-lg font-medium text-blue-600">(No votes)</p>
+                <p className="text-lg font-medium text-blue-600">{term.topTranslations.minimal || '(No votes)'}</p>
+              </div>
+              <div>
+                <span className="text-xs text-gray-400">Specific</span>
+                <p className="text-lg font-medium text-blue-600">{term.topTranslations.specific || '(No votes)'}</p>
+              </div>
+              <div>
+                <span className="text-xs text-gray-400">Humorous</span>
+                <p className="text-lg font-medium text-blue-600">{term.topTranslations.humorous || '(No votes)'}</p>
               </div>
             </div>
 

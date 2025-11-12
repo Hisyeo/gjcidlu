@@ -7,6 +7,9 @@ on:
     paths:
       - 'rsc/published/**'
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -31,10 +34,6 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: 'chore: Rebuild static site'
-          # The 'gen' directory is specified as distDir in next.config.mjs
-          # This action will automatically commit the changes in that directory.
-          # No file_pattern is needed if the action defaults to committing all changes.
-          # To be safe, we can specify it.
           file_pattern: 'gen/**'
           commit_user_name: 'yôn Gicîdolû Bot'
           commit_user_email: 'actions@github.com'

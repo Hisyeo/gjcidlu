@@ -5,6 +5,9 @@ on:
     types: [closed] # Run only when a PR is closed
     branches: [ main ] # Only for PRs merging into 'main'
 
+permissions:
+  contents: write
+
 jobs:
   aggregate:
     # Only run on merged PRs

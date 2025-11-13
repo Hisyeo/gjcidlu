@@ -12,7 +12,8 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     env:
-      NEXT_PUBLIC_GITHUB_REPO_URL: https://hisyeo.github.io/gjcidlu/
+      NEXT_PUBLIC_BASE_URL: https://hisyeo.github.io/gjcidlu/
+      NEXT_PUBLIC_GITHUB_REPO_URL: https://github.com/hisyeo/gjcidlu
     steps:
       - name: 'Checkout repository'
         uses: actions/checkout@v4

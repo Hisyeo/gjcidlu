@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write # Needed to post comments
 
 jobs:
   validate:
@@ -21,6 +22,7 @@ jobs:
           fetch-depth: 0 # Fetch all history to resolve refs
 
       - name: 'Blacklist Check'
+        id: blacklist_check
         env:
           # Add comma-separated usernames to ban.
           # e.g., "user1,user2,another-user"
@@ -30,42 +32,82 @@ jobs:
           echo "PR Author: $PR_AUTHOR"
           if [[ ",$BLACKLIST," == *",$PR_AUTHOR,"* ]]; then
             echo "User $PR_AUTHOR is on the blacklist. Failing."
+            echo "validation_status=failed" >> "$GITHUB_OUTPUT"
             exit 1
           else
             echo "User $PR_AUTHOR is not on the blacklist. Proceeding."
+            echo "validation_status=passed" >> "$GITHUB_OUTPUT"
           fi
       
       - name: 'Enrich submission file'
+        id: enrich_file
         env:
           PR_AUTHOR: ${{ github.event.pull_request.user.login }}
         run: |
-          # Find the first .json file in the submitted directory
           SUBMISSION_FILE=$(find rsc/submitted -name '*.json' -print -quit)
 
           if [[ -z "$SUBMISSION_FILE" ]]; then
             echo "No submission file found in PR. Skipping enrichment."
+            echo "enriched_file_path=" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           echo "Enriching file: $SUBMISSION_FILE"
           
-          # Use node to parse and update the JSON file
           node -e '
             const fs = require("fs");
             const path = require("path");
             const filePath = process.argv[1];
             const author = process.env.PR_AUTHOR;
             const content = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-            content.author = author;
+            content.author = { system: "GitHub", id: author }; // Enriched with GitHub as system
             fs.writeFileSync(filePath, JSON.stringify(content, null, 2));
             console.log(`Successfully added author (${author}) to ${filePath}`);
           ' "$SUBMISSION_FILE"
+          echo "enriched_file_path=$SUBMISSION_FILE" >> "$GITHUB_OUTPUT"
 
-      - name: 'Commit and push enriched file'
-        uses: stefanzweifel/git-auto-commit-action@v5
+      - name: 'Generate Comment Body'
+        id: generate_comment
+        env:
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          SUBMISSION_FILE="${{ steps.enrich_file.outputs.enriched_file_path }}"
+          if [[ -z "$SUBMISSION_FILE" ]]; then
+            echo "comment_body=No submission file found in this PR." >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          SUBMISSION_CONTENT=$(cat "$SUBMISSION_FILE")
+          NEW_TERMS_COUNT=$(echo "$SUBMISSION_CONTENT" | jq '.newTerms | length')
+          NEW_ENTRIES_COUNT=$(echo "$SUBMISSION_CONTENT" | jq '.newEntries | length')
+          VOTES_COUNT=$(echo "$SUBMISSION_CONTENT" | jq '.votes | length')
+
+          RECEIPT_ITEMS=""
+          if [ "$NEW_TERMS_COUNT" -gt 0 ]; then
+            RECEIPT_ITEMS+="- **New Terms:** $NEW_TERMS_COUNT\n"
+          fi
+          if [ "$NEW_ENTRIES_COUNT" -gt 0 ]; then
+            RECEIPT_ITEMS+="- **New Translations:** $NEW_ENTRIES_COUNT\n"
+          fi
+          if [ "$VOTES_COUNT" -gt 0 ]; then
+            RECEIPT_ITEMS+="- **New Votes:** $VOTES_COUNT\n"
+          fi
+
+          VERIFICATION_LINK="https://github.com/${{ github.repository_owner }}/gjcidlu/pull/${{ github.event.pull_request.number }}" # Link to the PR itself for review
+
+          COMMENT_BODY="### Submission Validation & Review\n\n"
+          COMMENT_BODY+="This Pull Request contains a submission from GitHub user **${{ env.PR_AUTHOR }}**.\n\n"
+          COMMENT_BODY+="**Summary of Contributions:**\n${RECEIPT_ITEMS}\n"
+          COMMENT_BODY+="Please review the changes in this PR. The submission file has been enriched with the author's GitHub ID.\n\n"
+          COMMENT_BODY+="[Click here to review the PR]($VERIFICATION_LINK)\n"
+          
+          echo "comment_body<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$COMMENT_BODY" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: 'Post PR Comment'
+        uses: peter-evans/create-or-update-comment@v3
         with:
-          commit_message: 'chore: Enrich submission with PR author'
-          branch: ${{ github.head_ref }}
-          commit_user_name: 'yôn Gicîdolû Bot'
-          commit_user_email: 'actions@github.com'
-          commit_author: 'yôn Gicîdolû Bot <actions@github.com>'
+          issue-number: ${{ github.event.pull_request.number }}
+          body: ${{ steps.generate_comment.outputs.comment_body }}
+          token: ${{ secrets.GITHUB_TOKEN }}

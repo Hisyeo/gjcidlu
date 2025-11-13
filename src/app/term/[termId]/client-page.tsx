@@ -24,12 +24,18 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
     e.preventDefault();
     if (!translation.trim()) return;
 
-    // Guard against duplicate translations
     const newTranslationContents = translation.split('').map(char => char.charCodeAt(0));
     const newEntryId = btoa(String(newTranslationContents)).slice(0, 20).replace(/[^a-zA-Z0-9]/g, '');
 
-    const isDuplicate = initialEntries.some(entry => entry.id === newEntryId);
-    if (isDuplicate) {
+    // Guard against duplicate translations from initial data
+    const isDuplicateInInitial = initialEntries.some(entry => entry.id === newEntryId);
+    
+    // Guard against duplicate translations in the current queue
+    const isDuplicateInQueue = queue.some(action => 
+      action.type === 'NEW_ENTRY' && action.payload.id === newEntryId
+    );
+
+    if (isDuplicateInInitial || isDuplicateInQueue) {
       alert('This translation has already been submitted.');
       return;
     }

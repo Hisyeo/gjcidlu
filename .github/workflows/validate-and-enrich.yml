@@ -70,11 +70,11 @@ jobs:
             COMMENT_BODY+="**Action Required:** Please close this PR, perform a hard refresh (Ctrl+Shift+R), and try again."
           else
             RECEIPT_ITEMS=$(jq -r '
-              [
-                (.newTerms // []) | map("- Term '\''\(.id | split("-")[0])'\''"),
-                (.newEntries // []) | map("- Translation '\''\(.id)'\'' for '\''\(.termId)'\''"),
-                (.votes // []) | map("- \((.voteType | ascii_upcase[0:1]) + .voteType[1:]) vote for '\''\(.entryId)'\'' on term '\''\(.termId)'\''")
-              ] | .[] | .[]
+              (
+                ((.newTerms // []) | map("- Term '\''\(.id | split("-")[0])'\''")) +
+                ((.newEntries // []) | map("- Translation '\''\(.id)'\'' for '\''\(.termId)'\''")) +
+                ((.votes // []) | map("- \((.voteType | ascii_upcase[0:1]) + .voteType[1:]) vote for '\''\(.entryId)'\'' on term '\''\(.termId)'\''"))
+              ) | .[]
             ' <<< "$SUBMISSION_CONTENT" | sed 's/^/  /')
 
             if [[ "$USER_SYSTEM" == "Email" ]]; then

@@ -12,7 +12,7 @@ interface HTFData {
   encodings: HTFEncoding[];
 }
 
-const htfData: HTFData = htf2;
+const htfData = htf2 as HTFData;
 
 // To improve performance, create a sorted list of encodings (longest first)
 const sortedEncodings = htfData.encodings

@@ -1,0 +1,59 @@
+{
+  "version": 2,
+  "author": {
+    "system": "Discord",
+    "id": "128874964517388288"
+  },
+  "newTerms": [
+    {
+      "id": "term-93yqs",
+      "pos": "adverb",
+      "description": "term"
+    }
+  ],
+  "newEntries": [
+    {
+      "id": "Miww",
+      "termId": "robot-10vwg",
+      "contents": [
+        2,
+        0
+      ],
+      "submitter": "test-user",
+      "created": "2025-11-13T20:11:05.790Z"
+    },
+    {
+      "id": "Miw3Mjg",
+      "termId": "ramble-g68oh",
+      "contents": [
+        2,
+        728
+      ],
+      "submitter": "test-user",
+      "created": "2025-11-13T20:38:16.957Z"
+    }
+  ],
+  "votes": [
+    {
+      "termId": "decipher-qym15",
+      "entryId": "Miw4NTAsMTc3NCw0Nzcs",
+      "voteType": "specific",
+      "user": "test-user",
+      "voted": "2025-11-13T20:04:37.293Z"
+    },
+    {
+      "termId": "decipher-qym15",
+      "entryId": "Miw4NTAsMTc3NCw0Nzcs",
+      "voteType": "minimal",
+      "user": "test-user",
+      "voted": "2025-11-13T20:04:38.384Z"
+    },
+    {
+      "termId": "robot-10vwg",
+      "entryId": "Miw3MTEsMTc3NCw3NDQs",
+      "voteType": "overall",
+      "user": "test-user",
+      "voted": "2025-11-13T20:13:21.759Z"
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "author": {
+    "system": "Discord",
+    "id": "128874964517388288"
+  },
+  "newTerms": [],
+  "newEntries": [
+    {
+      "id": "MTA3LDI1MSwyNDQsMTIw",
+      "termId": "banana-143",
+      "contents": [
+        107,
+        251,
+        244,
+        120,
+        105,
+        32,
+        119,
+        111,
+        110,
+        107,
+        251,
+        107,
+        32,
+        115,
+        234,
+        108,
+        98,
+        244
+      ],
+      "submitter": "test-user",
+      "created": "2025-11-13T04:07:58.125Z"
+    }
+  ],
+  "votes": [
+    {
+      "termId": "document-v-123",
+      "entryId": "xe-sobis-bi-cukto",
+      "voteType": "overall",
+      "user": "test-user",
+      "voted": "2025-11-13T04:06:48.589Z"
+    }
+  ]
+}

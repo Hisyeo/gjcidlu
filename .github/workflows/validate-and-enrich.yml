@@ -39,8 +39,6 @@ jobs:
         run: |
           # Get the list of files changed in the PR
           CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
-
-          # Filter for the new submission file in rsc/submitted
           SUBMISSION_FILE=$(echo "$CHANGED_FILES" | grep '^rsc/submitted/.*\.json$' | head -n 1)
 
           if [[ -z "$SUBMISSION_FILE" ]]; then
@@ -48,54 +46,49 @@ jobs:
             exit 0
           fi
 
-          echo "--- DEBUG: Identified Submission File ---"
-          echo "$SUBMISSION_FILE"
-          echo "---------------------------------------"
-
-          echo "--- DEBUG: Submission File Content ---"
-          cat "$SUBMISSION_FILE"
-          echo "------------------------------------"
-
+          echo "--- DEBUG: Identified Submission File: $SUBMISSION_FILE ---"
           SUBMISSION_CONTENT=$(cat "$SUBMISSION_FILE")
+          echo "$SUBMISSION_CONTENT"
           
-          USER_SYSTEM=$(jq -r '.author.system' <<< "$SUBMISSION_CONTENT")
-          USER_ID=$(jq -r '.author.id' <<< "$SUBMISSION_CONTENT")
+          # Use a single, more robust jq call to extract all data at once
+          JQ_OUTPUT=$(jq -r '
+            .author.system,
+            .author.id,
+            (.newTerms // []) | length,
+            (.newEntries // []) | length,
+            (.votes // []) | length,
+            (
+              (.newTerms // []) | map("- Term '\''\(.id | split("-")[0])'\''"),
+              (.newEntries // []) | map("- Translation '\''\(.id)'\'' for '\''\(.termId)'\''"),
+              (.votes // []) | map("- \((.voteType | ascii_upcase[0:1]) + .voteType[1:]) vote for '\''\(.entryId)'\'' on term '\''\(.termId)'\''")
+            ) | .[]
+          ' <<< "$SUBMISSION_CONTENT")
+
+          # Read the output of jq into shell variables
+          readarray -t JQ_LINES <<< "$JQ_OUTPUT"
+          USER_SYSTEM="${JQ_LINES[0]}"
+          USER_ID="${JQ_LINES[1]}"
+          NEW_TERMS_COUNT="${JQ_LINES[2]}"
+          NEW_ENTRIES_COUNT="${JQ_LINES[3]}"
+          VOTES_COUNT="${JQ_LINES[4]}"
+          RECEIPT_ITEMS=$(printf "  %s\n" "${JQ_LINES[@]:5}")
+
 
           echo "--- DEBUG: Parsed Values ---"
           echo "USER_SYSTEM: $USER_SYSTEM"
           echo "USER_ID: $USER_ID"
+          echo "NEW_TERMS_COUNT: $NEW_TERMS_COUNT"
+          echo "RECEIPT_ITEMS:\n$RECEIPT_ITEMS"
           echo "----------------------------"
 
           if [[ "$USER_SYSTEM" == "null" || "$USER_ID" == "null" || -z "$USER_SYSTEM" || -z "$USER_ID" ]]; then
             COMMENT_BODY="### ⚠️ Submission Error\n\n"
             COMMENT_BODY+="The submission file in this PR appears to be malformed or is from an outdated client.\n\n"
             COMMENT_BODY+="**Error:** Could not find author information (\`.author.system\` or \`.author.id\`) in the submission JSON.\n\n"
-            COMMENT_BODY+="**Action Required:** Please close this PR. Then, perform a hard refresh of the web application in your browser (Ctrl+Shift+R or Cmd+Shift+R) to get the latest version and try your submission again."
+            COMMENT_BODY+="**Action Required:** Please close this PR, perform a hard refresh (Ctrl+Shift+R), and try again."
           else
-            NEW_TERMS_COUNT=$(jq -r '.newTerms | length' <<< "$SUBMISSION_CONTENT")
-            NEW_ENTRIES_COUNT=$(jq -r '.newEntries | length' <<< "$SUBMISSION_CONTENT")
-            VOTES_COUNT=$(jq -r '.votes | length' <<< "$SUBMISSION_CONTENT")
-
-            echo "--- DEBUG: Generating Receipt Items (Raw JQ Output) ---"
-            jq -r '
-              (.newTerms // []) | map("- Term '\''\(.id | split("-")[0])'\''") | .[],
-              (.newEntries // []) | map("- Translation '\''\(.id)'\'' for '\''\(.termId)'\''") | .[],
-              (.votes // []) | map("- \((.voteType | ascii_upcase[0:1]) + .voteType[1:]) vote for '\''\(.entryId)'\'' on term '\''\(.termId)'\''") | .[]
-            ' <<< "$SUBMISSION_CONTENT"
-            echo "----------------------------------------------------------"
-
-            RECEIPT_ITEMS=$(jq -r '
-              (.newTerms // []) | map("- Term '\''\(.id | split("-")[0])'\''") | .[],
-              (.newEntries // []) | map("- Translation '\''\(.id)'\'' for '\''\(.termId)'\''") | .[],
-              (.votes // []) | map("- \((.voteType | ascii_upcase[0:1]) + .voteType[1:]) vote for '\''\(.entryId)'\'' on term '\''\(.termId)'\''") | .[]
-            ' <<< "$SUBMISSION_CONTENT" | sed 's/^/  /')
-            
-            echo "--- DEBUG: RECEIPT_ITEMS Variable Content ---"
-            echo "$RECEIPT_ITEMS"
-            echo "---------------------------------------------"
-
             if [[ "$USER_SYSTEM" == "Email" ]]; then
-              EMAIL_BODY="Thank you for your ${VOTES_COUNT} votes, ${NEW_ENTRIES_COUNT} entries, and ${NEW_TERMS_COUNT} terms!%0A%0AHere is a receipt of what you have submitted:%0A${RECEIPT_ITEMS//'%'/'%25'//''/'%0A'//' '/'%20'//'"'/"%27"}%0A%0AReply YES if you confirm these votes, entries and terms to be valid.%0AReply NO if you would like to start over.%0AIf we don't receive a reply in a timely fashion, you may become banned from using email verification."
+              EMAIL_BODY="Thank you for your ${VOTES_COUNT} votes, ${NEW_ENTRIES_COUNT} entries, and ${NEW_TERMS_COUNT} terms!%0A%0AHere is a receipt of what you have submitted:%0A${RECEIPT_ITEMS//'%'/'%25'//$'\n'/'%0A'//' '/'%20'//'"'/"%27"}%0A%0AReply YES if you confirm these votes, entries and terms to be valid.%0AReply NO if you would like to start over.%0AIf we don't receive a reply in a timely fashion, you may become banned from using email verification."
               VERIFICATION_LINK="mailto:${USER_ID}?subject=Confirm Your Submission&body=${EMAIL_BODY}"
             else
               VERIFICATION_LINK="https://discord.com/users/${USER_ID}"

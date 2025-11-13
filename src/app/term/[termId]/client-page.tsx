@@ -1,30 +1,43 @@
 "use client";
 
-import { useState } from 'react';
-import { addToQueue } from '@/lib/queue';
-import { Entry, Term, Vote, VoteType } from '@/lib/types';
+import { useState, useEffect } from 'react';
+import { getQueue, addToQueue, removeFromQueue } from '@/lib/queue';
+import { Entry, Term, Vote, VoteType, QueueAction } from '@/lib/types';
 
 interface TermDetailClientViewProps {
   term: Term;
-  initialEntries: { id: string; votes: Record<VoteType, number> }[];
+  initialEntries: { id: string; votes: Record<VoteType, number>; contents: number[] }[];
 }
 
 export default function TermDetailClientView({ term, initialEntries }: TermDetailClientViewProps) {
   const [translation, setTranslation] = useState('');
-  // Local state to give immediate feedback on votes
-  const [entries, setEntries] = useState(initialEntries);
+  const [queue, setQueue] = useState<QueueAction[]>([]);
+
+  useEffect(() => {
+    const updateQueue = () => setQueue(getQueue());
+    updateQueue(); // Initial load
+    window.addEventListener('storage', updateQueue);
+    return () => window.removeEventListener('storage', updateQueue);
+  }, []);
 
   const handleAddEntry = (e: React.FormEvent) => {
     e.preventDefault();
     if (!translation.trim()) return;
 
-    const mockContents = translation.split('').map(char => char.charCodeAt(0));
-    const mockEntryId = btoa(String(mockContents)).slice(0, 20).replace(/[^a-zA-Z0-9]/g, '');
+    // Guard against duplicate translations
+    const newTranslationContents = translation.split('').map(char => char.charCodeAt(0));
+    const newEntryId = btoa(String(newTranslationContents)).slice(0, 20).replace(/[^a-zA-Z0-9]/g, '');
+
+    const isDuplicate = initialEntries.some(entry => entry.id === newEntryId);
+    if (isDuplicate) {
+      alert('This translation has already been submitted.');
+      return;
+    }
 
     const newEntry: Omit<Entry, 'submitter' | 'created'> = {
-      id: mockEntryId,
+      id: newEntryId,
       termId: term.id,
-      contents: mockContents,
+      contents: newTranslationContents,
     };
 
     addToQueue({
@@ -37,6 +50,18 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
   };
 
   const handleVote = (entryId: string, voteType: VoteType) => {
+    // Guard: If a vote for this category and term already exists, remove it first.
+    const existingVote = queue.find(
+      (action): action is { type: 'VOTE'; payload: Vote; id: string } =>
+        action.type === 'VOTE' &&
+        action.payload.termId === term.id &&
+        action.payload.voteType === voteType
+    );
+
+    if (existingVote) {
+      removeFromQueue(existingVote.id);
+    }
+
     const vote: Omit<Vote, 'user' | 'voted'> = {
       termId: term.id,
       entryId: entryId,
@@ -48,15 +73,28 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
       payload: { ...vote, user: 'test-user', voted: new Date().toISOString() }
     });
 
-    // Give immediate UI feedback
-    setEntries(currentEntries =>
-      currentEntries.map(entry =>
-        entry.id === entryId
-          ? { ...entry, votes: { ...entry.votes, [voteType]: entry.votes[voteType] + 1 } }
-          : entry
-      )
-    );
     alert(`Vote for '${voteType}' on entry '${entryId}' added to queue!`);
+  };
+
+  const getVoteCount = (entryId: string, voteType: VoteType) => {
+    const initialCount = initialEntries.find(e => e.id === entryId)?.votes[voteType] ?? 0;
+    const queueCount = queue.filter(
+      action =>
+        action.type === 'VOTE' &&
+        action.payload.entryId === entryId &&
+        action.payload.voteType === voteType
+    ).length;
+    return initialCount + queueCount;
+  };
+
+  const isVotedInQueue = (entryId: string, voteType: VoteType) => {
+    return queue.some(
+      action =>
+        action.type === 'VOTE' &&
+        action.payload.termId === term.id &&
+        action.payload.voteType === voteType &&
+        action.payload.entryId === entryId
+    );
   };
 
   return (
@@ -78,9 +116,9 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
 
       <div className="mx-auto max-w-2xl">
         <div className="mt-8 space-y-4">
-          <h3 className="text-xl font-semibold">All Translations ({entries.length})</h3>
+          <h3 className="text-xl font-semibold">All Translations ({initialEntries.length})</h3>
 
-          {entries.map(entry => (
+          {initialEntries.map(entry => (
             <div key={entry.id} className="rounded-lg border bg-white p-4">
               <div className="mb-3 flex items-center justify-between">
                 <p className="text-2xl font-medium text-gray-900">{entry.id}</p>
@@ -92,10 +130,18 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
                 </button>
               </div>
               <div className="flex flex-wrap gap-2">
-                <button onClick={() => handleVote(entry.id, 'overall')} className="border border-blue-500 px-3 py-1 text-sm rounded-md">Overall ({entry.votes.overall})</button>
-                <button onClick={() => handleVote(entry.id, 'minimal')} className="border border-gray-400 px-3 py-1 text-sm rounded-md">Minimal ({entry.votes.minimal})</button>
-                <button onClick={() => handleVote(entry.id, 'specific')} className="border border-gray-400 px-3 py-1 text-sm rounded-md">Specific ({entry.votes.specific})</button>
-                <button onClick={() => handleVote(entry.id, 'humorous')} className="border border-gray-400 px-3 py-1 text-sm rounded-md">Humorous ({entry.votes.humorous})</button>
+                {(['overall', 'minimal', 'specific', 'humorous'] as VoteType[]).map(voteType => {
+                  const isVoted = isVotedInQueue(entry.id, voteType);
+                  const buttonClass = isVoted
+                    ? 'bg-blue-500 text-white px-3 py-1 text-sm rounded-md'
+                    : 'border border-gray-400 px-3 py-1 text-sm rounded-md';
+                  
+                  return (
+                    <button key={voteType} onClick={() => handleVote(entry.id, voteType)} className={buttonClass}>
+                      {voteType.charAt(0).toUpperCase() + voteType.slice(1)} ({getVoteCount(entry.id, voteType)})
+                    </button>
+                  );
+                })}
               </div>
             </div>
           ))}

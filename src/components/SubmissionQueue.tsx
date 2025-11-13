@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { getQueue, removeFromQueue } from '@/lib/queue';
 import { QueueAction } from '@/lib/types';
 import CheckoutModal from './CheckoutModal'; // Import the modal
+import { decode } from '@/lib/htf-int'; // Import decode
 
 interface SubmissionQueueProps {
   toggleQueue: () => void;
@@ -46,7 +47,7 @@ const SubmissionQueue: React.FC<SubmissionQueueProps> = ({ toggleQueue }) => {
       case 'NEW_ENTRY':
         return (
           <>
-            <h3 className="font-medium text-gray-900">New Translation: "{action.payload.contents.join(' ')}"</h3>
+            <h3 className="font-medium text-gray-900">New Translation: "{decode(action.payload.contents)}"</h3>
             <p className="text-sm text-gray-600">For: "{action.payload.termId}"</p>
           </>
         );

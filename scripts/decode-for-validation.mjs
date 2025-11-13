@@ -48,44 +48,29 @@ async function run() {
     const votes = submissionContent.votes || [];
 
     // Create a quick summary
-    let summary = '#### Decoded New Translations:\n';
+    let summary = '#### Summary of Contributions:\n';
     if (newEntries.length > 0) {
+      summary += '##### New Translations:\n';
       for (const entry of newEntries) {
         const decodedText = decode(entry.contents);
         summary += `- **${decodedText}** (for term: *${entry.termId}*)\n`;
       }
     } else {
-      summary += '- (No new translations in this submission)\n';
-    }
-
-    // Add decoded fields to the full submission object for the details view
-    if (newEntries.length > 0) {
-      submissionContent.newEntries.forEach(entry => {
-        entry.decoded_contents = decode(entry.contents);
-      });
+      summary += '- No new translations.\n';
     }
 
     if (votes.length > 0) {
-      submissionContent.votes.forEach(vote => {
+      summary += '##### New Votes:\n';
+      for (const vote of votes) {
         const votedEntry = newEntries.find(e => e.id === vote.entryId);
-        if (votedEntry) {
-          vote.decoded_entry = decode(votedEntry.contents);
-        } else {
-          vote.decoded_entry = `(Existing entry - ID: ${vote.entryId})`;
-        }
-      });
+        const decodedEntryText = votedEntry ? decode(votedEntry.contents) : `(Existing entry - ID: ${vote.entryId})`;
+        summary += `- **${vote.voteType.charAt(0).toUpperCase() + vote.voteType.slice(1)}** vote for **${decodedEntryText}** (on term: *${vote.termId}*)\n`;
+      }
+    } else {
+      summary += '- No new votes.\n';
     }
-
-    const fullReceipt = JSON.stringify(submissionContent, null, 2);
-
-    let output = `${summary}\n<details><summary>Full Submission Receipt</summary>\n\n\`\`\`json\n${fullReceipt}\n\`\`\`\n\n</details>`;
     
-    // This special format is for multiline strings in GitHub Actions
-    output = output.replace(/%/g, '%25');
-    output = output.replace(/\n/g, '%0A');
-    output = output.replace(/\r/g, '%0D');
-
-    console.log(output);
+    console.log(summary);
 
   } catch (error) {
     console.error(`Failed to decode submission file: ${error.message}`);

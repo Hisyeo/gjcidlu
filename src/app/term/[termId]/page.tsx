@@ -1,13 +1,16 @@
-import { getTerms, getTermById, getEntriesForTerm, getAggregatedVotesForTerm, VoteCounts } from '@/lib/data';
+import { getTermById, getEntriesForTerm, getAggregatedVotesForTerm, VoteCounts } from '@/lib/data';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import TermDetailClientView from './client-page';
+import entriesData from '../../../rsc/published/entries.json'; // Direct import
 
 // Generate static pages for all terms at build time
 export function generateStaticParams() {
-  const terms = getTerms();
-  return terms.map(term => ({
-    termId: term.id,
+  const entries: { [termId: string]: any } = entriesData;
+  if (!entries) return [];
+  
+  return Object.keys(entries).map(termId => ({
+    termId: termId,
   }));
 }
 

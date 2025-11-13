@@ -42,36 +42,41 @@ jobs:
             exit 0
           fi
 
-          # The jq utility is pre-installed on GitHub runners
           SUBMISSION_CONTENT=$(cat "$SUBMISSION_FILE")
           USER_SYSTEM=$(echo "$SUBMISSION_CONTENT" | jq -r '.author.system')
           USER_ID=$(echo "$SUBMISSION_CONTENT" | jq -r '.author.id')
-          NEW_TERMS_COUNT=$(echo "$SUBMISSION_CONTENT" | jq '.newTerms | length')
-          NEW_ENTRIES_COUNT=$(echo "$SUBMISSION_CONTENT" | jq '.newEntries | length')
-          VOTES_COUNT=$(echo "$SUBMISSION_CONTENT" | jq '.votes | length')
 
-          # Generate receipt list
-          RECEIPT_ITEMS=$(echo "$SUBMISSION_CONTENT" | jq -r '
-            (.newTerms // []) | map("- Term '\''\(.id | split("-")[0])'\''") | .[],
-            (.newEntries // []) | map("- Translation '\''\(.id)'\'' for '\''\(.termId)'\''") | .[],
-            (.votes // []) | map("- \(.voteType | cap) vote for '\''\(.entryId)'\'' on term '\''\(.termId)'\''") | .[]
-          ' | sed 's/^/  /')
-
-          # Generate verification link
-          if [[ "$USER_SYSTEM" == "Email" ]]; then
-            EMAIL_BODY="Thank you for your ${VOTES_COUNT} votes, ${NEW_ENTRIES_COUNT} entries, and ${NEW_TERMS_COUNT} terms!%0A%0AHere is a receipt of what you have submitted:%0A${RECEIPT_ITEMS//'%'/'%25'//''/'%0A'//' '/'%20'//'"'/"%27"}%0A%0AReply YES if you confirm these votes, entries and terms to be valid.%0AReply NO if you would like to start over.%0AIf we don't receive a reply in a timely fashion, you may become banned from using email verification."
-            VERIFICATION_LINK="mailto:${USER_ID}?subject=Confirm Your Submission&body=${EMAIL_BODY}"
+          if [[ "$USER_SYSTEM" == "null" || "$USER_ID" == "null" ]]; then
+            COMMENT_BODY="### ⚠️ Submission Error\n\n"
+            COMMENT_BODY+="The submission file in this PR appears to be malformed or is from an outdated client.\n\n"
+            COMMENT_BODY+="**Error:** Could not find author information (\`.author.system\` or \`.author.id\`) in the submission JSON.\n\n"
+            COMMENT_BODY+="**Action Required:** Please close this PR. Then, perform a hard refresh of the web application in your browser (Ctrl+Shift+R or Cmd+Shift+R) to get the latest version and try your submission again."
           else
-            VERIFICATION_LINK="https://discord.com/users/${USER_ID}"
+            NEW_TERMS_COUNT=$(echo "$SUBMISSION_CONTENT" | jq '.newTerms | length')
+            NEW_ENTRIES_COUNT=$(echo "$SUBMISSION_CONTENT" | jq '.newEntries | length')
+            VOTES_COUNT=$(echo "$SUBMISSION_CONTENT" | jq '.votes | length')
+
+            RECEIPT_ITEMS=$(echo "$SUBMISSION_CONTENT" | jq -r '
+              (.newTerms // []) | map("- Term '\''\(.id | split("-")[0])'\''") | .[],
+              (.newEntries // []) | map("- Translation '\''\(.id)'\'' for '\''\(.termId)'\''") | .[],
+              (.votes // []) | map("- \(.voteType | cap) vote for '\''\(.entryId)'\'' on term '\''\(.termId)'\''") | .[]
+            ' | sed 's/^/  /')
+
+            if [[ "$USER_SYSTEM" == "Email" ]]; then
+              EMAIL_BODY="Thank you for your ${VOTES_COUNT} votes, ${NEW_ENTRIES_COUNT} entries, and ${NEW_TERMS_COUNT} terms!%0A%0AHere is a receipt of what you have submitted:%0A${RECEIPT_ITEMS//'%'/'%25'//'
+'/'%0A'//' '/'%20'//'"'/"%27"}%0A%0AReply YES if you confirm these votes, entries and terms to be valid.%0AReply NO if you would like to start over.%0AIf we don't receive a reply in a timely fashion, you may become banned from using email verification."
+              VERIFICATION_LINK="mailto:${USER_ID}?subject=Confirm Your Submission&body=${EMAIL_BODY}"
+            else
+              VERIFICATION_LINK="https://discord.com/users/${USER_ID}"
+            fi
+
+            COMMENT_BODY="### Submission Review Required 🗳️\n\n"
+            COMMENT_BODY+="A new submission has been received from **${USER_SYSTEM}** user \`${USER_ID}\`.\n\n"
+            COMMENT_BODY+="#### Summary of Contributions\n- **New Terms:** ${NEW_TERMS_COUNT}\n- **New Translations:** ${NEW_ENTRIES_COUNT}\n- **New Votes:** ${VOTES_COUNT}\n\n"
+            COMMENT_BODY+="---\n\n#### Reviewer Action\n\nClick here to verify the user: [**Verify via ${USER_SYSTEM}**](${VERIFICATION_LINK})\n\n"
+            COMMENT_BODY+="<details><summary>Click to see full submission receipt</summary>\n\n${RECEIPT_ITEMS}\n\n</details>"
           fi
 
-          COMMENT_BODY="### Submission Review Required 🗳️\n\n"
-          COMMENT_BODY+="A new submission has been received from **${USER_SYSTEM}** user \`${USER_ID}\`.\n\n"
-          COMMENT_BODY+="#### Summary of Contributions\n- **New Terms:** ${NEW_TERMS_COUNT}\n- **New Translations:** ${NEW_ENTRIES_COUNT}\n- **New Votes:** ${VOTES_COUNT}\n\n"
-          COMMENT_BODY+="---\n\n#### Reviewer Action\n\nClick here to verify the user: [**Verify via ${USER_SYSTEM}**](${VERIFICATION_LINK})\n\n"
-          COMMENT_BODY+="<details><summary>Click to see full submission receipt</summary>\n\n${RECEIPT_ITEMS}\n\n</details>"
-
-          # Escape for multiline output
           echo "comment_body<<EOF" >> "$GITHUB_OUTPUT"
           echo -e "$COMMENT_BODY" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
@@ -82,3 +87,4 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body: ${{ steps.generate_comment.outputs.comment_body }}
           token: ${{ secrets.GITHUB_TOKEN }}
+

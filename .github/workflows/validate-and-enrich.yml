@@ -78,11 +78,13 @@ jobs:
             ' <<< "$SUBMISSION_CONTENT" | sed 's/^/  /')
 
             if [[ "$USER_SYSTEM" == "Email" ]]; then
-              EMAIL_BODY="Thank you for your ${VOTES_COUNT} votes, ${NEW_ENTRIES_COUNT} entries, and ${NEW_TERMS_COUNT} terms!%0A%0AHere is a receipt of what you have submitted:%0A${RECEIPT_ITEMS//'%'/'%25'//$'\n'/'%0A'//' '/'%20'//'"'/"%27"}%0A%0AReply YES if you confirm these votes, entries and terms to be valid.%0AReply NO if you would like to start over.%0AIf we don't receive a reply in a timely fashion, you may become banned from using email verification."
-              VERIFICATION_LINK="mailto:${USER_ID}?subject=Confirm Your Submission&body=${EMAIL_BODY}"
+              EMAIL_BODY_RAW="Thank you for your ${VOTES_COUNT} votes, ${NEW_ENTRIES_COUNT} entries, and ${NEW_TERMS_COUNT} terms!\n\nHere is a receipt of what you have submitted:\n${RECEIPT_ITEMS}\n\nReply YES if you confirm these votes, entries and terms to be valid.\nReply NO if you would like to start over.\nIf we don't receive a reply in a timely fashion, you may become banned from using email verification."
+              ENCODED_EMAIL_BODY=$(python -c 'import urllib.parse; print(urllib.parse.quote(f"""'"$EMAIL_BODY_RAW"'"""))')
+              VERIFICATION_LINK="mailto:${USER_ID}?subject=Confirm Your Submission&body=${ENCODED_EMAIL_BODY}"
             elif [[ "$USER_SYSTEM" == "Reddit" ]]; then
-              EMAIL_BODY="Thank you for your ${VOTES_COUNT} votes, ${NEW_ENTRIES_COUNT} entries, and ${NEW_TERMS_COUNT} terms!%0A%0AHere is a receipt of what you have submitted:%0A${RECEIPT_ITEMS//'%'/'%25'//$'\n'/'%0A'//' '/'%20'//'"'/"%27"}%0A%0AReply YES if you confirm these votes, entries and terms to be valid.%0AReply NO if you would like to start over.%0AIf we don't receive a reply in a timely fashion, you may become banned from using Reddit verification."
-              VERIFICATION_LINK="https://www.reddit.com/message/compose?to=${USER_ID}&subject=Confirm%20Your%20Submission&message=${EMAIL_BODY}"
+              EMAIL_BODY_RAW="Thank you for your ${VOTES_COUNT} votes, ${NEW_ENTRIES_COUNT} entries, and ${NEW_TERMS_COUNT} terms!\n\nHere is a receipt of what you have submitted:\n${RECEIPT_ITEMS}\n\nReply YES if you confirm these votes, entries and terms to be valid.\nReply NO if you would like to start over.\nIf we don't receive a reply in a timely fashion, you may become banned from using Reddit verification."
+              ENCODED_EMAIL_BODY=$(python -c 'import urllib.parse; print(urllib.parse.quote(f"""'"$EMAIL_BODY_RAW"'"""))')
+              VERIFICATION_LINK="https://www.reddit.com/message/compose?to=${USER_ID}&subject=Confirm%20Your%20Submission&message=${ENCODED_EMAIL_BODY}"
             else
               VERIFICATION_LINK="https://discord.com/users/${USER_ID}"
             fi

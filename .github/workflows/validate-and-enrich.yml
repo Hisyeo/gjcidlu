@@ -80,14 +80,14 @@ jobs:
             jq -r '
               (.newTerms // []) | map("- Term '\''\(.id | split("-")[0])'\''") | .[],
               (.newEntries // []) | map("- Translation '\''\(.id)'\'' for '\''\(.termId)'\''") | .[],
-              (.votes // []) | map("- \(.voteType | cap) vote for '\''\(.entryId)'\'' on term '\''\(.termId)'\''") | .[]
+              (.votes // []) | map("- \((.voteType | ascii_upcase[0:1]) + .voteType[1:]) vote for '\''\(.entryId)'\'' on term '\''\(.termId)'\''") | .[]
             ' <<< "$SUBMISSION_CONTENT"
             echo "----------------------------------------------------------"
 
             RECEIPT_ITEMS=$(jq -r '
               (.newTerms // []) | map("- Term '\''\(.id | split("-")[0])'\''") | .[],
               (.newEntries // []) | map("- Translation '\''\(.id)'\'' for '\''\(.termId)'\''") | .[],
-              (.votes // []) | map("- \(.voteType | cap) vote for '\''\(.entryId)'\'' on term '\''\(.termId)'\''") | .[]
+              (.votes // []) | map("- \((.voteType | ascii_upcase[0:1]) + .voteType[1:]) vote for '\''\(.entryId)'\'' on term '\''\(.termId)'\''") | .[]
             ' <<< "$SUBMISSION_CONTENT" | sed 's/^/  /')
             
             echo "--- DEBUG: RECEIPT_ITEMS Variable Content ---"

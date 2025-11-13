@@ -1,11 +1,12 @@
-import path from 'path';
-import fs from 'fs/promises';
 import { Term, VoteType } from './types';
+import entriesData from '../../rsc/published/entries.json';
+import votesData from '../../rsc/published/votes.json';
 
+// --- Type definitions to match the JSON structure ---
 interface EntriesData {
   [termId: string]: {
     $pos: string;
-    $desc:string;
+    $desc: string;
     [entryId: string]: any;
   }
 }
@@ -13,7 +14,7 @@ interface EntriesData {
 interface VotesData {
     [termId: string]: {
         [userId: string]: {
-            [voteType in VoteType]?: { entry: string; voted: string }[];
+            [voteType in VoteType]?: { entry: string; voted?: string; date?: string }[];
         }
     }
 }
@@ -25,37 +26,31 @@ export interface TermWithDetails extends Term {
     topTranslations: Record<VoteType, string | null>;
 }
 
-async function readJsonFile(filePath: string) {
-    try {
-        const jsonContent = await fs.readFile(filePath, 'utf-8');
-        return JSON.parse(jsonContent);
-    } catch (error) {
-        console.error(`Failed to read or parse ${path.basename(filePath)}:`, error);
-        return null;
-    }
-}
+// --- Cast the imported data to our defined types ---
+const entries: EntriesData = entriesData;
+const votes: VotesData = votesData;
 
-export async function getTerms(): Promise<Term[]> {
-  const data: EntriesData | null = await readJsonFile(path.join(process.cwd(), 'rsc', 'published', 'entries.json'));
-  if (!data) return [];
+// --- Synchronous Data Access Functions ---
+
+export function getTerms(): Term[] {
+  if (!entries) return [];
   
-  return Object.keys(data).map(termId => ({
+  return Object.keys(entries).map(termId => ({
     id: termId,
-    pos: data[termId].$pos || '', // Default to empty string if missing
-    description: data[termId].$desc || '', // Default to empty string if missing
+    pos: entries[termId].$pos || '',
+    description: entries[termId].$desc || '',
   }));
 }
 
-export async function getTermById(termId: string): Promise<Term | null> {
-    const terms = await getTerms();
-    return terms.find(term => term.id === termId) || null;
+export function getTermById(termId: string): Term | null {
+    const allTerms = getTerms();
+    return allTerms.find(term => term.id === termId) || null;
 }
 
-export async function getEntriesForTerm(termId: string): Promise<{ id: string, contents: number[] }[]> {
-    const data: EntriesData | null = await readJsonFile(path.join(process.cwd(), 'rsc', 'published', 'entries.json'));
-    if (!data || !data[termId]) return [];
+export function getEntriesForTerm(termId: string): { id: string, contents: number[] }[] {
+    if (!entries || !entries[termId]) return [];
 
-    const termData = data[termId];
+    const termData = entries[termId];
     return Object.keys(termData)
         .filter(key => !key.startsWith('$'))
         .map(entryId => ({ 
@@ -64,19 +59,17 @@ export async function getEntriesForTerm(termId: string): Promise<{ id: string, c
         }));
 }
 
-export async function getAggregatedVotesForTerm(termId: string): Promise<AggregatedVotes> {
-    const data: VotesData | null = await readJsonFile(path.join(process.cwd(), 'rsc', 'published', 'votes.json'));
+export function getAggregatedVotesForTerm(termId: string): AggregatedVotes {
     const aggregatedVotes: AggregatedVotes = {};
+    if (!votes || !votes[termId]) return aggregatedVotes;
 
-    if (!data || !data[termId]) return aggregatedVotes;
-
-    const termVotes = data[termId];
+    const termVotes = votes[termId];
     for (const userId in termVotes) {
         const userVotes = termVotes[userId];
         for (const voteType in userVotes) {
-            const votes = userVotes[voteType as VoteType];
-            if (votes && votes.length > 0) {
-                const latestVote = votes[votes.length - 1];
+            const userVoteArray = userVotes[voteType as VoteType];
+            if (userVoteArray && userVoteArray.length > 0) {
+                const latestVote = userVoteArray[userVoteArray.length - 1];
                 const entryId = latestVote.entry;
 
                 if (!aggregatedVotes[entryId]) {
@@ -89,11 +82,11 @@ export async function getAggregatedVotesForTerm(termId: string): Promise<Aggrega
     return aggregatedVotes;
 }
 
-export async function getTermsWithDetails(): Promise<TermWithDetails[]> {
-    const terms = await getTerms();
+export function getTermsWithDetails(): TermWithDetails[] {
+    const allTerms = getTerms();
 
-    const detailedTerms = await Promise.all(terms.map(async (term) => {
-        const aggregatedVotes = await getAggregatedVotesForTerm(term.id);
+    const detailedTerms = allTerms.map(term => {
+        const aggregatedVotes = getAggregatedVotesForTerm(term.id);
 
         const topTranslations: Record<VoteType, string | null> = {
             overall: null,
@@ -121,7 +114,7 @@ export async function getTermsWithDetails(): Promise<TermWithDetails[]> {
             ...term,
             topTranslations,
         };
-    }));
+    });
 
     return detailedTerms;
 }

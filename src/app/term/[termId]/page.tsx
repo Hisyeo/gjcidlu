@@ -4,24 +4,23 @@ import { notFound } from 'next/navigation';
 import TermDetailClientView from './client-page';
 
 // Generate static pages for all terms at build time
-export async function generateStaticParams() {
-  const terms = await getTerms();
+export function generateStaticParams() {
+  const terms = getTerms();
   return terms.map(term => ({
     termId: term.id,
   }));
 }
 
 // --- Page Component (Server) ---
-export default async function TermDetailPage({ params }: { params: { termId: string } }) {
-  const resolvedParams = await params;
-  const term = await getTermById(resolvedParams.termId);
+export default function TermDetailPage({ params }: { params: { termId: string } }) {
+  const term = getTermById(params.termId);
 
   if (!term) {
     notFound();
   }
 
-  const entries = await getEntriesForTerm(term.id);
-  const votes = await getAggregatedVotesForTerm(term.id);
+  const entries = getEntriesForTerm(term.id);
+  const votes = getAggregatedVotesForTerm(term.id);
 
   const initialEntries = entries.map(entry => {
     const entryVotes = votes[entry.id] || { overall: 0, minimal: 0, specific: 0, humorous: 0 };

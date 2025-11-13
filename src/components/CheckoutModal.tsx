@@ -75,6 +75,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ queue, onClose }) => {
                 >
                     <option>Discord</option>
                     <option>Email</option>
+                    <option>Reddit</option>
                 </select>
              </div>
              <div>
@@ -87,6 +88,9 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ queue, onClose }) => {
                     placeholder={userSystem === 'Discord' ? 'Your Discord User ID (e.g., 12345...)' : 'your.email@example.com'}
                     className="mt-1 w-full rounded-lg border border-gray-300 p-2 focus:ring-2 focus:ring-blue-500"
                 />
+             </div>
+             <div className="p-2 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700 text-sm">
+                <p>Please note that this username, ID, or email will be saved within this repository and will be used to contact you for verification.</p>
              </div>
           </div>
         </div>

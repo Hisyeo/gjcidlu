@@ -16,7 +16,7 @@ export function generateStaticParams() {
 
 // --- Page Component (Server) ---
 export default async function TermDetailPage({ params }: { params: { termId: string } }) {
-  const resolvedParams = await params;
+  const resolvedParams = await params; // both awaits are required
   const term = getTermById(await resolvedParams.termId);
 
   if (!term) {

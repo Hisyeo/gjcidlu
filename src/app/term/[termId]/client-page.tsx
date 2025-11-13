@@ -82,7 +82,10 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
       payload: { ...vote, user: 'test-user', voted: new Date().toISOString() }
     });
 
-    showToast(`Vote for '${voteType}' on entry '${entryId}' added to queue!`, 'success'); // Replaced alert
+    const entry = initialEntries.find(e => e.id === entryId);
+    const translation = entry ? decode(entry.contents) : entryId;
+
+    showToast(`Vote for '${voteType}' on entry '${translation}' added to queue!`, 'success');
   };
 
   const getVoteCount = (entryId: string, voteType: VoteType) => {

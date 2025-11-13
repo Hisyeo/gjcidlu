@@ -1,23 +1,22 @@
-"use client";
-
 import React, { useState, useEffect } from 'react';
 import { getQueue, removeFromQueue } from '@/lib/queue';
-import { QueueAction } from '@/lib/types';
-import CheckoutModal from './CheckoutModal'; // Import the modal
-import { decode } from '@/lib/htf-int'; // Import decode
+import { QueueAction, Entry } from '@/lib/types';
+import CheckoutModal from './CheckoutModal';
+import { decode } from '@/lib/htf-int';
 
 interface SubmissionQueueProps {
   toggleQueue: () => void;
+  allEntries: Record<string, any>; // A more specific type would be better
 }
 
-const SubmissionQueue: React.FC<SubmissionQueueProps> = ({ toggleQueue }) => {
+const SubmissionQueue: React.FC<SubmissionQueueProps> = ({ toggleQueue, allEntries }) => {
   const [queue, setQueue] = useState<QueueAction[]>([]);
-  const [isModalOpen, setModalOpen] = useState(false); // State for modal
+  const [isModalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     const updateQueue = () => setQueue(getQueue());
     window.addEventListener('storage', updateQueue);
-    updateQueue(); // Initial load
+    updateQueue();
     return () => window.removeEventListener('storage', updateQueue);
   }, []);
 
@@ -33,6 +32,28 @@ const SubmissionQueue: React.FC<SubmissionQueueProps> = ({ toggleQueue }) => {
 
   const handleCloseModal = () => {
     setModalOpen(false);
+  };
+
+  const getTranslationForEntryId = (entryId: string): string => {
+    // 1. Search in the current queue
+    const queueEntry = queue.find(
+      (action): action is { type: 'NEW_ENTRY'; payload: Entry; id: string } =>
+        action.type === 'NEW_ENTRY' && action.payload.id === entryId
+    );
+    if (queueEntry) {
+      return decode(queueEntry.payload.contents);
+    }
+
+    // 2. Search in the allEntries data from props
+    for (const termId in allEntries) {
+      const termEntries = allEntries[termId];
+      if (termEntries[entryId]) {
+        return decode(termEntries[entryId].contents);
+      }
+    }
+    
+    // 3. Fallback
+    return entryId;
   };
 
   const renderAction = (action: QueueAction) => {
@@ -52,9 +73,10 @@ const SubmissionQueue: React.FC<SubmissionQueueProps> = ({ toggleQueue }) => {
           </>
         );
       case 'VOTE':
+        const translation = getTranslationForEntryId(action.payload.entryId);
         return (
           <>
-            <h3 className="font-medium text-gray-900">{action.payload.voteType.charAt(0).toUpperCase() + action.payload.voteType.slice(1)} vote for "{action.payload.entryId}"</h3>
+            <h3 className="font-medium text-gray-900">{action.payload.voteType.charAt(0).toUpperCase() + action.payload.voteType.slice(1)} vote for "{translation}"</h3>
             <p className="text-sm text-gray-600">Term: "{action.payload.termId}"</p>
           </>
         );
@@ -62,33 +84,34 @@ const SubmissionQueue: React.FC<SubmissionQueueProps> = ({ toggleQueue }) => {
   };
 
   const getIconForAction = (action: QueueAction) => {
+    // ... (icon logic remains the same)
     switch (action.type) {
-      case 'NEW_TERM':
-        return (
-          <div className="flex-shrink-0 w-10 h-10 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-            </svg>
-          </div>
-        );
-      case 'NEW_ENTRY':
-        return (
-          <div className="flex-shrink-0 w-10 h-10 bg-green-100 text-green-700 rounded-full flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 5h12M9 3v2m4 10h.01M11 11h.01M13 11h.01M16 11h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-        );
-      case 'VOTE':
-        return (
-          <div className="flex-shrink-0 w-10 h-10 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 19.5V11m0 0l-2.5-2.5a.5.5 0 010-.707l2.5-2.5a.5.5 0 01.707 0l2.5 2.5a.5.5 0 010 .707l-2.5 2.5z" />
-            </svg>
-          </div>
-        );
-    }
-  }
+        case 'NEW_TERM':
+          return (
+            <div className="flex-shrink-0 w-10 h-10 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+          );
+        case 'NEW_ENTRY':
+          return (
+            <div className="flex-shrink-0 w-10 h-10 bg-green-100 text-green-700 rounded-full flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 5h12M9 3v2m4 10h.01M11 11h.01M13 11h.01M16 11h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+          );
+        case 'VOTE':
+          return (
+            <div className="flex-shrink-0 w-10 h-10 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 19.5V11m0 0l-2.5-2.5a.5.5 0 010-.707l2.5-2.5a.5.5 0 01.707 0l2.5 2.5a.5.5 0 010 .707l-2.5 2.5z" />
+              </svg>
+            </div>
+          );
+      }
+  };
 
   return (
     <>

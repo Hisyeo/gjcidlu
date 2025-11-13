@@ -15,9 +15,11 @@ interface Stats {
 export default function ClientWrapper({
   children,
   stats,
+  allEntries,
 }: {
   children: React.ReactNode;
   stats: Stats | null;
+  allEntries: any; // You might want to define a more specific type for this
 }) {
   const [isQueueOpen, setQueueOpen] = useState(false);
   const [queueCount, setQueueCount] = useState(0);
@@ -53,7 +55,7 @@ export default function ClientWrapper({
         onTitleClick={handleTitleClick}
       />
       {children}
-      {isQueueOpen && <SubmissionQueue toggleQueue={toggleQueue} />}
+      {isQueueOpen && <SubmissionQueue toggleQueue={toggleQueue} allEntries={allEntries} />}
     </ToastProvider>
   );
 }

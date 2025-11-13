@@ -4,6 +4,7 @@ import "./globals.css";
 import { AppProvider } from "./AppContext";
 import ClientWrapper from "@/components/ClientWrapper";
 import { getTranslationStats } from "@/lib/data";
+import entriesData from '@/../rsc/published/entries.json'; // Import entries data
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,7 +34,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 text-gray-800`}
       >
         <AppProvider>
-          <ClientWrapper stats={stats}>
+          <ClientWrapper stats={stats} allEntries={entriesData}>
             {children}
           </ClientWrapper>
         </AppProvider>

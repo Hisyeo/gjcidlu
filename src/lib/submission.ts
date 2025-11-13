@@ -5,6 +5,7 @@ type UserSystem = 'Email' | 'Discord';
 
 function formatSubmission(queue: QueueAction[], userSystem: UserSystem, userId: string) {
   const submission = {
+    version: 2, // Add version field
     author: {
       system: userSystem,
       id: userId,

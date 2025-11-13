@@ -21,6 +21,50 @@ export default function TermList({ initialTerms }: TermListProps) {
     setFilteredTerms(filtered);
   }, [searchQuery, initialTerms]);
 
+  const renderTopTranslations = (topTranslations: TermWithDetails['topTranslations']) => {
+    const votedCategories = (Object.keys(topTranslations) as (keyof typeof topTranslations)[])
+      .filter(cat => topTranslations[cat] !== null)
+      .map(cat => ({ category: cat, translation: topTranslations[cat]! }));
+
+    if (votedCategories.length === 0) {
+      return <p className="text-lg font-medium text-gray-500">(No votes)</p>;
+    }
+
+    if (votedCategories.length <= 2) {
+      return (
+        <div className="flex flex-col space-y-2">
+          {votedCategories.map(({ category, translation }) => (
+            <div key={category}>
+              <span className="text-xs text-gray-400 capitalize">{category}</span>
+              <p className="text-lg font-medium text-blue-600">{translation}</p>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+        <div>
+          <span className="text-xs text-gray-400">Overall</span>
+          <p className="text-lg font-medium text-blue-600">{topTranslations.overall || '(No votes)'}</p>
+        </div>
+        <div>
+          <span className="text-xs text-gray-400">Minimal</span>
+          <p className="text-lg font-medium text-blue-600">{topTranslations.minimal || '(No votes)'}</p>
+        </div>
+        <div>
+          <span className="text-xs text-gray-400">Specific</span>
+          <p className="text-lg font-medium text-blue-600">{topTranslations.specific || '(No votes)'}</p>
+        </div>
+        <div>
+          <span className="text-xs text-gray-400">Humorous</span>
+          <p className="text-lg font-medium text-blue-600">{topTranslations.humorous || '(No votes)'}</p>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       <div className="flex space-x-2">
@@ -49,24 +93,7 @@ export default function TermList({ initialTerms }: TermListProps) {
             <hr className="my-4 border-gray-100" />
             
             <h3 className="mb-3 text-sm font-semibold text-gray-500 uppercase">Top Translations</h3>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-              <div>
-                <span className="text-xs text-gray-400">Overall</span>
-                <p className="text-lg font-medium text-blue-600">{term.topTranslations.overall || '(No votes)'}</p>
-              </div>
-              <div>
-                <span className="text-xs text-gray-400">Minimal</span>
-                <p className="text-lg font-medium text-blue-600">{term.topTranslations.minimal || '(No votes)'}</p>
-              </div>
-              <div>
-                <span className="text-xs text-gray-400">Specific</span>
-                <p className="text-lg font-medium text-blue-600">{term.topTranslations.specific || '(No votes)'}</p>
-              </div>
-              <div>
-                <span className="text-xs text-gray-400">Humorous</span>
-                <p className="text-lg font-medium text-blue-600">{term.topTranslations.humorous || '(No votes)'}</p>
-              </div>
-            </div>
+            {renderTopTranslations(term.topTranslations)}
 
             <hr className="my-4 border-gray-100" />
 

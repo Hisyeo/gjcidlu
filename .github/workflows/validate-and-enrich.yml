@@ -56,8 +56,8 @@ jobs:
             COMMENT_BODY+="**Error:** Could not find author information (\`.author.system\` or \`.author.id\`) in the submission JSON.\n\n"
             COMMENT_BODY+="**Action Required:** Please close this PR, perform a hard refresh (Ctrl+Shift+R), and try again."
           else
-            # The Node.js script now generates the main content, including the summary and the details block.
-            DECODED_CONTENT=$(node scripts/decode-for-validation.mjs "$SUBMISSION_FILE")
+            # Run the Node.js script to get the decoded summary
+            DECODED_SUMMARY=$(node scripts/decode-for-validation.mjs "$SUBMISSION_FILE")
 
             # Construct the verification link
             if [[ "$USER_SYSTEM" == "Email" ]]; then
@@ -70,8 +70,9 @@ jobs:
 
             COMMENT_BODY="### Submission Review Required 🗳️\n\n"
             COMMENT_BODY+="A new submission has been received from **${USER_SYSTEM}** user \`${USER_ID}\`.\n\n"
-            COMMENT_BODY+="${DECODED_CONTENT}\n" # Use the full output from the script
-            COMMENT_BODY+="---\n\n#### Reviewer Action\n\nClick here to verify the user: [**Verify via ${USER_SYSTEM}**](${VERIFICATION_LINK})"
+            COMMENT_BODY+="${DECODED_SUMMARY}\n" # Use the summary from the script
+            COMMENT_BODY+="---\n\n#### Reviewer Action\n\nClick here to verify the user: [**Verify via ${USER_SYSTEM}**](${VERIFICATION_LINK})\n\n"
+            COMMENT_BODY+="<details><summary>Full Submission Receipt</summary>\n\n\`\`\`json\n${SUBMISSION_CONTENT}\n\`\`\`\n\n</details>" # Raw content for full receipt
           fi
 
           echo "comment_body<<EOF" >> "$GITHUB_OUTPUT"

@@ -1,0 +1,35 @@
+{
+  "version": 2,
+  "author": {
+    "system": "Reddit",
+    "id": "MadcapJake"
+  },
+  "newTerms": [],
+  "newEntries": [
+    {
+      "id": "Miw4NTAsMTc3NCw4NTgs",
+      "termId": "ramble-g68oh",
+      "contents": [
+        2,
+        850,
+        1774,
+        858,
+        1774,
+        410,
+        1774,
+        728
+      ],
+      "submitter": "test-user",
+      "created": "2025-11-13T23:52:09.565Z"
+    }
+  ],
+  "votes": [
+    {
+      "termId": "ramble-g68oh",
+      "entryId": "Miw4NTAsMTc3NCw3Mjgs",
+      "voteType": "specific",
+      "user": "test-user",
+      "voted": "2025-11-13T23:51:25.840Z"
+    }
+  ]
+}

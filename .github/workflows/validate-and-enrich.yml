@@ -46,22 +46,9 @@ jobs:
             exit 0
           fi
 
-          echo "--- DEBUG: Identified Submission File: $SUBMISSION_FILE ---"
           SUBMISSION_CONTENT=$(cat "$SUBMISSION_FILE")
-          echo "$SUBMISSION_CONTENT"
-
-          # Extract values using separate, robust jq calls
           USER_SYSTEM=$(jq -r '.author.system' <<< "$SUBMISSION_CONTENT")
           USER_ID=$(jq -r '.author.id' <<< "$SUBMISSION_CONTENT")
-          NEW_TERMS_COUNT=$(jq -r '(.newTerms // []) | length' <<< "$SUBMISSION_CONTENT")
-          NEW_ENTRIES_COUNT=$(jq -r '(.newEntries // []) | length' <<< "$SUBMISSION_CONTENT")
-          VOTES_COUNT=$(jq -r '(.votes // []) | length' <<< "$SUBMISSION_CONTENT")
-
-          echo "--- DEBUG: Parsed Values ---"
-          echo "USER_SYSTEM: $USER_SYSTEM"
-          echo "USER_ID: $USER_ID"
-          echo "NEW_TERMS_COUNT: $NEW_TERMS_COUNT"
-          echo "----------------------------"
 
           if [[ "$USER_SYSTEM" == "null" || "$USER_ID" == "null" || -z "$USER_SYSTEM" || -z "$USER_ID" ]]; then
             COMMENT_BODY="### ⚠️ Submission Error\n\n"
@@ -69,38 +56,22 @@ jobs:
             COMMENT_BODY+="**Error:** Could not find author information (\`.author.system\` or \`.author.id\`) in the submission JSON.\n\n"
             COMMENT_BODY+="**Action Required:** Please close this PR, perform a hard refresh (Ctrl+Shift+R), and try again."
           else
-            RECEIPT_ITEMS=$(jq -r '
-              (
-                ((.newTerms // []) | map("- Term '\''\(.id | split("-")[0])'\''")) +
-                ((.newEntries // []) | map("- Translation '\''\(.id)'\'' for '\''\(.termId)'\''")) +
-                ((.votes // []) | map("- \((.voteType | ascii_upcase[0:1]) + .voteType[1:]) vote for '\''\(.entryId)'\'' on term '\''\(.termId)'\''"))
-              ) | .[]
-            ' <<< "$SUBMISSION_CONTENT" | sed 's/^/  /')
+            # The Node.js script now generates the main content, including the summary and the details block.
+            DECODED_CONTENT=$(node scripts/decode-for-validation.mjs "$SUBMISSION_FILE")
 
+            # Construct the verification link
             if [[ "$USER_SYSTEM" == "Email" ]]; then
-              EMAIL_BODY_RAW="Thank you for your ${VOTES_COUNT} votes, ${NEW_ENTRIES_COUNT} entries, and ${NEW_TERMS_COUNT} terms!\n\nHere is a receipt of what you have submitted:\n${RECEIPT_ITEMS}\n\nReply YES if you confirm these votes, entries and terms to be valid.\nReply NO if you would like to start over.\nIf we don't receive a reply in a timely fashion, you may become banned from using email verification."
-              ENCODED_EMAIL_BODY=$(python -c 'import urllib.parse; print(urllib.parse.quote(f"""'"$EMAIL_BODY_RAW"'"""))')
-              VERIFICATION_LINK="mailto:${USER_ID}?subject=Confirm Your Submission&body=${ENCODED_EMAIL_BODY}"
+              VERIFICATION_LINK="mailto:${USER_ID}?subject=Confirm Your Submission"
             elif [[ "$USER_SYSTEM" == "Reddit" ]]; then
-              EMAIL_BODY_RAW="Thank you for your ${VOTES_COUNT} votes, ${NEW_ENTRIES_COUNT} entries, and ${NEW_TERMS_COUNT} terms!\n\nHere is a receipt of what you have submitted:\n${RECEIPT_ITEMS}\n\nReply YES if you confirm these votes, entries and terms to be valid.\nReply NO if you would like to start over.\nIf we don't receive a reply in a timely fashion, you may become banned from using Reddit verification."
-              ENCODED_EMAIL_BODY=$(python -c 'import urllib.parse; print(urllib.parse.quote(f"""'"$EMAIL_BODY_RAW"'"""))')
-              VERIFICATION_LINK="https://www.reddit.com/message/compose?to=${USER_ID}&subject=Confirm%20Your%20Submission&message=${ENCODED_EMAIL_BODY}"
+              VERIFICATION_LINK="https://www.reddit.com/message/compose?to=${USER_ID}&subject=Confirm%20Your%20Submission"
             else
               VERIFICATION_LINK="https://discord.com/users/${USER_ID}"
             fi
 
             COMMENT_BODY="### Submission Review Required 🗳️\n\n"
             COMMENT_BODY+="A new submission has been received from **${USER_SYSTEM}** user \`${USER_ID}\`.\n\n"
-            COMMENT_BODY+="#### Summary of Contributions\n- **New Terms:** ${NEW_TERMS_COUNT}\n- **New Translations:** ${NEW_ENTRIES_COUNT}\n- **New Votes:** ${VOTES_COUNT}\n\n"
-            
-            # Run the decoder script and capture its output
-            DECODED_TEXT=$(node scripts/decode-for-validation.mjs "$SUBMISSION_FILE")
-            if [[ -n "$DECODED_TEXT" ]]; then
-              COMMENT_BODY+="${DECODED_TEXT}\n"
-            fi
-
-            COMMENT_BODY+="---\n\n#### Reviewer Action\n\nClick here to verify the user: [**Verify via ${USER_SYSTEM}**](${VERIFICATION_LINK})\n\n"
-            COMMENT_BODY+="<details><summary>Click to see full submission receipt</summary>\n\n${RECEIPT_ITEMS}\n\n</details>"
+            COMMENT_BODY+="${DECODED_CONTENT}\n" # Use the full output from the script
+            COMMENT_BODY+="---\n\n#### Reviewer Action\n\nClick here to verify the user: [**Verify via ${USER_SYSTEM}**](${VERIFICATION_LINK})"
           fi
 
           echo "comment_body<<EOF" >> "$GITHUB_OUTPUT"

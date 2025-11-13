@@ -1,0 +1,29 @@
+{
+  "version": 2,
+  "author": {
+    "system": "Discord",
+    "id": "128874964517388288"
+  },
+  "newTerms": [
+    {
+      "id": "robot-10vwg",
+      "pos": "noun",
+      "description": "a machine that can move and do some of the work of a person, and is usually controlled by a computer"
+    },
+    {
+      "id": "ramble-g68oh",
+      "pos": "verb",
+      "description": "to talk for a long time in a way that does not seem clearly organized, so that other people find it difficult to understand you"
+    }
+  ],
+  "newEntries": [],
+  "votes": [
+    {
+      "termId": "decipher-qym15",
+      "entryId": "Miw4NTAsMTc3NCw0Nzcs",
+      "voteType": "specific",
+      "user": "test-user",
+      "voted": "2025-11-13T14:56:04.750Z"
+    }
+  ]
+}

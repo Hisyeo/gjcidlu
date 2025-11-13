@@ -48,7 +48,6 @@ jobs:
 
           SUBMISSION_CONTENT=$(cat "$SUBMISSION_FILE")
           
-          # Use a here-string for more robust parsing
           USER_SYSTEM=$(jq -r '.author.system' <<< "$SUBMISSION_CONTENT")
           USER_ID=$(jq -r '.author.id' <<< "$SUBMISSION_CONTENT")
 
@@ -67,11 +66,23 @@ jobs:
             NEW_ENTRIES_COUNT=$(jq -r '.newEntries | length' <<< "$SUBMISSION_CONTENT")
             VOTES_COUNT=$(jq -r '.votes | length' <<< "$SUBMISSION_CONTENT")
 
+            echo "--- DEBUG: Generating Receipt Items (Raw JQ Output) ---"
+            jq -r '
+              (.newTerms // []) | map("- Term '\''\(.id | split("-")[0])'\''") | .[],
+              (.newEntries // []) | map("- Translation '\''\(.id)'\'' for '\''\(.termId)'\''") | .[],
+              (.votes // []) | map("- \(.voteType | cap) vote for '\''\(.entryId)'\'' on term '\''\(.termId)'\''") | .[]
+            ' <<< "$SUBMISSION_CONTENT"
+            echo "----------------------------------------------------------"
+
             RECEIPT_ITEMS=$(jq -r '
               (.newTerms // []) | map("- Term '\''\(.id | split("-")[0])'\''") | .[],
               (.newEntries // []) | map("- Translation '\''\(.id)'\'' for '\''\(.termId)'\''") | .[],
               (.votes // []) | map("- \(.voteType | cap) vote for '\''\(.entryId)'\'' on term '\''\(.termId)'\''") | .[]
             ' <<< "$SUBMISSION_CONTENT" | sed 's/^/  /')
+            
+            echo "--- DEBUG: RECEIPT_ITEMS Variable Content ---"
+            echo "$RECEIPT_ITEMS"
+            echo "---------------------------------------------"
 
             if [[ "$USER_SYSTEM" == "Email" ]]; then
               EMAIL_BODY="Thank you for your ${VOTES_COUNT} votes, ${NEW_ENTRIES_COUNT} entries, and ${NEW_TERMS_COUNT} terms!%0A%0AHere is a receipt of what you have submitted:%0A${RECEIPT_ITEMS//'%'/'%25'//''/'%0A'//' '/'%20'//'"'/"%27"}%0A%0AReply YES if you confirm these votes, entries and terms to be valid.%0AReply NO if you would like to start over.%0AIf we don't receive a reply in a timely fashion, you may become banned from using email verification."

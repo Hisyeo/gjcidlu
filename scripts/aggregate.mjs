@@ -7,35 +7,52 @@ const PUBLISHED_DIR = path.join(process.cwd(), 'rsc', 'published');
 const ENTRIES_FILE = path.join(PUBLISHED_DIR, 'entries.json');
 const VOTES_FILE = path.join(PUBLISHED_DIR, 'votes.json');
 
+// This is the initial state of the data before any submissions are processed.
+const baseEntries = {};
+const baseVotes = {};
+
+async function getAllSubmissionFiles() {
+    // Ensure directories exist to prevent errors on a clean checkout
+    await fs.mkdir(SUBMITTED_DIR, { recursive: true });
+    await fs.mkdir(PROCESSED_DIR, { recursive: true });
+    
+    const submitted = (await fs.readdir(SUBMITTED_DIR)).map(f => path.join(SUBMITTED_DIR, f));
+    const processed = (await fs.readdir(PROCESSED_DIR)).map(f => path.join(PROCESSED_DIR, f));
+    return [...submitted, ...processed];
+}
+
 async function main() {
-  const prAuthor = process.argv[2]; // Get PR author from command line argument
-  if (!prAuthor) {
-    console.error('Error: PR author not provided to the aggregation script.');
-    process.exit(1);
-  }
-  console.log(`Starting aggregation script for PR author: ${prAuthor}`);
+  console.log('Starting aggregation script for build process...');
 
-  // Ensure directories exist
-  await fs.mkdir(PROCESSED_DIR, { recursive: true });
+  // Ensure output directory exists
+  await fs.mkdir(PUBLISHED_DIR, { recursive: true });
 
-  const submittedFiles = await fs.readdir(SUBMITTED_DIR);
-  if (submittedFiles.length === 0) {
-    console.log('No new submissions found. Exiting.');
+  const allFiles = await getAllSubmissionFiles();
+  if (allFiles.length === 0) {
+    console.log('No submissions found. Writing empty data files.');
+    await fs.writeFile(ENTRIES_FILE, JSON.stringify(baseEntries, null, 2));
+    await fs.writeFile(VOTES_FILE, JSON.stringify(baseVotes, null, 2));
     return;
   }
 
-  console.log(`Found ${submittedFiles.length} new submission(s).`);
+  console.log(`Found ${allFiles.length} total submission file(s) to process.`);
 
-  // Read the main data files
-  const entriesData = JSON.parse(await fs.readFile(ENTRIES_FILE, 'utf-8'));
-  const votesData = JSON.parse(await fs.readFile(VOTES_FILE, 'utf-8'));
+  // Start with a clean slate
+  const entriesData = JSON.parse(JSON.stringify(baseEntries));
+  const votesData = JSON.parse(JSON.stringify(baseVotes));
 
-  for (const filename of submittedFiles) {
-    const filePath = path.join(SUBMITTED_DIR, filename);
-    if(path.extname(filename) !== '.json') continue;
+  for (const filePath of allFiles) {
+    if(path.extname(filePath) !== '.json') continue;
 
-    console.log(`Processing ${filename}...`);
     const submissionContent = JSON.parse(await fs.readFile(filePath, 'utf-8'));
+    const authorObj = submissionContent.author;
+    
+    if (!authorObj || !authorObj.system || !authorObj.id) {
+        console.warn(`Skipping file ${path.basename(filePath)} due to missing author object.`);
+        continue;
+    }
+    
+    const authorId = `${authorObj.system.toLowerCase()}:${authorObj.id}`;
 
     // Process new terms
     submissionContent.newTerms?.forEach(term => {
@@ -44,7 +61,6 @@ async function main() {
           $pos: term.pos,
           $desc: term.description,
         };
-        console.log(`  - Added new term: ${term.id}`);
       }
     });
 
@@ -52,44 +68,32 @@ async function main() {
     submissionContent.newEntries?.forEach(entry => {
       if (entriesData[entry.termId] && !entriesData[entry.termId][entry.id]) {
         entriesData[entry.termId][entry.id] = {
-          submitter: prAuthor, // Use PR author
+          submitter: authorId,
           created: entry.created,
           contents: entry.contents,
           ...(entry.original && { original: entry.original }),
         };
-        console.log(`  - Added new entry: ${entry.id} for term ${entry.termId}`);
       }
     });
 
     // Process votes
     submissionContent.votes?.forEach(vote => {
-      if (!votesData[vote.termId]) {
-        votesData[vote.termId] = {};
-      }
-      if (!votesData[vote.termId][prAuthor]) { // Use PR author
-        votesData[vote.termId][prAuthor] = {};
-      }
-      if (!votesData[vote.termId][prAuthor][vote.voteType]) { // Use PR author
-        votesData[vote.termId][prAuthor][vote.voteType] = [];
-      }
-      // Add the new vote. The last one in the array is the most recent.
-      votesData[vote.termId][prAuthor][vote.voteType].push({ // Use PR author
+      if (!votesData[vote.termId]) votesData[vote.termId] = {};
+      if (!votesData[vote.termId][authorId]) votesData[vote.termId][authorId] = {};
+      if (!votesData[vote.termId][authorId][vote.voteType]) votesData[vote.termId][authorId][vote.voteType] = [];
+      
+      votesData[vote.termId][authorId][vote.voteType].push({
         entry: vote.entryId,
         voted: vote.voted,
       });
-      console.log(`  - Added ${vote.voteType} vote for entry ${vote.entryId} by ${prAuthor}`);
     });
-
-    // Move processed file
-    await fs.rename(filePath, path.join(PROCESSED_DIR, filename));
-    console.log(`  - Moved ${filename} to processed directory.`);
   }
 
-  // Write updated data back to files
+  // Write the final aggregated data
   await fs.writeFile(ENTRIES_FILE, JSON.stringify(entriesData, null, 2));
-  console.log('Successfully updated entries.json.');
+  console.log('Successfully generated entries.json.');
   await fs.writeFile(VOTES_FILE, JSON.stringify(votesData, null, 2));
-  console.log('Successfully updated votes.json.');
+  console.log('Successfully generated votes.json.');
 
   console.log('Aggregation script finished.');
 }

@@ -11,6 +11,8 @@ interface CheckoutModalProps {
 
 const CheckoutModal: React.FC<CheckoutModalProps> = ({ queue, onClose }) => {
   const [isProcessing, setProcessing] = useState(false);
+  const [userSystem, setUserSystem] = useState<'Email' | 'Discord'>('Discord');
+  const [userId, setUserId] = useState('');
 
   const newTermsCount = queue.filter(a => a.type === 'NEW_TERM').length;
   const newEntriesCount = queue.filter(a => a.type === 'NEW_ENTRY').length;
@@ -18,16 +20,18 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ queue, onClose }) => {
   const totalContributions = queue.length;
 
   const handleSubmit = () => {
+    if (!userId) {
+      alert('Please enter your User ID.');
+      return;
+    }
     setProcessing(true);
-    // This function currently contains an alert and doesn't redirect.
-    // In a real scenario, it would redirect to GitHub.
-    generateSubmissionUrl();
-    // We might not even get here if the redirect is synchronous.
-    // If it were an API call, we'd handle the response.
+    
+    generateSubmissionUrl(queue, userSystem, userId);
+
     setTimeout(() => {
       setProcessing(false);
       onClose();
-    }, 1000); // Simulate processing time
+    }, 1000);
   };
 
   return (
@@ -35,25 +39,55 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ queue, onClose }) => {
       <div className="bg-white rounded-lg shadow-xl w-full max-w-lg">
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-2xl font-semibold">Confirm Your Contributions</h2>
-          <p className="text-gray-500 mt-1">Your contributions will be sent to moderation.</p>
+          <p className="text-gray-500 mt-1">Your contributions will be sent for moderation. Please provide an ID for verification.</p>
         </div>
 
-        <div className="p-6 space-y-3">
-          <div className="flex justify-between">
-            <span className="text-gray-600">New Terms:</span>
-            <span className="font-medium">{newTermsCount}</span>
+        <div className="p-6 space-y-4">
+          {/* Summary */}
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-gray-600">New Terms:</span>
+              <span className="font-medium">{newTermsCount}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">New Translations:</span>
+              <span className="font-medium">{newEntriesCount}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Translation Votes:</span>
+              <span className="font-medium">{votesCount}</span>
+            </div>
+            <div className="flex justify-between pt-3 border-t mt-3">
+              <span className="text-lg font-semibold">Total Contributions:</span>
+              <span className="text-lg font-semibold">{totalContributions}</span>
+            </div>
           </div>
-          <div className="flex justify-between">
-            <span className="text-gray-600">New Translations:</span>
-            <span className="font-medium">{newEntriesCount}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-600">Translation Votes:</span>
-            <span className="font-medium">{votesCount}</span>
-          </div>
-          <div className="flex justify-between pt-3 border-t mt-3">
-            <span className="text-lg font-semibold">Total Contributions:</span>
-            <span className="text-lg font-semibold">{totalContributions}</span>
+
+          {/* Verification Inputs */}
+          <div className="pt-4 space-y-4 border-t">
+             <div>
+                <label htmlFor="user-system" className="block text-sm font-medium text-gray-700">User System</label>
+                <select 
+                    id="user-system"
+                    value={userSystem}
+                    onChange={(e) => setUserSystem(e.target.value as any)}
+                    className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2"
+                >
+                    <option>Discord</option>
+                    <option>Email</option>
+                </select>
+             </div>
+             <div>
+                <label htmlFor="user-id" className="block text-sm font-medium text-gray-700">User ID</label>
+                <input 
+                    type="text" 
+                    id="user-id"
+                    value={userId}
+                    onChange={(e) => setUserId(e.target.value)}
+                    placeholder={userSystem === 'Discord' ? 'Your Discord User ID (e.g., 12345...)' : 'your.email@example.com'}
+                    className="mt-1 w-full rounded-lg border border-gray-300 p-2 focus:ring-2 focus:ring-blue-500"
+                />
+             </div>
           </div>
         </div>
 
@@ -64,8 +98,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ queue, onClose }) => {
             </button>
             <button
               onClick={handleSubmit}
-              disabled={isProcessing}
-              className="px-5 py-2 bg-blue-600 text-white rounded-lg font-medium flex items-center justify-center disabled:opacity-70 cursor-not-allowed"
+              disabled={isProcessing || !userId}
+              className="px-5 py-2 bg-blue-600 text-white rounded-lg font-medium flex items-center justify-center disabled:opacity-50 cursor-not-allowed"
             >
               {isProcessing ? (
                 <>

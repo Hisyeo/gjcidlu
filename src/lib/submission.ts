@@ -50,10 +50,7 @@ export function generateSubmissionUrl(queue: QueueAction[], userSystem: UserSyst
   const filename = `sub.${timestamp}-${randomStr}.json`;
   const filepath = `rsc/submitted/${filename}`;
 
-  // Generic commit message for the new file
-  const commitMessage = `feat: Add new submission from ${userSystem} user ${userId}`;
-
-  const url = `${repoUrl}/new/main?filename=${filepath}&value=${encodeURIComponent(jsonContent)}&message=${encodeURIComponent(commitMessage)}`;
+  const url = `${repoUrl}/new/main?filename=${filepath}&value=${encodeURIComponent(jsonContent)}`;
 
   window.location.href = url;
 

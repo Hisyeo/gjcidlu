@@ -36,11 +36,20 @@ jobs:
       - name: 'Generate Comment Body'
         id: generate_comment
         run: |
-          SUBMISSION_FILE=$(find rsc/submitted -name '*.json' -print -quit)
+          # Get the list of files changed in the PR
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
+
+          # Filter for the new submission file in rsc/submitted
+          SUBMISSION_FILE=$(echo "$CHANGED_FILES" | grep '^rsc/submitted/.*\.json$' | head -n 1)
+
           if [[ -z "$SUBMISSION_FILE" ]]; then
-            echo "comment_body=This PR does not contain a submission file." >> "$GITHUB_OUTPUT"
+            echo "comment_body=This PR does not contain a new submission file in \`rsc/submitted/\`." >> "$GITHUB_OUTPUT"
             exit 0
           fi
+
+          echo "--- DEBUG: Identified Submission File ---"
+          echo "$SUBMISSION_FILE"
+          echo "---------------------------------------"
 
           echo "--- DEBUG: Submission File Content ---"
           cat "$SUBMISSION_FILE"

@@ -1,0 +1,31 @@
+{
+  "version": 2,
+  "author": {
+    "system": "Discord",
+    "id": "128874964517388288"
+  },
+  "newTerms": [],
+  "newEntries": [
+    {
+      "id": "Miw1NzQsMTc3NCw4NjY",
+      "termId": "robot-10vwg",
+      "contents": [
+        2,
+        574,
+        1774,
+        866
+      ],
+      "submitter": "test-user",
+      "created": "2025-11-13T19:49:29.591Z"
+    }
+  ],
+  "votes": [
+    {
+      "termId": "robot-10vwg",
+      "entryId": "Miw3MTEsMTc3NCw3NDQs",
+      "voteType": "overall",
+      "user": "test-user",
+      "voted": "2025-11-13T20:15:55.361Z"
+    }
+  ]
+}

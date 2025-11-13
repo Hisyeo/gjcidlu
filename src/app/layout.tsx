@@ -1,12 +1,9 @@
-"use client"; // This is required to use hooks like useState
-
-import { useState, useEffect } from "react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Header from "@/components/Header";
-import SubmissionQueue from "@/components/SubmissionQueue";
-import { getQueue } from "@/lib/queue";
+import { AppProvider } from "./AppContext";
+import ClientWrapper from "@/components/ClientWrapper";
+import { getTranslationStats } from "@/lib/data";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,42 +15,29 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// Metadata can't be exported from a client component, so we handle it differently if needed.
-// For now, we can remove it from here and add it to the page level or keep the layout as a server component and wrap the client parts.
-// Let's wrap the client-dependent parts instead.
+export const metadata: Metadata = {
+  title: "yôn Gicîdolû",
+  description: "A git-forged local-first tool for tracking conlang compound phrases.",
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [isQueueOpen, setQueueOpen] = useState(false);
-  const [queueCount, setQueueCount] = useState(0);
-
-  const toggleQueue = () => setQueueOpen(!isQueueOpen);
-
-  const updateQueueCount = () => {
-    setQueueCount(getQueue().length);
-  };
-
-  useEffect(() => {
-    updateQueueCount();
-    window.addEventListener('storage', updateQueueCount);
-    return () => {
-      window.removeEventListener('storage', updateQueueCount);
-    };
-  }, []);
+  const stats = getTranslationStats();
 
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 text-gray-800`}
       >
-        <Header toggleQueue={toggleQueue} queueCount={queueCount} />
-        {children}
-        {isQueueOpen && <SubmissionQueue toggleQueue={toggleQueue} />}
+        <AppProvider>
+          <ClientWrapper stats={stats}>
+            {children}
+          </ClientWrapper>
+        </AppProvider>
       </body>
     </html>
   );
 }
-

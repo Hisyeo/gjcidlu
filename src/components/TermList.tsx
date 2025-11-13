@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { TermWithDetails } from '@/lib/data';
+import { useAppContext } from '@/app/AppContext';
+import { addToQueue } from '@/lib/queue';
+import { encode } from '@/lib/htf-int';
 
 interface TermListProps {
   initialTerms: TermWithDetails[];
@@ -11,6 +14,10 @@ interface TermListProps {
 export default function TermList({ initialTerms }: TermListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredTerms, setFilteredTerms] = useState(initialTerms);
+  const { showUntranslated, setShowUntranslated } = useAppContext();
+  
+  // State for the new translation inputs
+  const [newTranslations, setNewTranslations] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const lowercasedQuery = searchQuery.toLowerCase();
@@ -20,6 +27,36 @@ export default function TermList({ initialTerms }: TermListProps) {
     );
     setFilteredTerms(filtered);
   }, [searchQuery, initialTerms]);
+
+  const handleTranslationChange = (termId: string, value: string) => {
+    setNewTranslations(prev => ({ ...prev, [termId]: value }));
+  };
+
+  const handleSaveAll = () => {
+    let count = 0;
+    for (const termId in newTranslations) {
+      const translationText = newTranslations[termId];
+      if (translationText && translationText.trim()) {
+        const newTranslationContents = encode(translationText.trim());
+        const newEntryId = btoa(String(newTranslationContents)).slice(0, 20).replace(/[^a-zA-Z0-9]/g, '');
+
+        addToQueue({
+          type: 'NEW_ENTRY',
+          payload: {
+            id: newEntryId,
+            termId: termId,
+            contents: newTranslationContents,
+            submitter: 'test-user', // This should be replaced with real user data
+            created: new Date().toISOString(),
+          }
+        });
+        count++;
+      }
+    }
+    alert(`${count} new translations added to the submission queue!`);
+    setNewTranslations({});
+    setShowUntranslated(false); // Go back to the main view
+  };
 
   const renderTopTranslations = (topTranslations: TermWithDetails['topTranslations']) => {
     const votedCategories = (Object.keys(topTranslations) as (keyof typeof topTranslations)[])
@@ -64,6 +101,41 @@ export default function TermList({ initialTerms }: TermListProps) {
       </div>
     );
   };
+
+  if (showUntranslated) {
+    const untranslatedTerms = initialTerms.filter(term => 
+      Object.values(term.topTranslations).every(t => t === null)
+    );
+
+    return (
+      <div className="mt-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">Untranslated Terms ({untranslatedTerms.length})</h2>
+          <button 
+            onClick={handleSaveAll}
+            className="rounded-lg bg-green-600 px-5 py-2 font-medium text-white hover:bg-green-700"
+          >
+            Save All
+          </button>
+        </div>
+        <div className="space-y-4">
+          {untranslatedTerms.map(term => (
+            <div key={term.id} className="rounded-lg border border-gray-200 bg-white p-4">
+              <h3 className="text-lg font-semibold text-gray-900">{term.id.split('-')[0]}</h3>
+              <p className="mb-2 text-sm text-gray-500 italic">{term.description}</p>
+              <input
+                type="text"
+                placeholder="Enter Hîsyêô translation..."
+                value={newTranslations[term.id] || ''}
+                onChange={(e) => handleTranslationChange(term.id, e.target.value)}
+                className="w-full rounded-lg border border-gray-300 p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

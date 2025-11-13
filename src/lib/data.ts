@@ -128,3 +128,22 @@ export function getTermsWithDetails(): TermWithDetails[] {
 
     return detailedTerms;
 }
+
+export function getTranslationStats() {
+    const allTerms = getTerms();
+    const totalTerms = allTerms.length;
+    let translatedCount = 0;
+
+    for (const term of allTerms) {
+        const entries = getEntriesForTerm(term.id);
+        if (entries.length > 0) {
+            translatedCount++;
+        }
+    }
+
+    return {
+        totalTerms,
+        translatedCount,
+        untranslatedCount: totalTerms - translatedCount,
+    };
+}

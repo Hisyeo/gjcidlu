@@ -108,8 +108,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ queue, onClose }) => {
             </button>
             <button
               onClick={handleSubmit}
-              disabled={isProcessing || !userId}
-              className="px-5 py-2 bg-blue-600 text-white rounded-lg font-medium flex items-center justify-center disabled:opacity-50 cursor-not-allowed"
+              disabled={isProcessing || !userId || !process.env.NEXT_PUBLIC_GITHUB_REPO_URL}
+              className={`px-5 py-2 bg-blue-600 text-white rounded-lg font-medium flex items-center justify-center hover:bg-blue-700 disabled:opacity-50 ${!userId ? 'cursor-not-allowed' : ''}`}
             >
               {isProcessing ? (
                 <>

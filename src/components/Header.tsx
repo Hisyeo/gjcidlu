@@ -11,7 +11,7 @@ const Header: React.FC<HeaderProps> = ({ toggleQueue, queueCount }) => {
       <nav className="container mx-auto flex items-center justify-between px-4 py-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">yôn Gicîdolû</h1>
-          <span className="text-sm text-gray-500">Native Languages &rarr; Hîsyêô</span>
+          <span className="text-sm text-gray-500">English &rarr; Hîsyêô</span>
         </div>
 
         <button onClick={toggleQueue} className="relative rounded-full p-2 hover:bg-gray-100">

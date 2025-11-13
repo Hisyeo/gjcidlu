@@ -1,0 +1,35 @@
+{
+  "version": 2,
+  "author": {
+    "system": "Discord",
+    "id": "128874964517388288"
+  },
+  "newTerms": [],
+  "newEntries": [
+    {
+      "id": "Miw4NTAsMTc3NCw4NTgs",
+      "termId": "ramble-g68oh",
+      "contents": [
+        2,
+        850,
+        1774,
+        858,
+        1774,
+        410,
+        1774,
+        728
+      ],
+      "submitter": "test-user",
+      "created": "2025-11-13T20:53:02.872Z"
+    }
+  ],
+  "votes": [
+    {
+      "termId": "ramble-g68oh",
+      "entryId": "Miw4NTAsMTc3NCw3Mjgs",
+      "voteType": "specific",
+      "user": "test-user",
+      "voted": "2025-11-13T20:52:45.623Z"
+    }
+  ]
+}

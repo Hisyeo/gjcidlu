@@ -51,14 +51,17 @@ export async function getTermById(termId: string): Promise<Term | null> {
     return terms.find(term => term.id === termId) || null;
 }
 
-export async function getEntriesForTerm(termId: string): Promise<{ id: string }[]> {
+export async function getEntriesForTerm(termId: string): Promise<{ id: string, contents: number[] }[]> {
     const data: EntriesData | null = await readJsonFile(path.join(process.cwd(), 'rsc', 'published', 'entries.json'));
     if (!data || !data[termId]) return [];
 
     const termData = data[termId];
     return Object.keys(termData)
         .filter(key => !key.startsWith('$'))
-        .map(entryId => ({ id: entryId, ...termData[entryId] }));
+        .map(entryId => ({ 
+            id: entryId, 
+            contents: termData[entryId].contents || [] 
+        }));
 }
 
 export async function getAggregatedVotesForTerm(termId: string): Promise<AggregatedVotes> {

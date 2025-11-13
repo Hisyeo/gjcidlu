@@ -27,6 +27,7 @@ export default async function TermDetailPage({ params }: { params: { termId: str
     const entryVotes = votes[entry.id] || { overall: 0, minimal: 0, specific: 0, humorous: 0 };
     return {
       id: entry.id,
+      contents: entry.contents,
       votes: entryVotes,
     };
   });

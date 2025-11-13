@@ -1,9 +1,13 @@
 {
+  "author": {
+    "system": "Reddit",
+    "id": "MadcapJake"
+  },
   "newTerms": [
     {
-      "id": "essay-es7da",
-      "pos": "noun",
-      "description": "a short piece of writing about a particular subject by a student as part of a course of study"
+      "id": "decipher-qym15",
+      "pos": "verb",
+      "description": "to find the meaning of something that is difficult to read or understand"
     }
   ],
   "newEntries": [],

@@ -40,6 +40,7 @@ async function main() {
   // Start with a clean slate
   const entriesData = JSON.parse(JSON.stringify(baseEntries));
   const votesData = JSON.parse(JSON.stringify(baseVotes));
+  let processedCount = 0;
 
   for (const filePath of allFiles) {
     if(path.extname(filePath) !== '.json') continue;
@@ -51,6 +52,8 @@ async function main() {
         console.warn(`Skipping file ${path.basename(filePath)} due to missing author object.`);
         continue;
     }
+
+    processedCount++;
     
     const authorId = `${authorObj.system.toLowerCase()}:${authorObj.id}`;
 
@@ -89,11 +92,15 @@ async function main() {
     });
   }
 
-  // Write the final aggregated data
-  await fs.writeFile(ENTRIES_FILE, JSON.stringify(entriesData, null, 2));
-  console.log('Successfully generated entries.json.');
-  await fs.writeFile(VOTES_FILE, JSON.stringify(votesData, null, 2));
-  console.log('Successfully generated votes.json.');
+  if (processedCount > 0) {
+    // Write the final aggregated data
+    await fs.writeFile(ENTRIES_FILE, JSON.stringify(entriesData, null, 2));
+    console.log('Successfully generated entries.json.');
+    await fs.writeFile(VOTES_FILE, JSON.stringify(votesData, null, 2));
+    console.log('Successfully generated votes.json.');
+  } else {
+    console.log('No valid submissions processed. Published data remains unchanged.');
+  }
 
   console.log('Aggregation script finished.');
 }

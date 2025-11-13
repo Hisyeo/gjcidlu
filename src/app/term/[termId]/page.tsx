@@ -2,7 +2,7 @@ import { getTermById, getEntriesForTerm, getAggregatedVotesForTerm, VoteCounts }
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import TermDetailClientView from './client-page';
-import entriesData from '../../../rsc/published/entries.json'; // Direct import
+import entriesData from '../../../../rsc/published/entries.json'; // Direct import
 
 // Generate static pages for all terms at build time
 export function generateStaticParams() {
@@ -16,6 +16,7 @@ export function generateStaticParams() {
 
 // --- Page Component (Server) ---
 export default function TermDetailPage({ params }: { params: { termId: string } }) {
+  console.log('--- Building page for termId:', params.termId);
   const term = getTermById(params.termId);
 
   if (!term) {

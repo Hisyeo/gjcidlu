@@ -1,6 +1,6 @@
 {
-  "welcome-1": {
-    "$pos": "interjection",
-    "$desc": "A placeholder term to ensure the initial build succeeds. This will be replaced by real data once submissions are merged."
+  "decipher-qym15": {
+    "$pos": "verb",
+    "$desc": "to find the meaning of something that is difficult to read or understand"
   }
 }

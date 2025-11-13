@@ -1,0 +1,23 @@
+{
+  "author": {
+    "system": "Reddit",
+    "id": "MadcapJake"
+  },
+  "newTerms": [
+    {
+      "id": "decipher-srp1t",
+      "pos": "verb",
+      "description": "to find the meaning of something that is difficult to read or understand"
+    }
+  ],
+  "newEntries": [],
+  "votes": [
+    {
+      "termId": "document-v-123",
+      "entryId": "xe-sobis-bi-cukto",
+      "voteType": "specific",
+      "user": "test-user",
+      "voted": "2025-11-13T04:36:39.862Z"
+    }
+  ]
+}

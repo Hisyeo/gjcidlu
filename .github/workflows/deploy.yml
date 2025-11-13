@@ -1,0 +1,44 @@
+name: 'Build and Deploy Site'
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write # Needed for gh-pages action to push to the gh-pages branch
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout repository'
+        uses: actions/checkout@v4
+        with:
+          # Fetch all history and tags for the peaceiris/actions-gh-pages action
+          fetch-depth: 0 
+
+      - name: 'Set up Node.js'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 'Install dependencies'
+        run: npm install
+
+      - name: 'Aggregate data and build site'
+        run: |
+          # First, ensure the directories exist so the script doesn't fail on a clean repo
+          mkdir -p rsc/submitted rsc/processed
+          # Then, run the build process
+          npm run build
+
+      - name: 'Deploy to GitHub Pages'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./gen
+          # The user that makes the deployment commit
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'

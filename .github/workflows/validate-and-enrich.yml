@@ -1,0 +1,69 @@
+name: 'Validate and Enrich PR'
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'rsc/submitted/**'
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout PR branch'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: 'Blacklist Check'
+        env:
+          # Add comma-separated usernames to ban.
+          # e.g., "user1,user2,another-user"
+          BLACKLIST: ""
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          echo "PR Author: $PR_AUTHOR"
+          if [[ ",$BLACKLIST," == *",$PR_AUTHOR,"* ]]; then
+            echo "User $PR_AUTHOR is on the blacklist. Failing."
+            exit 1
+          else
+            echo "User $PR_AUTHOR is not on the blacklist. Proceeding."
+          fi
+      
+      - name: 'Enrich submission file'
+        env:
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          # Find the first .json file in the submitted directory
+          SUBMISSION_FILE=$(find rsc/submitted -name '*.json' -print -quit)
+
+          if [[ -z "$SUBMISSION_FILE" ]]; then
+            echo "No submission file found in PR. Skipping enrichment."
+            exit 0
+          fi
+
+          echo "Enriching file: $SUBMISSION_FILE"
+          
+          # Use node to parse and update the JSON file
+          node -e '
+            const fs = require("fs");
+            const path = require("path");
+            const filePath = process.argv[1];
+            const author = process.env.PR_AUTHOR;
+            const content = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+            content.author = author;
+            fs.writeFileSync(filePath, JSON.stringify(content, null, 2));
+            console.log(`Successfully added author (${author}) to ${filePath}`);
+          ' "$SUBMISSION_FILE"
+
+      - name: 'Commit and push enriched file'
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'chore: Enrich submission with PR author'
+          branch: ${{ github.head_ref }}
+          commit_user_name: 'yôn Gicîdolû Bot'
+          commit_user_email: 'actions@github.com'
+          commit_author: 'yôn Gicîdolû Bot <actions@github.com>'

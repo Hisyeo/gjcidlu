@@ -1,7 +1,7 @@
 import { getQueue, clearQueue } from './queue';
 import { QueueAction } from './types';
 
-function formatSubmission(queue: QueueAction[], username: string) {
+function formatSubmission(queue: QueueAction[]) {
   const submission: {
     newTerms: any[];
     newEntries: any[];
@@ -18,16 +18,12 @@ function formatSubmission(queue: QueueAction[], username: string) {
         submission.newTerms.push(action.payload);
         break;
       case 'NEW_ENTRY':
-        submission.newEntries.push({
-          ...action.payload,
-          submitter: username,
-        });
+        // The author/submitter will be added by the pre-merge workflow
+        submission.newEntries.push(action.payload);
         break;
       case 'VOTE':
-        submission.votes.push({
-          ...action.payload,
-          user: username,
-        });
+        // The author/user will be added by the pre-merge workflow
+        submission.votes.push(action.payload);
         break;
     }
   });
@@ -38,24 +34,17 @@ function formatSubmission(queue: QueueAction[], username: string) {
 export function generateSubmissionUrl() {
   const queue = getQueue();
   if (queue.length === 0) {
-    if (process.env.NEXT_PUBLIC_SUBMISSION_MODE !== 'live') {
-      alert("Submission queue is empty.");
-    }
+    alert("Submission queue is empty.");
     return;
   }
 
-  // In a real app, you'd get the username from an auth system.
-  const username = "test-user";
-  const submissionContent = formatSubmission(queue, username);
-
+  const submissionContent = formatSubmission(queue);
   const jsonContent = JSON.stringify(submissionContent, null, 2);
 
   const repoUrl = process.env.NEXT_PUBLIC_GITHUB_REPO_URL;
   if (!repoUrl) {
-    if (process.env.NEXT_PUBLIC_SUBMISSION_MODE !== 'live') {
-      alert("Error: GitHub repository URL is not configured.");
-      console.error("NEXT_PUBLIC_GITHUB_REPO_URL is not set.");
-    }
+    alert("Error: GitHub repository URL is not configured.");
+    console.error("NEXT_PUBLIC_GITHUB_REPO_URL is not set.");
     return;
   }
 
@@ -66,13 +55,8 @@ export function generateSubmissionUrl() {
 
   const url = `${repoUrl}/new/main?filename=${filepath}&value=${encodeURIComponent(jsonContent)}`;
 
-  if (process.env.NEXT_PUBLIC_SUBMISSION_MODE !== 'live') {
-    console.log("Submission URL:", url);
-    console.log("Submission Content:", jsonContent);
-    alert(`In development mode: You would be redirected to GitHub to create a new file named ${filename}. Check the console for the URL and content.`);
-  } else {
-    window.location.href = url;
-  }
+  // The redirect is now the standard behavior, as dev/prod is handled by the repo owner.
+  window.location.href = url;
 
   clearQueue();
 }

@@ -15,9 +15,9 @@ export function generateStaticParams() {
 }
 
 // --- Page Component (Server) ---
-export default function TermDetailPage({ params }: { params: { termId: string } }) {
-  console.log('--- Building page for termId:', params.termId);
-  const term = getTermById(params.termId);
+export default async function TermDetailPage({ params }: { params: { termId: string } }) {
+  const resolvedParams = await params;
+  const term = getTermById(await resolvedParams.termId);
 
   if (!term) {
     notFound();

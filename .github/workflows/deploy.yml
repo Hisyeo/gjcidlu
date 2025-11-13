@@ -30,6 +30,8 @@ jobs:
         run: npm install
 
       - name: 'Aggregate data and build site'
+        env:
+          NEXT_PUBLIC_GITHUB_URL: https://hisyeo.github.io/gjcidlu/
         run: |
           # First, ensure the directories exist so the script doesn't fail on a clean repo
           mkdir -p rsc/submitted rsc/processed

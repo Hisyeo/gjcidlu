@@ -1,0 +1,71 @@
+{
+  "author": {
+    "system": "Discord",
+    "id": "128874964517388288"
+  },
+  "newTerms": [],
+  "newEntries": [
+    {
+      "id": "MTA3LDI1MSwyNDQsMTIw",
+      "termId": "banana-143",
+      "contents": [
+        107,
+        251,
+        244,
+        120,
+        105,
+        32,
+        119,
+        111,
+        110,
+        107,
+        251,
+        107,
+        32,
+        115,
+        234,
+        108,
+        98,
+        244
+      ],
+      "submitter": "test-user",
+      "created": "2025-11-13T04:50:26.746Z"
+    },
+    {
+      "id": "MTE1LDExMSw5OCwxMDUs",
+      "termId": "document-v-123",
+      "contents": [
+        115,
+        111,
+        98,
+        105,
+        115
+      ],
+      "submitter": "test-user",
+      "created": "2025-11-13T04:50:38.269Z"
+    }
+  ],
+  "votes": [
+    {
+      "termId": "document-v-123",
+      "entryId": "sobis",
+      "voteType": "overall",
+      "user": "test-user",
+      "voted": "2025-11-13T04:49:37.388Z"
+    },
+    {
+      "termId": "document-v-123",
+      "entryId": "xe-sobis-bi-cukto",
+      "voteType": "specific",
+      "user": "test-user",
+      "voted": "2025-11-13T04:49:55.170Z"
+    },
+    {
+      "termId": "document-n-456",
+      "entryId": "cukto",
+      "voteType": "specific",
+      "user": "test-user",
+      "voted": "2025-11-13T04:50:06.420Z"
+    }
+  ]
+}

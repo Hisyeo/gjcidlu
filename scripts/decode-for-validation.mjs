@@ -18,7 +18,6 @@ function decode(encoded) {
 
   const version = encoded[0];
   if (version !== htfData.version) {
-    // Use console.error in a script to ensure it's visible in logs
     console.error(`Mismatched HTF version. Expected ${htfData.version}, got ${version}.`);
   }
 
@@ -46,16 +45,40 @@ async function run() {
   try {
     const submissionContent = JSON.parse(await fs.readFile(filePath, 'utf-8'));
     const newEntries = submissionContent.newEntries || [];
+    const votes = submissionContent.votes || [];
 
-    if (newEntries.length === 0) {
-      return; // No new entries to decode, exit silently
+    // Create a quick summary
+    let summary = '#### Decoded New Translations:\n';
+    if (newEntries.length > 0) {
+      for (const entry of newEntries) {
+        const decodedText = decode(entry.contents);
+        summary += `- **${decodedText}** (for term: *${entry.termId}*)\n`;
+      }
+    } else {
+      summary += '- (No new translations in this submission)\n';
     }
 
-    let output = '#### Decoded Translations:\n';
-    for (const entry of newEntries) {
-      const decodedText = decode(entry.contents);
-      output += `- **${decodedText}** (for term: *${entry.termId}*)\n`;
+    // Add decoded fields to the full submission object for the details view
+    if (newEntries.length > 0) {
+      submissionContent.newEntries.forEach(entry => {
+        entry.decoded_contents = decode(entry.contents);
+      });
     }
+
+    if (votes.length > 0) {
+      submissionContent.votes.forEach(vote => {
+        const votedEntry = newEntries.find(e => e.id === vote.entryId);
+        if (votedEntry) {
+          vote.decoded_entry = decode(votedEntry.contents);
+        } else {
+          vote.decoded_entry = `(Existing entry - ID: ${vote.entryId})`;
+        }
+      });
+    }
+
+    const fullReceipt = JSON.stringify(submissionContent, null, 2);
+
+    let output = `${summary}\n<details><summary>Full Submission Receipt</summary>\n\n\`\`\`json\n${fullReceipt}\n\`\`\`\n\n</details>`;
     
     // This special format is for multiline strings in GitHub Actions
     output = output.replace(/%/g, '%25');

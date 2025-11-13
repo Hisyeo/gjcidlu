@@ -92,6 +92,13 @@ jobs:
             COMMENT_BODY="### Submission Review Required 🗳️\n\n"
             COMMENT_BODY+="A new submission has been received from **${USER_SYSTEM}** user \`${USER_ID}\`.\n\n"
             COMMENT_BODY+="#### Summary of Contributions\n- **New Terms:** ${NEW_TERMS_COUNT}\n- **New Translations:** ${NEW_ENTRIES_COUNT}\n- **New Votes:** ${VOTES_COUNT}\n\n"
+            
+            # Run the decoder script and capture its output
+            DECODED_TEXT=$(node scripts/decode-for-validation.mjs "$SUBMISSION_FILE")
+            if [[ -n "$DECODED_TEXT" ]]; then
+              COMMENT_BODY+="${DECODED_TEXT}\n"
+            fi
+
             COMMENT_BODY+="---\n\n#### Reviewer Action\n\nClick here to verify the user: [**Verify via ${USER_SYSTEM}**](${VERIFICATION_LINK})\n\n"
             COMMENT_BODY+="<details><summary>Click to see full submission receipt</summary>\n\n${RECEIPT_ITEMS}\n\n</details>"
           fi

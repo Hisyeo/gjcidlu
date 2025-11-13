@@ -31,10 +31,46 @@
   },
   "robot-10vwg": {
     "$pos": "noun",
-    "$desc": "a machine that can move and do some of the work of a person, and is usually controlled by a computer"
+    "$desc": "a machine that can move and do some of the work of a person, and is usually controlled by a computer",
+    "Miw3MTEsMTc3NCw3NDQs": {
+      "submitter": "discord:128874964517388288",
+      "created": "2025-11-13T18:26:36.339Z",
+      "contents": [
+        2,
+        711,
+        1774,
+        744,
+        1774,
+        834,
+        1774,
+        574
+      ]
+    }
   },
   "ramble-g68oh": {
     "$pos": "verb",
-    "$desc": "to talk for a long time in a way that does not seem clearly organized, so that other people find it difficult to understand you"
+    "$desc": "to talk for a long time in a way that does not seem clearly organized, so that other people find it difficult to understand you",
+    "Miw4NTAsMTc3NCw3Mjgs": {
+      "submitter": "discord:128874964517388288",
+      "created": "2025-11-13T18:27:24.391Z",
+      "contents": [
+        2,
+        850,
+        1774,
+        728,
+        1774,
+        868,
+        1774,
+        833,
+        1774,
+        687,
+        1774,
+        858,
+        1774,
+        769,
+        1774,
+        709
+      ]
+    }
   }
 }

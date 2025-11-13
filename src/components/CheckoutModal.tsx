@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { QueueAction } from '@/lib/types';
 import { generateSubmissionUrl } from '@/lib/submission';
+import { useToast } from '@/app/ToastContext'; // Import useToast
 
 interface CheckoutModalProps {
   queue: QueueAction[];
@@ -11,8 +12,9 @@ interface CheckoutModalProps {
 
 const CheckoutModal: React.FC<CheckoutModalProps> = ({ queue, onClose }) => {
   const [isProcessing, setProcessing] = useState(false);
-  const [userSystem, setUserSystem] = useState<'Email' | 'Discord'>('Discord');
+  const [userSystem, setUserSystem] = useState<'Email' | 'Discord' | 'Reddit'>('Discord'); // Added Reddit
   const [userId, setUserId] = useState('');
+  const { showToast } = useToast(); // Use the toast hook
 
   const newTermsCount = queue.filter(a => a.type === 'NEW_TERM').length;
   const newEntriesCount = queue.filter(a => a.type === 'NEW_ENTRY').length;
@@ -21,17 +23,21 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ queue, onClose }) => {
 
   const handleSubmit = () => {
     if (!userId) {
-      alert('Please enter your User ID.');
+      showToast('Please enter your User ID.', 'error'); // Replaced alert
       return;
     }
     setProcessing(true);
     
-    generateSubmissionUrl(queue, userSystem, userId);
+    const errorMessage = generateSubmissionUrl(queue, userSystem, userId);
 
-    setTimeout(() => {
+    if (errorMessage) {
+      showToast(errorMessage, 'error');
       setProcessing(false);
-      onClose();
-    }, 1000);
+      return;
+    }
+
+    // If successful, the page will redirect, so no need for setTimeout here
+    // The onClose() will be handled by the page redirect
   };
 
   return (

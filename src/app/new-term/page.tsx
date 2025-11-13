@@ -5,11 +5,13 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { addToQueue } from '@/lib/queue';
 import { Term } from '@/lib/types';
+import { useToast } from '@/app/ToastContext';
 
 function NewTermForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialTermName = searchParams.get('name') || '';
+  const { showToast } = useToast();
 
   const [termName, setTermName] = useState(initialTermName);
   const [pos, setPos] = useState('');
@@ -18,7 +20,7 @@ function NewTermForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!termName || !pos || !description) {
-      alert('Please fill out all fields.');
+      showToast('Please fill out all fields.', 'error');
       return;
     }
 

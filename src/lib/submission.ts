@@ -1,7 +1,7 @@
 import { getQueue, clearQueue } from './queue';
 import { QueueAction } from './types';
 
-type UserSystem = 'Email' | 'Discord';
+type UserSystem = 'Email' | 'Discord' | 'Reddit';
 
 function formatSubmission(queue: QueueAction[], userSystem: UserSystem, userId: string) {
   const submission = {
@@ -32,10 +32,9 @@ function formatSubmission(queue: QueueAction[], userSystem: UserSystem, userId: 
   return submission;
 }
 
-export function generateSubmissionUrl(queue: QueueAction[], userSystem: UserSystem, userId: string) {
+export function generateSubmissionUrl(queue: QueueAction[], userSystem: UserSystem, userId: string): string | null {
   if (queue.length === 0) {
-    alert("Submission queue is empty.");
-    return;
+    return "Submission queue is empty.";
   }
 
   const submissionContent = formatSubmission(queue, userSystem, userId);
@@ -43,8 +42,7 @@ export function generateSubmissionUrl(queue: QueueAction[], userSystem: UserSyst
 
   const repoUrl = process.env.NEXT_PUBLIC_GITHUB_REPO_URL;
   if (!repoUrl) {
-    alert("Error: GitHub repository URL is not configured.");
-    return;
+    return "Error: GitHub repository URL is not configured.";
   }
 
   const timestamp = new Date().toISOString().replace(/[-:.]/g, "").slice(0, -4);
@@ -60,4 +58,5 @@ export function generateSubmissionUrl(queue: QueueAction[], userSystem: UserSyst
   window.location.href = url;
 
   clearQueue();
+  return null; // Indicate success
 }

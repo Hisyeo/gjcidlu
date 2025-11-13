@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { encode, decode } from '@/lib/htf-int';
 import { Entry, Term, Vote, VoteType, QueueAction } from '@/lib/types';
 import { addToQueue, getQueue, removeFromQueue } from '@/lib/queue';
+import { useToast } from '@/app/ToastContext'; // Import useToast
 
 interface TermDetailClientViewProps {
   term: Term;
@@ -13,6 +14,7 @@ interface TermDetailClientViewProps {
 export default function TermDetailClientView({ term, initialEntries }: TermDetailClientViewProps) {
   const [translation, setTranslation] = useState('');
   const [queue, setQueue] = useState<QueueAction[]>([]);
+  const { showToast } = useToast(); // Use the toast hook
 
   useEffect(() => {
     const updateQueue = () => setQueue(getQueue());
@@ -37,7 +39,7 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
     );
 
     if (isDuplicateInInitial || isDuplicateInQueue) {
-      alert('This translation has already been submitted.');
+      showToast('This translation has already been submitted.', 'error'); // Replaced alert
       return;
     }
 
@@ -53,7 +55,7 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
     });
 
     setTranslation('');
-    alert('Translation added to queue!');
+    showToast('Translation added to queue!', 'success'); // Replaced alert
   };
 
   const handleVote = (entryId: string, voteType: VoteType) => {
@@ -80,7 +82,7 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
       payload: { ...vote, user: 'test-user', voted: new Date().toISOString() }
     });
 
-    alert(`Vote for '${voteType}' on entry '${entryId}' added to queue!`);
+    showToast(`Vote for '${voteType}' on entry '${entryId}' added to queue!`, 'success'); // Replaced alert
   };
 
   const getVoteCount = (entryId: string, voteType: VoteType) => {

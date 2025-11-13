@@ -6,6 +6,7 @@ import { TermWithDetails } from '@/lib/data';
 import { useAppContext } from '@/app/AppContext';
 import { addToQueue } from '@/lib/queue';
 import { encode } from '@/lib/htf-int';
+import { useToast } from '@/app/ToastContext';
 
 interface TermListProps {
   initialTerms: TermWithDetails[];
@@ -15,6 +16,7 @@ export default function TermList({ initialTerms }: TermListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredTerms, setFilteredTerms] = useState(initialTerms);
   const { showUntranslated, setShowUntranslated } = useAppContext();
+  const { showToast } = useToast();
   
   // State for the new translation inputs
   const [newTranslations, setNewTranslations] = useState<Record<string, string>>({});
@@ -53,7 +55,7 @@ export default function TermList({ initialTerms }: TermListProps) {
         count++;
       }
     }
-    alert(`${count} new translations added to the submission queue!`);
+    showToast(`${count} new translations added to the submission queue!`, 'success');
     setNewTranslations({});
     setShowUntranslated(false); // Go back to the main view
   };

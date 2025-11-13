@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import SubmissionQueue from "@/components/SubmissionQueue";
 import { getQueue } from "@/lib/queue";
-import { AppProvider, useAppContext } from "@/app/AppContext";
-import { useRouter } from 'next/navigation';
+import { useAppContext } from "@/app/AppContext";
+import { ToastProvider } from "@/app/ToastContext";
 
 interface Stats {
   translatedCount: number;
@@ -22,26 +22,21 @@ export default function ClientWrapper({
   const [isQueueOpen, setQueueOpen] = useState(false);
   const [queueCount, setQueueCount] = useState(0);
   const { setShowUntranslated } = useAppContext();
-  const router = useRouter();
 
   const toggleQueue = () => setQueueOpen(!isQueueOpen);
 
-  const updateQueueCount = () => {
-    setQueueCount(getQueue().length);
-  };
-
   useEffect(() => {
-    updateQueueCount();
-    window.addEventListener('storage', updateQueueCount);
-    return () => {
-      window.removeEventListener('storage', updateQueueCount);
+    const updateQueueCount = () => {
+      const queue = getQueue();
+      setQueueCount(queue.length);
     };
+    updateQueueCount();
+    window.addEventListener("storage", updateQueueCount);
+    return () => window.removeEventListener("storage", updateQueueCount);
   }, []);
 
   const handleUntranslatedClick = () => {
     setShowUntranslated(true);
-    // Use Next.js router to navigate to ensure client-side navigation
-    router.push('/');
   };
 
   const handleTitleClick = () => {
@@ -49,7 +44,7 @@ export default function ClientWrapper({
   };
 
   return (
-    <>
+    <ToastProvider>
       <Header 
         toggleQueue={toggleQueue} 
         queueCount={queueCount} 
@@ -59,6 +54,6 @@ export default function ClientWrapper({
       />
       {children}
       {isQueueOpen && <SubmissionQueue toggleQueue={toggleQueue} />}
-    </>
+    </ToastProvider>
   );
 }

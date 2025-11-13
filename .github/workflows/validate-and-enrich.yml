@@ -1,112 +1,84 @@
-name: 'Validate and Enrich PR'
+name: 'Validate and Comment on PR'
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize]
     paths:
       - 'rsc/submitted/**'
 
 permissions:
-  contents: write
-  pull-requests: write # Needed to post comments
+  contents: read
+  pull-requests: write
 
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - name: 'Checkout PR branch'
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
-          ref: ${{ github.head_ref }}
-          fetch-depth: 0 # Fetch all history to resolve refs
-
       - name: 'Blacklist Check'
         id: blacklist_check
         env:
-          # Add comma-separated usernames to ban.
-          # e.g., "user1,user2,another-user"
-          BLACKLIST: ""
+          BLACKLIST: "" # Add comma-separated usernames to ban.
           PR_AUTHOR: ${{ github.event.pull_request.user.login }}
         run: |
           echo "PR Author: $PR_AUTHOR"
           if [[ ",$BLACKLIST," == *",$PR_AUTHOR,"* ]]; then
-            echo "User $PR_AUTHOR is on the blacklist. Failing."
-            echo "validation_status=failed" >> "$GITHUB_OUTPUT"
+            echo "::error::User $PR_AUTHOR is on the blacklist."
             exit 1
           else
-            echo "User $PR_AUTHOR is not on the blacklist. Proceeding."
-            echo "validation_status=passed" >> "$GITHUB_OUTPUT"
-          fi
-      
-      - name: 'Enrich submission file'
-        id: enrich_file
-        env:
-          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
-        run: |
-          SUBMISSION_FILE=$(find rsc/submitted -name '*.json' -print -quit)
-
-          if [[ -z "$SUBMISSION_FILE" ]]; then
-            echo "No submission file found in PR. Skipping enrichment."
-            echo "enriched_file_path=" >> "$GITHUB_OUTPUT"
-            exit 0
+            echo "User $PR_AUTHOR is not on the blacklist."
           fi
 
-          echo "Enriching file: $SUBMISSION_FILE"
-          
-          node -e '
-            const fs = require("fs");
-            const path = require("path");
-            const filePath = process.argv[1];
-            const author = process.env.PR_AUTHOR;
-            const content = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-            content.author = { system: "GitHub", id: author }; // Enriched with GitHub as system
-            fs.writeFileSync(filePath, JSON.stringify(content, null, 2));
-            console.log(`Successfully added author (${author}) to ${filePath}`);
-          ' "$SUBMISSION_FILE"
-          echo "enriched_file_path=$SUBMISSION_FILE" >> "$GITHUB_OUTPUT"
+      - name: 'Checkout PR Code Safely'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: 'Generate Comment Body'
         id: generate_comment
-        env:
-          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
         run: |
-          SUBMISSION_FILE="${{ steps.enrich_file.outputs.enriched_file_path }}"
+          SUBMISSION_FILE=$(find rsc/submitted -name '*.json' -print -quit)
           if [[ -z "$SUBMISSION_FILE" ]]; then
-            echo "comment_body=No submission file found in this PR." >> "$GITHUB_OUTPUT"
+            echo "comment_body=This PR does not contain a submission file." >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
+          # The jq utility is pre-installed on GitHub runners
           SUBMISSION_CONTENT=$(cat "$SUBMISSION_FILE")
+          USER_SYSTEM=$(echo "$SUBMISSION_CONTENT" | jq -r '.author.system')
+          USER_ID=$(echo "$SUBMISSION_CONTENT" | jq -r '.author.id')
           NEW_TERMS_COUNT=$(echo "$SUBMISSION_CONTENT" | jq '.newTerms | length')
           NEW_ENTRIES_COUNT=$(echo "$SUBMISSION_CONTENT" | jq '.newEntries | length')
           VOTES_COUNT=$(echo "$SUBMISSION_CONTENT" | jq '.votes | length')
 
-          RECEIPT_ITEMS=""
-          if [ "$NEW_TERMS_COUNT" -gt 0 ]; then
-            RECEIPT_ITEMS+="- **New Terms:** $NEW_TERMS_COUNT\n"
-          fi
-          if [ "$NEW_ENTRIES_COUNT" -gt 0 ]; then
-            RECEIPT_ITEMS+="- **New Translations:** $NEW_ENTRIES_COUNT\n"
-          fi
-          if [ "$VOTES_COUNT" -gt 0 ]; then
-            RECEIPT_ITEMS+="- **New Votes:** $VOTES_COUNT\n"
+          # Generate receipt list
+          RECEIPT_ITEMS=$(echo "$SUBMISSION_CONTENT" | jq -r '
+            (.newTerms // []) | map("- Term '\''\(.id | split("-")[0])'\''") | .[],
+            (.newEntries // []) | map("- Translation '\''\(.id)'\'' for '\''\(.termId)'\''") | .[],
+            (.votes // []) | map("- \(.voteType | cap) vote for '\''\(.entryId)'\'' on term '\''\(.termId)'\''") | .[]
+          ' | sed 's/^/  /')
+
+          # Generate verification link
+          if [[ "$USER_SYSTEM" == "Email" ]]; then
+            EMAIL_BODY="Thank you for your ${VOTES_COUNT} votes, ${NEW_ENTRIES_COUNT} entries, and ${NEW_TERMS_COUNT} terms!%0A%0AHere is a receipt of what you have submitted:%0A${RECEIPT_ITEMS//'%'/'%25'//'
+'/'%0A'//' '/'%20'//'"'/"%27"}%0A%0AReply YES if you confirm these votes, entries and terms to be valid.%0AReply NO if you would like to start over.%0AIf we don't receive a reply in a timely fashion, you may become banned from using email verification."
+            VERIFICATION_LINK="mailto:${USER_ID}?subject=Confirm Your Submission&body=${EMAIL_BODY}"
+          else
+            VERIFICATION_LINK="https://discord.com/users/${USER_ID}"
           fi
 
-          VERIFICATION_LINK="https://github.com/${{ github.repository_owner }}/gjcidlu/pull/${{ github.event.pull_request.number }}" # Link to the PR itself for review
+          COMMENT_BODY="### Submission Review Required 🗳️\n\n"
+          COMMENT_BODY+="A new submission has been received from **${USER_SYSTEM}** user \`${USER_ID}\`.\n\n"
+          COMMENT_BODY+="#### Summary of Contributions\n- **New Terms:** ${NEW_TERMS_COUNT}\n- **New Translations:** ${NEW_ENTRIES_COUNT}\n- **New Votes:** ${VOTES_COUNT}\n\n"
+          COMMENT_BODY+="---\n\n#### Reviewer Action\n\nClick here to verify the user: [**Verify via ${USER_SYSTEM}**](${VERIFICATION_LINK})\n\n"
+          COMMENT_BODY+="<details><summary>Click to see full submission receipt</summary>\n\n${RECEIPT_ITEMS}\n\n</details>"
 
-          COMMENT_BODY="### Submission Validation & Review\n\n"
-          COMMENT_BODY+="This Pull Request contains a submission from GitHub user **${{ env.PR_AUTHOR }}**.\n\n"
-          COMMENT_BODY+="**Summary of Contributions:**\n${RECEIPT_ITEMS}\n"
-          COMMENT_BODY+="Please review the changes in this PR. The submission file has been enriched with the author's GitHub ID.\n\n"
-          COMMENT_BODY+="[Click here to review the PR]($VERIFICATION_LINK)\n"
-          
+          # Escape for multiline output
           echo "comment_body<<EOF" >> "$GITHUB_OUTPUT"
-          echo "$COMMENT_BODY" >> "$GITHUB_OUTPUT"
+          echo -e "$COMMENT_BODY" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
 
       - name: 'Post PR Comment'
-        uses: peter-evans/create-or-update-comment@v3
+        uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body: ${{ steps.generate_comment.outputs.comment_body }}

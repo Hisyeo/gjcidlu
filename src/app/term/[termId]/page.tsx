@@ -5,10 +5,12 @@ import TermDetailClientView from './client-page';
 
 // Generate static pages for all terms at build time
 export async function generateStaticParams() {
-  const terms = await getTerms();
-  return terms.map(term => ({
-    termId: term.id,
-  }));
+  // Temporarily return a hardcoded value to debug if the function is recognized
+  return [{ termId: 'ephemeral-628' }];
+  // const terms = await getTerms();
+  // return terms.map(term => ({
+  //   termId: term.id,
+  // }));
 }
 
 // --- Page Component (Server) ---

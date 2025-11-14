@@ -1,13 +1,9 @@
 "use client";
 
-import { useState, useEffect, useMemo } from 'react'; // Import useMemo
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { TermWithDetails } from '@/lib/data';
 import { useAppContext } from '@/app/AppContext';
-import { addToQueue, getQueue } from '@/lib/queue';
-import { encode, encodeToSnakeCaseSyllabary } from '@/lib/htf-int';
-import { useToast } from '@/app/ToastContext';
-import { QueueAction } from '@/lib/types';
 
 interface TermListProps {
   initialTerms: TermWithDetails[];
@@ -15,21 +11,10 @@ interface TermListProps {
 
 export default function TermList({ initialTerms }: TermListProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const { showUntranslated, setShowUntranslated } = useAppContext();
-  const { showToast } = useToast();
-  const [queue, setQueue] = useState<QueueAction[]>([]);
-  
-  // State for the new translation inputs
-  const [newTranslations, setNewTranslations] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    const updateQueue = () => setQueue(getQueue());
-    updateQueue();
-    window.addEventListener('storage', updateQueue);
-    return () => window.removeEventListener('storage', updateQueue);
-  }, []);
+  const { showUntranslated } = useAppContext();
 
   const filteredTerms = useMemo(() => {
+    if (!initialTerms) return [];
     const lowercasedQuery = searchQuery.toLowerCase();
     return initialTerms.filter(term =>
       term.id.toLowerCase().includes(lowercasedQuery) ||
@@ -37,71 +22,13 @@ export default function TermList({ initialTerms }: TermListProps) {
     );
   }, [searchQuery, initialTerms]);
 
-  const getPendingChangeStatus = (termId: string): 'vote' | 'entry' | 'both' | 'none' => {
-    const hasVote = queue.some(action => action.type === 'VOTE' && action.payload.termId === termId);
-    const hasEntry = queue.some(action => action.type === 'NEW_ENTRY' && action.payload.termId === termId);
-
-    if (hasVote && hasEntry) {
-      return 'both';
-    }
-    if (hasVote) {
-      return 'vote';
-    }
-    if (hasEntry) {
-      return 'entry';
-    }
-    return 'none';
-  };
-
-  const handleTranslationChange = (termId: string, value: string) => {
-    setNewTranslations(prev => ({ ...prev, [termId]: value }));
-  };
-
-  const handleSaveAll = () => {
-    let count = 0;
-    for (const termId in newTranslations) {
-      const translationText = newTranslations[termId];
-      if (translationText && translationText.trim()) {
-        const newTranslationContents = encode(translationText.trim());
-        // New ID generation based on snake_cased syllabary
-        const newEntryId = encodeToSnakeCaseSyllabary(newTranslationContents);
-
-        addToQueue({
-          type: 'NEW_ENTRY',
-          payload: {
-            id: newEntryId,
-            termId: termId,
-            contents: newTranslationContents,
-          }
-        });
-        count++;
-      }
-    }
-    showToast(`${count} new translations added to the submission queue!`, 'success');
-    setNewTranslations({});
-    setShowUntranslated(false); // Go back to the main view
-  };
-
   const renderTopTranslations = (topTranslations: TermWithDetails['topTranslations']) => {
     const votedCategories = (Object.keys(topTranslations) as (keyof typeof topTranslations)[])
       .filter(cat => topTranslations[cat] !== null)
       .map(cat => ({ category: cat, translation: topTranslations[cat]! }));
 
     if (votedCategories.length === 0) {
-      return <p className="text-lg font-medium text-gray-500">(No votes)</p>;
-    }
-
-    if (votedCategories.length <= 2) {
-      return (
-        <div className="flex flex-col space-y-2">
-          {votedCategories.map(({ category, translation }) => (
-            <div key={category}>
-              <span className="text-xs text-gray-400 capitalize">{category}</span>
-              <p className="text-lg font-medium text-blue-600">{translation}</p>
-            </div>
-          ))}
-        </div>
-      );
+      return <p className="text-lg font-medium text-gray-500">(No votes on published entries)</p>;
     }
 
     return (
@@ -127,38 +54,8 @@ export default function TermList({ initialTerms }: TermListProps) {
   };
 
   if (showUntranslated) {
-    const untranslatedTerms = initialTerms.filter(term => 
-      Object.values(term.topTranslations).every(t => t === null)
-    );
-
-    return (
-      <div className="mt-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Untranslated Terms ({untranslatedTerms.length})</h2>
-          <button 
-            onClick={handleSaveAll}
-            className="rounded-lg bg-green-600 px-5 py-2 font-medium text-white hover:bg-green-700"
-          >
-            Save All
-          </button>
-        </div>
-        <div className="space-y-4">
-          {untranslatedTerms.map(term => (
-            <div key={term.id} className="rounded-lg border border-gray-200 bg-white p-4">
-              <h3 className="text-lg font-semibold text-gray-900">{term.id.split('-')[0]}</h3>
-              <p className="mb-2 text-sm text-gray-500 italic">{term.description}</p>
-              <input
-                type="text"
-                placeholder="Enter Hîsyêô translation..."
-                value={newTranslations[term.id] || ''}
-                onChange={(e) => handleTranslationChange(term.id, e.target.value)}
-                className="w-full rounded-lg border border-gray-300 p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
+    // This view needs to be updated to handle the new data structure
+    return <div>Untranslated view not yet updated for pending data.</div>;
   }
 
   return (
@@ -181,39 +78,55 @@ export default function TermList({ initialTerms }: TermListProps) {
 
       <div className="mt-6 space-y-8">
         {filteredTerms.map(term => {
-          const status = getPendingChangeStatus(term.id);
-          const statusStyles = {
-            vote: 'border-blue-500',
-            entry: 'border-green-500',
-            both: 'border-indigo-500',
-            none: 'border-gray-200',
-          };
-          const borderClass = statusStyles[status];
+          const isPendingTerm = term.status === 'pending';
+          const hasPendingEntries = term.entries?.some(e => e.status === 'pending');
 
           return (
-            <div key={term.id} className={`rounded-lg border bg-white p-6 ${borderClass}`}>
-              <h2 className="text-2xl font-semibold text-gray-900">{term.id.split('-')[0]}</h2>
-              <p className="mb-1 font-mono text-gray-500">({term.pos.slice(0, 1)}.)</p>
-              <p className="mb-4 text-gray-700 italic">{term.description}</p>
-              
-              <hr className="my-4 border-gray-100" />
-              
-              <h3 className="mb-3 text-sm font-semibold text-gray-500 uppercase">Top Translations</h3>
-              {renderTopTranslations(term.topTranslations)}
+            <div key={term.id} className={`rounded-lg border bg-white ${isPendingTerm ? 'border-yellow-400' : 'border-gray-200'}`}>
+              {isPendingTerm && (
+                <div className="p-2 bg-yellow-100 text-yellow-800 text-sm rounded-t-lg flex justify-between items-center">
+                  <span>This term is pending review.</span>
+                  {term.prUrl && <a href={term.prUrl} target="_blank" rel="noopener noreferrer" className="font-bold hover:underline">View PR</a>}
+                </div>
+              )}
+              {hasPendingEntries && !isPendingTerm && (
+                <div className="p-2 bg-blue-100 text-blue-800 text-sm rounded-t-lg">
+                  This term has pending translations.
+                </div>
+              )}
+              <div className="p-6">
+                <h2 className="text-2xl font-semibold text-gray-900">{term.id.split('-')[0]}</h2>
+                <p className="mb-1 font-mono text-gray-500">({term.pos.slice(0, 1)}.)</p>
+                <p className="mb-4 text-gray-700 italic">{term.description}</p>
+                
+                {!isPendingTerm && (
+                  <>
+                    <hr className="my-4 border-gray-100" />
+                    <h3 className="mb-3 text-sm font-semibold text-gray-500 uppercase">Top Translations</h3>
+                    {renderTopTranslations(term.topTranslations)}
+                  </>
+                )}
 
-              <hr className="my-4 border-gray-100" />
+                <hr className="my-4 border-gray-100" />
 
-              <div className="mt-6 flex items-center justify-between">
-                <Link href={`/new-term?name=${encodeURIComponent(term.id.split('-')[0])}`} className="flex items-center space-x-1 text-xs text-gray-500 hover:text-blue-600 focus:outline-none">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>Add alternative meaning</span>
-                </Link>
+                <div className="mt-6 flex items-center justify-between">
+                  <Link href={`/new-term?name=${encodeURIComponent(term.id.split('-')[0])}`} className="flex items-center space-x-1 text-xs text-gray-500 hover:text-blue-600 focus:outline-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Add alternative meaning</span>
+                  </Link>
 
-                <Link href={`/term/${term.id}`} className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200">
-                  View Translations &rarr;
-                </Link>
+                  {isPendingTerm ? (
+                    <span className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-400 cursor-not-allowed" title="Detail page not available for pending terms">
+                      View Translations &rarr;
+                    </span>
+                  ) : (
+                    <Link href={`/term/${term.id}`} className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200">
+                      View Translations &rarr;
+                    </Link>
+                  )}
+                </div>
               </div>
             </div>
           );

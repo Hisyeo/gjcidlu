@@ -2,6 +2,8 @@ export interface Term {
   id: string; // e.g., "ephemeral-628"
   pos: string; // part of speech
   description: string;
+  status?: 'published' | 'pending';
+  prUrl?: string;
 }
 
 export interface Entry {
@@ -11,6 +13,8 @@ export interface Entry {
   created?: string; // ISO 8601 date
   contents: number[]; // HTF-INT
   original?: string; // if modifying
+  status?: 'published' | 'pending';
+  prUrl?: string;
 }
 
 export type VoteType = "overall" | "minimal" | "specific" | "humorous";

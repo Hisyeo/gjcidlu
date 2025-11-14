@@ -1,7 +1,8 @@
-import { Term, VoteType, EntriesData } from './types';
+import { Term, VoteType, EntriesData, Entry } from './types';
 import entriesData from '../../rsc/published/entries.json';
 import votesData from '../../rsc/published/votes.json';
-import { decode } from './htf-int'; // Import the decoder
+import { decode } from './htf-int';
+import { getPendingSubmissions } from './github';
 
 // --- Type definitions to match the JSON structure ---
 interface VotesData {
@@ -15,17 +16,27 @@ interface VotesData {
 export type VoteCounts = Record<VoteType, number>;
 export type AggregatedVotes = Record<string, VoteCounts>; // Record<entryId, VoteCounts>
 
-export interface TermWithDetails extends Term {
+export interface DetailedEntry extends Entry {
+    status: 'published' | 'pending'; // Make it required here
+    prUrl?: string;
+}
+
+export interface DetailedTerm extends Term {
+    status: 'published' | 'pending'; // Make it required here
+}
+
+export interface TermWithDetails extends DetailedTerm {
     topTranslations: Record<VoteType, string | null>;
+    entries: DetailedEntry[];
 }
 
 // --- Cast the imported data to our defined types ---
 const entries: EntriesData = entriesData;
 const votes: VotesData = votesData;
 
-// --- Synchronous Data Access Functions ---
+// --- Synchronous Data Access Functions for Published Data ---
 
-export function getTerms(): Term[] {
+export function getPublishedTerms(): Term[] {
   if (!entries) return [];
   
   return Object.keys(entries).map(termId => ({
@@ -36,11 +47,11 @@ export function getTerms(): Term[] {
 }
 
 export function getTermById(termId: string): Term | null {
-    const allTerms = getTerms();
+    const allTerms = getPublishedTerms();
     return allTerms.find(term => term.id === termId) || null;
 }
 
-export function getEntriesForTerm(termId: string): { id: string, contents: number[] }[] {
+export function getEntriesForTerm(termId: string): Entry[] {
     if (!entries || !entries[termId]) return [];
 
     const termData = entries[termId];
@@ -51,10 +62,14 @@ export function getEntriesForTerm(termId: string): { id: string, contents: numbe
             if (typeof entry !== 'string' && 'contents' in entry) {
                 return {
                     id: entryId,
-                    contents: entry.contents || []
+                    termId: termId,
+                    contents: entry.contents || [],
+                    submitter: entry.submitter,
+                    created: entry.created,
                 };
             }
-            return { id: entryId, contents: [] }; // Fallback for malformed entry
+            // This case should ideally not happen with valid data
+            return { id: entryId, termId: termId, contents: [] };
         });
 }
 
@@ -81,18 +96,43 @@ export function getAggregatedVotesForTerm(termId: string): AggregatedVotes {
     return aggregatedVotes;
 }
 
-export function getTermsWithDetails(): TermWithDetails[] {
-    const allTerms = getTerms();
+// --- New Asynchronous Function to Get All Data (Published + Pending) ---
 
-    const detailedTerms = allTerms.map(term => {
+export async function getTermsWithDetails(): Promise<TermWithDetails[]> {
+    const repoUrl = process.env.NEXT_PUBLIC_GITHUB_REPO_URL || '';
+    console.log(`[data.ts] Fetching pending submissions from repo: ${repoUrl}`);
+
+    const publishedTerms: DetailedTerm[] = getPublishedTerms().map(t => ({...t, status: 'published' as const}));
+    const pendingSubmissions = await getPendingSubmissions(repoUrl);
+    console.log(`[data.ts] Found ${pendingSubmissions.length} pending submissions.`);
+    
+    const pendingTerms: DetailedTerm[] = [];
+    const pendingEntries: DetailedEntry[] = [];
+
+    pendingSubmissions.forEach(submission => {
+        submission.newTerms?.forEach(term => {
+            pendingTerms.push({ ...term, status: 'pending', prUrl: submission.prUrl } as DetailedTerm);
+        });
+        submission.newEntries?.forEach(entry => {
+            pendingEntries.push({ ...entry, status: 'pending', prUrl: submission.prUrl } as DetailedEntry);
+        });
+    });
+    console.log(`[data.ts] Parsed ${pendingTerms.length} pending terms and ${pendingEntries.length} pending entries.`);
+
+    const allTerms = [...publishedTerms, ...pendingTerms];
+    const uniqueTerms = allTerms.filter((term, index, self) =>
+        index === self.findIndex((t) => t.id === term.id)
+    );
+
+    const detailedTerms = uniqueTerms.map(term => {
+        const publishedEntriesForTerm: DetailedEntry[] = getEntriesForTerm(term.id).map(e => ({ ...e, status: 'published' as const }));
+        const pendingEntriesForTerm: DetailedEntry[] = pendingEntries.filter(e => e.termId === term.id);
+        
+        const allEntriesForTerm: DetailedEntry[] = [...publishedEntriesForTerm, ...pendingEntriesForTerm];
+
         const aggregatedVotes = getAggregatedVotesForTerm(term.id);
-        const entriesForTerm = getEntriesForTerm(term.id);
-
         const topTranslations: Record<VoteType, string | null> = {
-            overall: null,
-            minimal: null,
-            specific: null,
-            humorous: null,
+            overall: null, minimal: null, specific: null, humorous: null,
         };
 
         const voteTypes: VoteType[] = ['overall', 'minimal', 'specific', 'humorous'];
@@ -109,26 +149,29 @@ export function getTermsWithDetails(): TermWithDetails[] {
             }
             
             if (winnerId) {
-                const winningEntry = entriesForTerm.find(e => e.id === winnerId);
+                const winningEntry = publishedEntriesForTerm.find(e => e.id === winnerId);
                 if (winningEntry && winningEntry.contents) {
                     topTranslations[type] = decode(winningEntry.contents);
                 }
-            } else {
-                topTranslations[type] = null;
             }
         }
 
         return {
             ...term,
             topTranslations,
+            entries: allEntriesForTerm,
         };
     });
+
+    if (pendingTerms.length > 0) {
+        console.log('[data.ts] Sample pending term:', JSON.stringify(detailedTerms.find(t => t.status === 'pending'), null, 2));
+    }
 
     return detailedTerms;
 }
 
 export function getTranslationStats() {
-    const allTerms = getTerms();
+    const allTerms = getPublishedTerms();
     const totalTerms = allTerms.length;
     let translatedCount = 0;
 

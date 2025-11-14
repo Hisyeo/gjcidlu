@@ -2,8 +2,8 @@ import { getTermById, getEntriesForTerm, getAggregatedVotesForTerm } from '@/lib
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import TermDetailClientView from './client-page';
-import entriesData from '../../../../rsc/published/entries.json'; // Direct import
-import { EntriesData } from '@/lib/types'; // Import the new interface
+import entriesData from '../../../../rsc/published/entries.json';
+import { EntriesData } from '@/lib/types';
 
 // Generate static pages for all terms at build time
 export function generateStaticParams() {
@@ -17,7 +17,7 @@ export function generateStaticParams() {
 
 // --- Page Component (Server) ---
 export default async function TermDetailPage({ params }: { params: { termId: string } }) {
-  const resolvedParams = await params; // both awaits are required
+  const resolvedParams = await params;
   const term = getTermById(await resolvedParams.termId);
 
   if (!term) {
@@ -31,8 +31,10 @@ export default async function TermDetailPage({ params }: { params: { termId: str
     const entryVotes = votes[entry.id] || { overall: 0, minimal: 0, specific: 0, humorous: 0 };
     return {
       id: entry.id,
+      termId: entry.termId,
       contents: entry.contents,
       votes: entryVotes,
+      status: 'published' as const, // Always published on this page
     };
   });
 
@@ -49,7 +51,6 @@ export default async function TermDetailPage({ params }: { params: { termId: str
           <p className="text-lg text-gray-700 italic">&quot;{term.description}&quot;</p>
         </div>
 
-        {/* Render the client component and pass server-fetched data to it */}
         <TermDetailClientView term={term} initialEntries={initialEntries} />
       </div>
     </main>

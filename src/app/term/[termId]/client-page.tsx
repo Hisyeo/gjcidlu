@@ -1,26 +1,24 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { encode, decode, encodeToSnakeCaseSyllabary } from '@/lib/htf-int';
 import { Entry, Term, Vote, VoteType, QueueAction } from '@/lib/types';
 import { addToQueue, getQueue, removeFromQueue } from '@/lib/queue';
 import { useToast } from '@/app/ToastContext';
+import { getPendingSubmissions, SubmissionContent, PendingSubmissionsResponse, GitHubRateLimitError } from '@/lib/github';
 
-interface EntryWithStatus extends Entry {
-  status?: 'published' | 'pending';
-  prUrl?: string;
-  votes: Record<VoteType, number>;
-}
+const PENDING_DATA_CACHE_KEY = 'pendingSubmissionsCache';
 
 interface TermDetailClientViewProps {
   term: Term;
-  initialEntries: EntryWithStatus[];
+  initialEntries: { id: string; votes: Record<VoteType, number>; contents: number[] }[];
 }
 
 export default function TermDetailClientView({ term, initialEntries }: TermDetailClientViewProps) {
   const [translation, setTranslation] = useState('');
   const [queue, setQueue] = useState<QueueAction[]>([]);
   const { showToast } = useToast();
+  const [pendingEntries, setPendingEntries] = useState<(Entry & { prUrl?: string })[]>([]);
 
   useEffect(() => {
     const updateQueue = () => setQueue(getQueue());
@@ -29,6 +27,50 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
     return () => window.removeEventListener('storage', updateQueue);
   }, []);
 
+  useEffect(() => {
+    const fetchPendingData = async () => {
+      const repoUrl = process.env.NEXT_PUBLIC_GITHUB_REPO_URL || '';
+      let fetchedSubmissions: SubmissionContent[] = [];
+
+      try {
+        const result: PendingSubmissionsResponse = await getPendingSubmissions(repoUrl);
+        fetchedSubmissions = result.submissions;
+        localStorage.setItem(PENDING_DATA_CACHE_KEY, JSON.stringify(fetchedSubmissions));
+      } catch (error: unknown) { // Changed type to unknown
+        console.error("Error fetching pending submissions:", error);
+        if (typeof error === 'object' && error !== null && 'isRateLimitError' in error && (error as GitHubRateLimitError).isRateLimitError) {
+          showToast('GitHub API rate limit exceeded. Using cached pending data.', 'error');
+        } else {
+          showToast('Failed to fetch pending data. Using cached data if available.', 'error');
+        }
+
+        try {
+          const cachedData = localStorage.getItem(PENDING_DATA_CACHE_KEY);
+          if (cachedData) {
+            fetchedSubmissions = JSON.parse(cachedData);
+          }
+        } catch (cacheError) {
+          console.error("Failed to read from localStorage:", cacheError);
+        }
+      }
+
+      const entriesForThisTerm = fetchedSubmissions
+        .flatMap(sub => sub.newEntries?.map(e => ({ ...e, prUrl: sub.prUrl })) || [])
+        .filter(entry => entry.termId === term.id);
+      
+      setPendingEntries(entriesForThisTerm);
+    };
+
+    fetchPendingData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [term.id]); // Only re-run if the term changes
+
+  const allEntries = useMemo(() => {
+    const published = initialEntries.map(e => ({ ...e, status: 'published' as const, prUrl: undefined }));
+    const pending = pendingEntries.map(e => ({ ...e, status: 'pending' as const, votes: { overall: 0, minimal: 0, specific: 0, humorous: 0 } }));
+    return [...published, ...pending];
+  }, [initialEntries, pendingEntries]);
+
   const handleAddEntry = (e: React.FormEvent) => {
     e.preventDefault();
     if (!translation.trim()) return;
@@ -36,7 +78,7 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
     const newTranslationContents = encode(translation);
     const newEntryId = encodeToSnakeCaseSyllabary(newTranslationContents);
 
-    const isDuplicate = initialEntries.some(entry => entry.id === newEntryId) ||
+    const isDuplicate = allEntries.some(entry => entry.id === newEntryId) ||
                         queue.some(action => action.type === 'NEW_ENTRY' && action.payload.id === newEntryId);
 
     if (isDuplicate) {
@@ -70,13 +112,13 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
       payload: { termId: term.id, entryId: entryId, voteType: voteType }
     });
 
-    const entry = initialEntries.find(e => e.id === entryId);
+    const entry = allEntries.find(e => e.id === entryId);
     const translationText = entry ? decode(entry.contents) : entryId;
     showToast(`Vote for '${voteType}' on entry '${translationText}' added to queue!`, 'success');
   };
 
   const getVoteCount = (entryId: string, voteType: VoteType) => {
-    const initialCount = initialEntries.find(e => e.id === entryId)?.votes[voteType] ?? 0;
+    const initialCount = allEntries.find(e => e.id === entryId)?.votes[voteType] ?? 0;
     const queueCount = queue.filter(
       action =>
         action.type === 'VOTE' &&
@@ -115,9 +157,9 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
 
       <div className="mx-auto max-w-2xl">
         <div className="mt-8 space-y-4">
-          <h3 className="text-xl font-semibold">All Translations ({initialEntries.length})</h3>
+          <h3 className="text-xl font-semibold">All Translations ({allEntries.length})</h3>
 
-          {initialEntries.map(entry => {
+          {allEntries.map(entry => {
             const isPending = entry.status === 'pending';
             return (
               <div key={entry.id} className={`rounded-lg border bg-white ${isPending ? 'border-yellow-400' : 'border-gray-200'}`}>

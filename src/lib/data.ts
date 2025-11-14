@@ -2,7 +2,6 @@ import { Term, VoteType, EntriesData, Entry } from './types';
 import entriesData from '../../rsc/published/entries.json';
 import votesData from '../../rsc/published/votes.json';
 import { decode } from './htf-int';
-import { getPendingSubmissions } from './github';
 
 // --- Type definitions to match the JSON structure ---
 interface VotesData {
@@ -16,27 +15,17 @@ interface VotesData {
 export type VoteCounts = Record<VoteType, number>;
 export type AggregatedVotes = Record<string, VoteCounts>; // Record<entryId, VoteCounts>
 
-export interface DetailedEntry extends Entry {
-    status: 'published' | 'pending'; // Make it required here
-    prUrl?: string;
-}
-
-export interface DetailedTerm extends Term {
-    status: 'published' | 'pending'; // Make it required here
-}
-
-export interface TermWithDetails extends DetailedTerm {
+export interface TermWithDetails extends Term {
     topTranslations: Record<VoteType, string | null>;
-    entries: DetailedEntry[];
 }
 
 // --- Cast the imported data to our defined types ---
 const entries: EntriesData = entriesData;
 const votes: VotesData = votesData;
 
-// --- Synchronous Data Access Functions for Published Data ---
+// --- Synchronous Data Access Functions ---
 
-export function getPublishedTerms(): Term[] {
+export function getTerms(): Term[] {
   if (!entries) return [];
   
   return Object.keys(entries).map(termId => ({
@@ -47,7 +36,7 @@ export function getPublishedTerms(): Term[] {
 }
 
 export function getTermById(termId: string): Term | null {
-    const allTerms = getPublishedTerms();
+    const allTerms = getTerms();
     return allTerms.find(term => term.id === termId) || null;
 }
 
@@ -68,7 +57,6 @@ export function getEntriesForTerm(termId: string): Entry[] {
                     created: entry.created,
                 };
             }
-            // This case should ideally not happen with valid data
             return { id: entryId, termId: termId, contents: [] };
         });
 }
@@ -96,43 +84,18 @@ export function getAggregatedVotesForTerm(termId: string): AggregatedVotes {
     return aggregatedVotes;
 }
 
-// --- New Asynchronous Function to Get All Data (Published + Pending) ---
+export function getTermsWithDetails(): TermWithDetails[] {
+    const allTerms = getTerms();
 
-export async function getTermsWithDetails(): Promise<TermWithDetails[]> {
-    const repoUrl = process.env.NEXT_PUBLIC_GITHUB_REPO_URL || '';
-    console.log(`[data.ts] Fetching pending submissions from repo: ${repoUrl}`);
-
-    const publishedTerms: DetailedTerm[] = getPublishedTerms().map(t => ({...t, status: 'published' as const}));
-    const pendingSubmissions = await getPendingSubmissions(repoUrl);
-    console.log(`[data.ts] Found ${pendingSubmissions.length} pending submissions.`);
-    
-    const pendingTerms: DetailedTerm[] = [];
-    const pendingEntries: DetailedEntry[] = [];
-
-    pendingSubmissions.forEach(submission => {
-        submission.newTerms?.forEach(term => {
-            pendingTerms.push({ ...term, status: 'pending', prUrl: submission.prUrl } as DetailedTerm);
-        });
-        submission.newEntries?.forEach(entry => {
-            pendingEntries.push({ ...entry, status: 'pending', prUrl: submission.prUrl } as DetailedEntry);
-        });
-    });
-    console.log(`[data.ts] Parsed ${pendingTerms.length} pending terms and ${pendingEntries.length} pending entries.`);
-
-    const allTerms = [...publishedTerms, ...pendingTerms];
-    const uniqueTerms = allTerms.filter((term, index, self) =>
-        index === self.findIndex((t) => t.id === term.id)
-    );
-
-    const detailedTerms = uniqueTerms.map(term => {
-        const publishedEntriesForTerm: DetailedEntry[] = getEntriesForTerm(term.id).map(e => ({ ...e, status: 'published' as const }));
-        const pendingEntriesForTerm: DetailedEntry[] = pendingEntries.filter(e => e.termId === term.id);
-        
-        const allEntriesForTerm: DetailedEntry[] = [...publishedEntriesForTerm, ...pendingEntriesForTerm];
-
+    const detailedTerms = allTerms.map(term => {
         const aggregatedVotes = getAggregatedVotesForTerm(term.id);
+        const entriesForTerm = getEntriesForTerm(term.id);
+
         const topTranslations: Record<VoteType, string | null> = {
-            overall: null, minimal: null, specific: null, humorous: null,
+            overall: null,
+            minimal: null,
+            specific: null,
+            humorous: null,
         };
 
         const voteTypes: VoteType[] = ['overall', 'minimal', 'specific', 'humorous'];
@@ -149,7 +112,7 @@ export async function getTermsWithDetails(): Promise<TermWithDetails[]> {
             }
             
             if (winnerId) {
-                const winningEntry = publishedEntriesForTerm.find(e => e.id === winnerId);
+                const winningEntry = entriesForTerm.find(e => e.id === winnerId);
                 if (winningEntry && winningEntry.contents) {
                     topTranslations[type] = decode(winningEntry.contents);
                 }
@@ -159,19 +122,14 @@ export async function getTermsWithDetails(): Promise<TermWithDetails[]> {
         return {
             ...term,
             topTranslations,
-            entries: allEntriesForTerm,
         };
     });
-
-    if (pendingTerms.length > 0) {
-        console.log('[data.ts] Sample pending term:', JSON.stringify(detailedTerms.find(t => t.status === 'pending'), null, 2));
-    }
 
     return detailedTerms;
 }
 
 export function getTranslationStats() {
-    const allTerms = getPublishedTerms();
+    const allTerms = getTerms();
     const totalTerms = allTerms.length;
     let translatedCount = 0;
 

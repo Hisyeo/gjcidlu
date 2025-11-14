@@ -17,14 +17,27 @@ export interface SubmissionContent {
   prUrl?: string;
 }
 
+export interface PendingSubmissionsResponse {
+    submissions: SubmissionContent[];
+    usedCache: boolean; // This will always be false when returned from this function
+}
+
+export interface GitHubRateLimitError extends Error {
+    isRateLimitError?: boolean;
+}
+
 async function fetchGitHubAPI(url: string) {
   const response = await fetch(url, {
     headers: {
-      // Authorization: `token ${process.env.GITHUB_TOKEN}`, // This would be needed for private repos or to avoid rate limits
+      // Authorization: `token ${process.env.GITHUB_TOKEN}`,
     },
   });
   if (!response.ok) {
-    // If the resource is not found, it's not a critical error in our case
+    if (response.status === 403 && response.headers.get('X-RateLimit-Remaining') === '0') {
+        const error: GitHubRateLimitError = new Error(`GitHub API rate limit exceeded for ${url}`);
+        error.isRateLimitError = true;
+        throw error;
+    }
     if (response.status === 404) {
       return null;
     }
@@ -33,10 +46,10 @@ async function fetchGitHubAPI(url: string) {
   return response.json();
 }
 
-export async function getPendingSubmissions(repoUrl: string): Promise<SubmissionContent[]> {
+export async function getPendingSubmissions(repoUrl: string): Promise<PendingSubmissionsResponse> {
   if (!repoUrl) {
     console.log("[github.ts] GITHUB_REPO_URL not set, skipping pending submissions.");
-    return [];
+    return { submissions: [], usedCache: false };
   }
 
   const match = repoUrl.match(/github\.com\/([^/]+\/[^/]+)/);
@@ -45,7 +58,7 @@ export async function getPendingSubmissions(repoUrl: string): Promise<Submission
 
   if (!owner || !repo) {
       console.error(`[github.ts] Invalid repoUrl format: ${repoUrl}`);
-      return [];
+      return { submissions: [], usedCache: false };
   }
   
   const submissions: SubmissionFile[] = [];
@@ -94,16 +107,18 @@ export async function getPendingSubmissions(repoUrl: string): Promise<Submission
     }
   } catch (error) {
     console.error("Failed to fetch pending submissions from GitHub:", error);
-    // Return empty array on error to prevent crashing the app
-    return [];
+    throw error; // Re-throw the error so the caller can handle caching
   }
 
-  return submissions.map(s => {
-    try {
-      return { ...JSON.parse(s.content), prUrl: s.prUrl };
-    } catch (e) {
-      console.error("Failed to parse submission content:", e);
-      return null;
-    }
-  }).filter((s): s is SubmissionContent => s !== null);
+  return {
+    submissions: submissions.map(s => {
+      try {
+        return { ...JSON.parse(s.content), prUrl: s.prUrl };
+      } catch (e) {
+        console.error("Failed to parse submission content:", e);
+        return null;
+      }
+    }).filter((s): s is SubmissionContent => s !== null),
+    usedCache: false,
+  };
 }

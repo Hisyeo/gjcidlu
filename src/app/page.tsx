@@ -1,8 +1,8 @@
 import { getTermsWithDetails } from '@/lib/data';
 import TermList from '@/components/TermList';
 
-export default async function Home() {
-  const terms = await getTermsWithDetails();
+export default function Home() {
+  const terms = getTermsWithDetails();
 
   return (
     <main className="container mx-auto mt-8 p-4">

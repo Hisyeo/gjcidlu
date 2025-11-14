@@ -1,5 +1,14 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## TODO
+
+- [x] Add a guard client side that replaces a vote if the user changes to a different translation for the same category
+- [x] Add a reddit username authentication
+- [ ] Add a hunspell library that suggests the alternatives that hunspell offers (during main page search and during add new term)
+- [ ] Show a count of how many translations have been written for the suggested alternative terms 
+- [ ] Add noun phrase grammar and spell checking before submission is allowed
+- [ ] Make the main rendering view into a window that only renders html within proximity of user's scroll location (when list of terms gets big)
+
 ## Getting Started
 
 First, run the development server:

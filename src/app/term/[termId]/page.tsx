@@ -1,12 +1,13 @@
-import { getTermById, getEntriesForTerm, getAggregatedVotesForTerm, VoteCounts } from '@/lib/data';
+import { getTermById, getEntriesForTerm, getAggregatedVotesForTerm } from '@/lib/data';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import TermDetailClientView from './client-page';
 import entriesData from '../../../../rsc/published/entries.json'; // Direct import
+import { EntriesData } from '@/lib/types'; // Import the new interface
 
 // Generate static pages for all terms at build time
 export function generateStaticParams() {
-  const entries: { [termId: string]: any } = entriesData;
+  const entries: EntriesData = entriesData;
   if (!entries) return [];
   
   return Object.keys(entries).map(termId => ({
@@ -45,7 +46,7 @@ export default async function TermDetailPage({ params }: { params: { termId: str
         <div className="rounded-lg border border-gray-200 bg-white p-6">
           <h2 className="text-3xl font-bold text-gray-900">{term.id.split('-')[0]}</h2>
           <p className="mb-2 font-mono text-lg text-gray-500">({term.pos.slice(0,1)}.)</p>
-          <p className="text-lg text-gray-700 italic">"{term.description}"</p>
+          <p className="text-lg text-gray-700 italic">&quot;{term.description}&quot;</p>
         </div>
 
         {/* Render the client component and pass server-fetched data to it */}

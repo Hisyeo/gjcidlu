@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { getQueue, removeFromQueue } from '@/lib/queue';
-import { QueueAction, Entry } from '@/lib/types';
+import { QueueAction, Entry, EntriesData } from '@/lib/types'; // Import EntriesData
 import CheckoutModal from './CheckoutModal';
 import { decode } from '@/lib/htf-int';
 
 interface SubmissionQueueProps {
   toggleQueue: () => void;
-  allEntries: Record<string, any>; // A more specific type would be better
+  allEntries: EntriesData; // Use the specific type
 }
 
 const SubmissionQueue: React.FC<SubmissionQueueProps> = ({ toggleQueue, allEntries }) => {
@@ -47,8 +47,9 @@ const SubmissionQueue: React.FC<SubmissionQueueProps> = ({ toggleQueue, allEntri
     // 2. Search in the allEntries data from props
     for (const termId in allEntries) {
       const termEntries = allEntries[termId];
-      if (termEntries[entryId]) {
-        return decode(termEntries[entryId].contents);
+      const entry = termEntries[entryId];
+      if (entry && typeof entry !== 'string' && 'contents' in entry) { // Type guard
+        return decode(entry.contents);
       }
     }
     
@@ -61,23 +62,23 @@ const SubmissionQueue: React.FC<SubmissionQueueProps> = ({ toggleQueue, allEntri
       case 'NEW_TERM':
         return (
           <>
-            <h3 className="font-medium text-gray-900">New Term: "{action.payload.id.split('-')[0]}"</h3>
-            <p className="text-sm text-gray-600">({action.payload.pos}) "{action.payload.description}"</p>
+            <h3 className="font-medium text-gray-900">New Term: &quot;{action.payload.id.split('-')[0]}&quot;</h3>
+            <p className="text-sm text-gray-600">({action.payload.pos}) &quot;{action.payload.description}&quot;</p>
           </>
         );
       case 'NEW_ENTRY':
         return (
           <>
-            <h3 className="font-medium text-gray-900">New Translation: "{decode(action.payload.contents)}"</h3>
-            <p className="text-sm text-gray-600">For: "{action.payload.termId}"</p>
+            <h3 className="font-medium text-gray-900">New Translation: &quot;{decode(action.payload.contents)}&quot;</h3>
+            <p className="text-sm text-gray-600">For: &quot;{action.payload.termId}&quot;</p>
           </>
         );
       case 'VOTE':
         const translation = getTranslationForEntryId(action.payload.entryId);
         return (
           <>
-            <h3 className="font-medium text-gray-900">{action.payload.voteType.charAt(0).toUpperCase() + action.payload.voteType.slice(1)} vote for "{translation}"</h3>
-            <p className="text-sm text-gray-600">Term: "{action.payload.termId}"</p>
+            <h3 className="font-medium text-gray-900">{action.payload.voteType.charAt(0).toUpperCase() + action.payload.voteType.slice(1)} vote for &quot;{translation}&quot;</h3>
+            <p className="text-sm text-gray-600">Term: &quot;{action.payload.termId}&quot;</p>
           </>
         );
     }

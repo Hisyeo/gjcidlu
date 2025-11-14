@@ -78,3 +78,29 @@ export function decode(encoded: number[]): string {
     })
     .join('');
 }
+
+/**
+ * Decodes an array of numbers back into a string using the syllabary mapping.
+ * @param encoded The array of numbers to decode.
+ * @returns The decoded syllabary string.
+ */
+export function decodeToSyllabary(encoded: number[]): string {
+  if (!encoded || encoded.length < 1) {
+    return '';
+  }
+
+  const version = encoded[0];
+  if (version !== htfData.version) {
+    console.warn(`Mismatched HTF version. Expected ${htfData.version}, got ${version}.`);
+  }
+
+  const data = encoded.slice(1);
+  return data
+    .map(index => {
+      if (index >= 0 && index < htfData.encodings.length) {
+        return htfData.encodings[index].syllabary;
+      }
+      return htfData.encodings[0].syllabary; // Return illegal character for invalid indices
+    })
+    .join('');
+}

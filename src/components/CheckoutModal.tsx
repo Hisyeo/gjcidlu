@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { QueueAction } from '@/lib/types';
+import { QueueAction, UserSystem } from '@/lib/types'; // Import UserSystem
 import { generateSubmissionUrl } from '@/lib/submission';
 import { useToast } from '@/app/ToastContext'; // Import useToast
 
@@ -76,7 +76,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ queue, onClose }) => {
                 <select 
                     id="user-system"
                     value={userSystem}
-                    onChange={(e) => setUserSystem(e.target.value as any)}
+                    onChange={(e) => setUserSystem(e.target.value as UserSystem)}
                     className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2"
                 >
                     <option>Discord</option>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { encode, decode } from '@/lib/htf-int';
+import { encode, decode, decodeToSyllabary } from '@/lib/htf-int';
 import { Entry, Term, Vote, VoteType, QueueAction } from '@/lib/types';
 import { addToQueue, getQueue, removeFromQueue } from '@/lib/queue';
 import { useToast } from '@/app/ToastContext'; // Import useToast
@@ -28,7 +28,9 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
     if (!translation.trim()) return;
 
     const newTranslationContents = encode(translation);
-    const newEntryId = btoa(String(newTranslationContents)).slice(0, 20).replace(/[^a-zA-Z0-9]/g, '');
+    // New ID generation based on syllabary
+    const syllabaryText = decodeToSyllabary(newTranslationContents);
+    const newEntryId = syllabaryText.replace(/\s+/g, '_');
 
     // Guard against duplicate translations from initial data
     const isDuplicateInInitial = initialEntries.some(entry => entry.id === newEntryId);
@@ -39,7 +41,7 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
     );
 
     if (isDuplicateInInitial || isDuplicateInQueue) {
-      showToast('This translation has already been submitted.', 'error'); // Replaced alert
+      showToast('This translation has already been submitted.', 'error');
       return;
     }
 
@@ -55,7 +57,7 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
     });
 
     setTranslation('');
-    showToast('Translation added to queue!', 'success'); // Replaced alert
+    showToast('Translation added to queue!', 'success');
   };
 
   const handleVote = (entryId: string, voteType: VoteType) => {
@@ -79,7 +81,7 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
 
     addToQueue({
       type: 'VOTE',
-      payload: { ...vote, user: 'test-user', voted: new Date().toISOString() }
+      payload: { ...vote }
     });
 
     const entry = initialEntries.find(e => e.id === entryId);

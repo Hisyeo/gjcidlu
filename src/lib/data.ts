@@ -1,17 +1,9 @@
-import { Term, VoteType } from './types';
+import { Term, VoteType, EntriesData } from './types';
 import entriesData from '../../rsc/published/entries.json';
 import votesData from '../../rsc/published/votes.json';
 import { decode } from './htf-int'; // Import the decoder
 
 // --- Type definitions to match the JSON structure ---
-interface EntriesData {
-  [termId: string]: {
-    $pos: string;
-    $desc: string;
-    [entryId: string]: any;
-  }
-}
-
 interface VotesData {
     [termId: string]: {
         [userId: string]: {
@@ -54,10 +46,16 @@ export function getEntriesForTerm(termId: string): { id: string, contents: numbe
     const termData = entries[termId];
     return Object.keys(termData)
         .filter(key => !key.startsWith('$'))
-        .map(entryId => ({ 
-            id: entryId, 
-            contents: termData[entryId].contents || [] 
-        }));
+        .map(entryId => {
+            const entry = termData[entryId];
+            if (typeof entry !== 'string' && 'contents' in entry) {
+                return {
+                    id: entryId,
+                    contents: entry.contents || []
+                };
+            }
+            return { id: entryId, contents: [] }; // Fallback for malformed entry
+        });
 }
 
 export function getAggregatedVotesForTerm(termId: string): AggregatedVotes {

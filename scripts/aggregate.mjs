@@ -85,9 +85,12 @@ async function main() {
       if (!votesData[vote.termId][authorId]) votesData[vote.termId][authorId] = {};
       if (!votesData[vote.termId][authorId][vote.voteType]) votesData[vote.termId][authorId][vote.voteType] = [];
       
+      // For version 3 submissions, the user and voted timestamp are derived from the submission itself
+      const votedTimestamp = submissionContent.version >= 3 ? new Date().toISOString() : vote.voted;
+
       votesData[vote.termId][authorId][vote.voteType].push({
         entry: vote.entryId,
-        voted: vote.voted,
+        voted: votedTimestamp,
       });
     });
   }

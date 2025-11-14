@@ -19,9 +19,28 @@ export interface Vote {
   termId: string;
   entryId: string;
   voteType: VoteType;
-  user: string; // In a real app, this would come from auth
-  voted: string; // ISO 8601 date
+  user?: string; // Made optional for client-side queue
+  voted?: string; // Made optional for client-side queue
 }
+
+export interface EntryContent {
+  submitter: string;
+  created: string;
+  contents: number[];
+  original?: string;
+}
+
+export interface TermEntries {
+  $pos: string;
+  $desc: string;
+  [key: string]: EntryContent | string; // Index signature for other properties
+}
+
+export interface EntriesData {
+  [termId: string]: TermEntries;
+}
+
+export type UserSystem = 'Email' | 'Discord' | 'Reddit';
 
 // Actions that can be in the submission queue
 export type QueueAction =

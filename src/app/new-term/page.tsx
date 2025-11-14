@@ -45,7 +45,7 @@ function NewTermForm() {
 
         <div className="rounded-lg border border-gray-200 bg-white p-6">
           <h2 className="text-2xl font-semibold">Add a New Term Meaning</h2>
-          <p className="mt-1 text-gray-500">This will create a new, distinct entry. (e.g., "Bank" as a noun "a financial institution" vs. "Bank" as a noun "a river side").</p>
+          <p className="mt-1 text-gray-500">This will create a new, distinct entry. (e.g., &quot;Bank&quot; as a noun &quot;a financial institution&quot; vs. &quot;Bank&quot; as a noun &quot;a river side&quot;).</p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div>

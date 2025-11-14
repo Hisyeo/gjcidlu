@@ -1,18 +1,16 @@
-import { getQueue, clearQueue } from './queue';
-import { QueueAction } from './types';
-
-type UserSystem = 'Email' | 'Discord' | 'Reddit';
+import { clearQueue } from './queue';
+import { QueueAction, Term, Entry, Vote, UserSystem } from './types';
 
 function formatSubmission(queue: QueueAction[], userSystem: UserSystem, userId: string) {
   const submission = {
-    version: 2, // Add version field
+    version: 3, // Add version field
     author: {
       system: userSystem,
       id: userId,
     },
-    newTerms: [] as any[],
-    newEntries: [] as any[],
-    votes: [] as any[],
+    newTerms: [] as Term[],
+    newEntries: [] as Entry[],
+    votes: [] as Vote[],
   };
 
   queue.forEach(action => {

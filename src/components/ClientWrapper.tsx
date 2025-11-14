@@ -6,6 +6,7 @@ import SubmissionQueue from "@/components/SubmissionQueue";
 import { getQueue } from "@/lib/queue";
 import { useAppContext } from "@/app/AppContext";
 import { ToastProvider } from "@/app/ToastContext";
+import { EntriesData } from "@/lib/types"; // Import EntriesData
 
 interface Stats {
   translatedCount: number;
@@ -19,7 +20,7 @@ export default function ClientWrapper({
 }: {
   children: React.ReactNode;
   stats: Stats | null;
-  allEntries: any; // You might want to define a more specific type for this
+  allEntries: EntriesData; // Use the specific type
 }) {
   const [isQueueOpen, setQueueOpen] = useState(false);
   const [queueCount, setQueueCount] = useState(0);

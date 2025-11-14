@@ -34,14 +34,6 @@ function decode(encoded) {
 
 // --- End of duplicated logic ---
 
-// Helper to decode base64f (filename-safe base64)
-function base64f_decode(str) {
-  // Convert base64f to standard base64
-  const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
-  // Decode from base64
-  return Buffer.from(base64, 'base64').toString('utf8');
-}
-
 async function run() {
   if (process.argv.length < 3) {
     console.error('Usage: node scripts/decode-for-validation.mjs <path_to_submission.json>');
@@ -70,22 +62,9 @@ async function run() {
     if (votes.length > 0) {
       summary += '##### New Votes:\n';
       for (const vote of votes) {
-        let decodedEntryText;
-        const votedEntry = newEntries.find(e => e.id === vote.entryId);
-        if (votedEntry) {
-          decodedEntryText = decode(votedEntry.contents);
-        } else {
-          // Attempt to decode the entryId itself if it's a base64f encoded HTF-INT array
-          try {
-            const decodedEntryIdString = base64f_decode(vote.entryId);
-            const htfIntArray = JSON.parse(decodedEntryIdString);
-            decodedEntryText = decode(htfIntArray);
-          } catch (e) {
-            decodedEntryText = `(Existing entry - ID: ${vote.entryId})`;
-          }
-        }
         const [termWord, termRandomId] = vote.termId.split('-');
-        summary += `- **${vote.voteType.charAt(0).toUpperCase() + vote.voteType.slice(1)}** vote for **${decodedEntryText}** (on term: *${termWord} (${termRandomId})*)\n`;
+        // The entryId is now human-readable, so we just display it.
+        summary += `- **${vote.voteType.charAt(0).toUpperCase() + vote.voteType.slice(1)}** vote for **${vote.entryId}** (on term: *${termWord} (${termRandomId})*)\n`;
       }
     } else {
       summary += '- No new votes.\n';

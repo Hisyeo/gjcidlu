@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react'; // Import useMemo
 import Link from 'next/link';
 import { TermWithDetails } from '@/lib/data';
 import { useAppContext } from '@/app/AppContext';
-import { addToQueue, getQueue } from '@/lib/queue'; // Import getQueue
-import { encode } from '@/lib/htf-int';
+import { addToQueue, getQueue } from '@/lib/queue';
+import { encode, decodeToSyllabary } from '@/lib/htf-int';
 import { useToast } from '@/app/ToastContext';
 import { QueueAction } from '@/lib/types';
 
@@ -15,7 +15,6 @@ interface TermListProps {
 
 export default function TermList({ initialTerms }: TermListProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredTerms, setFilteredTerms] = useState(initialTerms);
   const { showUntranslated, setShowUntranslated } = useAppContext();
   const { showToast } = useToast();
   const [queue, setQueue] = useState<QueueAction[]>([]);
@@ -30,13 +29,12 @@ export default function TermList({ initialTerms }: TermListProps) {
     return () => window.removeEventListener('storage', updateQueue);
   }, []);
 
-  useEffect(() => {
+  const filteredTerms = useMemo(() => {
     const lowercasedQuery = searchQuery.toLowerCase();
-    const filtered = initialTerms.filter(term =>
+    return initialTerms.filter(term =>
       term.id.toLowerCase().includes(lowercasedQuery) ||
       term.description.toLowerCase().includes(lowercasedQuery)
     );
-    setFilteredTerms(filtered);
   }, [searchQuery, initialTerms]);
 
   const getPendingChangeStatus = (termId: string): 'vote' | 'entry' | 'both' | 'none' => {
@@ -65,7 +63,9 @@ export default function TermList({ initialTerms }: TermListProps) {
       const translationText = newTranslations[termId];
       if (translationText && translationText.trim()) {
         const newTranslationContents = encode(translationText.trim());
-        const newEntryId = btoa(String(newTranslationContents)).slice(0, 20).replace(/[^a-zA-Z0-9]/g, '');
+        // New ID generation based on syllabary
+        const syllabaryText = decodeToSyllabary(newTranslationContents);
+        const newEntryId = syllabaryText.replace(/\s+/g, '_');
 
         addToQueue({
           type: 'NEW_ENTRY',

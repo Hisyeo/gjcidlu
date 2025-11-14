@@ -63,7 +63,7 @@ jobs:
           if [[ "${{ steps.duplicate_check.outputs.duplicate_found }}" == "true" ]]; then
             CONCLUSION="action_required"
             TITLE="Duplicate Entry Found"
-            SUMMARY="Your translation **${{ steps.duplicate_check.outputs.duplicate_entry_id }}** has already been submitted in another pending submission."
+            SUMMARY="Your translation **${{ steps.duplicate_check.outputs.duplicate_entry_id }}** has already been submitted in [another submission](${{ github.server_url }}/${{ github.repository }}/blob/${{ github.event.pull_request.head.sha }}/${{ steps.duplicate_check.outputs.duplicate_submission_file }})."
             TEXT="Please choose one of the following options:"
             ACTIONS='[
               {"label": "Change to Vote", "description": "Change this entry to a vote.", "identifier": "change-to-vote"},

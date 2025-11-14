@@ -1,0 +1,47 @@
+{
+  "version": 3,
+  "author": {
+    "system": "Discord",
+    "id": "128874964517388288"
+  },
+  "newTerms": [
+    {
+      "id": "kindhearted-k9dyq",
+      "pos": "adjective",
+      "description": "kind and generous"
+    },
+    {
+      "id": "quizzical-4hio5",
+      "pos": "adjective",
+      "description": "a quizzical expression is one that shows that you do not understand something and perhaps think it is slightly amusing"
+    },
+    {
+      "id": "intelligent-6llmu",
+      "pos": "adjective",
+      "description": "having a high level of mental ability, and good at thinking clearly and understanding ideas"
+    },
+    {
+      "id": "crush-2b5y6",
+      "pos": "verb",
+      "description": "to press something so hard that it breaks or is damaged"
+    },
+    {
+      "id": "crush-48beo",
+      "pos": "noun",
+      "description": "a strong feeling of romantic love for someone, especially one that a young person has for someone older who they do not know well"
+    },
+    {
+      "id": "disastrous-ucdtx",
+      "pos": "adjective",
+      "description": "very bad, or ending in failure"
+    }
+  ],
+  "newEntries": [],
+  "votes": [
+    {
+      "termId": "ramble-g68oh",
+      "entryId": "Miw4NTAsMTc3NCw3Mjgs",
+      "voteType": "overall"
+    }
+  ]
+}

@@ -117,10 +117,12 @@ jobs:
       - name: 'Post PR Comment'
         uses: actions/github-script@v7
         if: steps.comment_body.outputs.body != ''
+        env:
+          COMMENT_BODY: ${{ steps.comment_body.outputs.body }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const body = `${{ steps.comment_body.outputs.body }}`;
+            const body = process.env.COMMENT_BODY;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,

@@ -95,7 +95,7 @@ jobs:
               },
               actions: $actions
             }')
-
+          echo $JSON_PAYLOAD
           curl -L --fail \
             -X POST \
             -H "Accept: application/vnd.github+json" \

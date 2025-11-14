@@ -60,7 +60,7 @@ jobs:
             CONCLUSION="action_required"
             TITLE="Duplicate Entry Found"
             SUMMARY="Your translation **${{ steps.duplicate_check.outputs.duplicate_entry_id }}** has already been submitted in [another submission](${{ github.server_url }}/${{ github.repository }}/blob/${{ github.event.pull_request.head.sha }}/${{ steps.duplicate_check.outputs.duplicate_submission_file }})."
-            TEXT="To resolve this, please comment on this PR with one of the following commands:\n- \`/change-to-vote`\n- \`/remove-entry`"
+            TEXT="To resolve this, please comment on this PR with one of the following commands:\n- \\\`/change-to-vote\\\`\n- \\\`/remove-entry\\\`"
             ACTIONS="[]"
           else
             CONCLUSION="success"

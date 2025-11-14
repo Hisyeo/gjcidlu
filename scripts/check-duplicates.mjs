@@ -3,7 +3,6 @@ import path from 'path';
 
 const SUBMITTED_DIR = path.join(process.cwd(), 'rsc', 'submitted');
 const PROCESSED_DIR = path.join(process.cwd(), 'rsc', 'processed');
-const ENTRIES_PATH = path.join(process.cwd(), 'rsc', 'published', 'entries.json');
 
 async function getAllSubmissionFiles(dir) {
   try {
@@ -49,31 +48,6 @@ async function run() {
         process.exit(0);
       }
     }
-  }
-
-  // Check against entries.json
-  try {
-    const entriesContent = JSON.parse(await fs.readFile(ENTRIES_PATH, 'utf-8'));
-    for (const entry of currentNewEntries) {
-      const termEntries = entriesContent[entry.termId];
-      if (termEntries) {
-        for (const entryId in termEntries) {
-          if (entryId.startsWith('$')) continue;
-          const existingEntry = termEntries[entryId];
-          if (JSON.stringify(existingEntry.contents) === JSON.stringify(entry.contents)) {
-            console.log(`duplicate_found=true`);
-            console.log(`duplicate_entry_id=${entry.id}`);
-            console.log(`duplicate_submission_file=rsc/published/entries.json`);
-            process.exit(0);
-          }
-        }
-      }
-    }
-  } catch (error) {
-    if (error.code !== 'ENOENT') {
-      throw error;
-    }
-    // entries.json doesn't exist, so no duplicates to check against.
   }
 
   console.log('duplicate_found=false');

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { encode, decode, decodeToSyllabary } from '@/lib/htf-int';
+import { encode, decode, encodeToSnakeCaseSyllabary } from '@/lib/htf-int';
 import { Entry, Term, Vote, VoteType, QueueAction } from '@/lib/types';
 import { addToQueue, getQueue, removeFromQueue } from '@/lib/queue';
 import { useToast } from '@/app/ToastContext'; // Import useToast
@@ -28,9 +28,8 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
     if (!translation.trim()) return;
 
     const newTranslationContents = encode(translation);
-    // New ID generation based on syllabary
-    const syllabaryText = decodeToSyllabary(newTranslationContents);
-    const newEntryId = syllabaryText.replace(/\s+/g, '_');
+    // New ID generation based on snake_cased syllabary
+    const newEntryId = encodeToSnakeCaseSyllabary(newTranslationContents);
 
     // Guard against duplicate translations from initial data
     const isDuplicateInInitial = initialEntries.some(entry => entry.id === newEntryId);

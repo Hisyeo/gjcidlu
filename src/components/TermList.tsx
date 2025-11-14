@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { TermWithDetails } from '@/lib/data';
 import { useAppContext } from '@/app/AppContext';
 import { addToQueue, getQueue } from '@/lib/queue';
-import { encode, decodeToSyllabary } from '@/lib/htf-int';
+import { encode, encodeToSnakeCaseSyllabary } from '@/lib/htf-int';
 import { useToast } from '@/app/ToastContext';
 import { QueueAction } from '@/lib/types';
 
@@ -63,9 +63,8 @@ export default function TermList({ initialTerms }: TermListProps) {
       const translationText = newTranslations[termId];
       if (translationText && translationText.trim()) {
         const newTranslationContents = encode(translationText.trim());
-        // New ID generation based on syllabary
-        const syllabaryText = decodeToSyllabary(newTranslationContents);
-        const newEntryId = syllabaryText.replace(/\s+/g, '_');
+        // New ID generation based on snake_cased syllabary
+        const newEntryId = encodeToSnakeCaseSyllabary(newTranslationContents);
 
         addToQueue({
           type: 'NEW_ENTRY',

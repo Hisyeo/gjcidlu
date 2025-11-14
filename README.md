@@ -10,11 +10,10 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 - [ ] Add noun phrase grammar and spell checking before submission is allowed
 - [ ] Make the main rendering view into a window that only renders html within proximity of user's scroll location (when list of terms gets big)
 - [ ] Add a warning toast to indicate that user's prior selection was unset
-- [ ] Allow the user to open term detail page and add translation before submitting the new term
-- [ ] Allow the user to see newly added translations in the term detail page before they are submitted
+- [x] Allow the user to see newly added translations in the term detail page before they are submitted
 - [ ] Add a way to click on a submission queue item and navigate to that new term, new translation or voted translation
 - [ ] Either make the untranslated button clickable on all screens or only show it on the main screen
-- [ ] Make submitter not a field for submission entries because of the submission author
+- [x] Make submitter not a field for submission entries because of the submission author
 
 ## Getting Started
 

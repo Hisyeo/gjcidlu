@@ -5,7 +5,7 @@ export interface Term {
 }
 
 export interface Entry {
-  id: string; // base64f of contents
+  id: string; // snake_case_syllabary of contents
   termId: string;
   submitter?: string;
   created?: string; // ISO 8601 date

@@ -19,6 +19,7 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
   const [queue, setQueue] = useState<QueueAction[]>([]);
   const { showToast } = useToast();
   const [pendingEntries, setPendingEntries] = useState<(Entry & { prUrl?: string })[]>([]);
+  const [isDuplicateInput, setIsDuplicateInput] = useState(false); // New state for visual feedback
 
   useEffect(() => {
     const updateQueue = () => setQueue(getQueue());
@@ -36,7 +37,7 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
         const result: PendingSubmissionsResponse = await getPendingSubmissions(repoUrl);
         fetchedSubmissions = result.submissions;
         localStorage.setItem(PENDING_DATA_CACHE_KEY, JSON.stringify(fetchedSubmissions));
-      } catch (error: unknown) { // Changed type to unknown
+      } catch (error: unknown) {
         console.error("Error fetching pending submissions:", error);
         if (typeof error === 'object' && error !== null && 'isRateLimitError' in error && (error as GitHubRateLimitError).isRateLimitError) {
           showToast('GitHub API rate limit exceeded. Using cached pending data.', 'error');
@@ -63,13 +64,22 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
 
     fetchPendingData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [term.id]); // Only re-run if the term changes
+  }, [term.id]);
 
   const allEntries = useMemo(() => {
     const published = initialEntries.map(e => ({ ...e, status: 'published' as const, prUrl: undefined }));
-    const pending = pendingEntries.map(e => ({ ...e, status: 'pending' as const, votes: { overall: 0, minimal: 0, specific: 0, humorous: 0 } }));
-    return [...published, ...pending];
-  }, [initialEntries, pendingEntries]);
+    const pendingFromPrs = pendingEntries.map(e => ({ ...e, status: 'pending-pr' as const, votes: { overall: 0, minimal: 0, specific: 0, humorous: 0 } }));
+    
+    const pendingFromQueue = queue
+      .filter((action): action is { type: 'NEW_ENTRY'; payload: Entry; id: string } => action.type === 'NEW_ENTRY' && action.payload.termId === term.id)
+      .map(action => ({ ...action.payload, status: 'pending-queue' as const, votes: { overall: 0, minimal: 0, specific: 0, humorous: 0 } }));
+
+    const combined = [...published, ...pendingFromPrs, ...pendingFromQueue];
+    
+    const uniqueEntries = Array.from(new Map(combined.map(entry => [entry.id, entry])).values());
+
+    return uniqueEntries;
+  }, [initialEntries, pendingEntries, queue, term.id]);
 
   const handleAddEntry = (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,11 +88,17 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
     const newTranslationContents = encode(translation);
     const newEntryId = encodeToSnakeCaseSyllabary(newTranslationContents);
 
-    const isDuplicate = allEntries.some(entry => entry.id === newEntryId) ||
-                        queue.some(action => action.type === 'NEW_ENTRY' && action.payload.id === newEntryId);
+    // Check against all existing entries (published, pending PRs, and pending in queue)
+    const isDuplicateInAllEntries = allEntries.some(entry => entry.id === newEntryId);
+    const isDuplicateInQueue = queue.some(action => 
+      action.type === 'NEW_ENTRY' && 
+      action.payload.termId === term.id && 
+      action.payload.id === newEntryId // Check against the ID of the queued entry
+    );
 
-    if (isDuplicate) {
-      showToast('This translation has already been submitted.', 'error');
+    if (isDuplicateInAllEntries || isDuplicateInQueue) {
+      showToast('This translation already exists or is pending review.', 'error');
+      setIsDuplicateInput(true); // Set state to make input red
       return;
     }
 
@@ -92,7 +108,18 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
     });
 
     setTranslation('');
+    setIsDuplicateInput(false); // Reset state
     showToast('Translation added to queue!', 'success');
+  };
+
+  const handleModify = (contents: number[]) => {
+    setTranslation(decode(contents));
+    setIsDuplicateInput(false); // Reset duplicate status when modifying
+  };
+
+  const handleTranslationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTranslation(e.target.value);
+    setIsDuplicateInput(false); // Reset duplicate status when typing
   };
 
   const handleVote = (entryId: string, voteType: VoteType) => {
@@ -145,9 +172,9 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
           <input
             type="text"
             value={translation}
-            onChange={(e) => setTranslation(e.target.value)}
+            onChange={handleTranslationChange} // Use new handler
             placeholder="Add your Hîsyêô translation..."
-            className="w-full rounded-lg border border-gray-300 p-3"
+            className={`w-full rounded-lg border p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none ${isDuplicateInput ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'}`} // Conditional styling
           />
           <button type="submit" className="mt-2 w-full rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
             Add to Submission Queue
@@ -160,19 +187,24 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
           <h3 className="text-xl font-semibold">All Translations ({allEntries.length})</h3>
 
           {allEntries.map(entry => {
-            const isPending = entry.status === 'pending';
+            const isPendingPr = entry.status === 'pending-pr';
+            const isPendingQueue = entry.status === 'pending-queue';
+            const isPending = isPendingPr || isPendingQueue;
+
             return (
               <div key={entry.id} className={`rounded-lg border bg-white ${isPending ? 'border-yellow-400' : 'border-gray-200'}`}>
                 {isPending && (
                   <div className="p-2 bg-yellow-100 text-yellow-800 text-sm rounded-t-lg flex justify-between items-center">
-                    <span>This translation is pending review.</span>
-                    {entry.prUrl && <a href={entry.prUrl} target="_blank" rel="noopener noreferrer" className="font-bold hover:underline">View PR</a>}
+                    <span>
+                      {isPendingPr ? 'This translation is pending review.' : 'This translation is in your submission queue.'}
+                    </span>
+                    {isPendingPr && entry.prUrl && <a href={entry.prUrl} target="_blank" rel="noopener noreferrer" className="font-bold hover:underline">View PR</a>}
                   </div>
                 )}
                 <div className="p-4">
                   <div className="mb-3 flex items-center justify-between">
                     <p className="text-2xl font-medium text-gray-900">{decode(entry.contents)}</p>
-                    <button className="flex items-center space-x-1 rounded-lg p-2 text-sm text-gray-500 hover:bg-gray-100 hover:text-blue-600">
+                    <button onClick={() => handleModify(entry.contents)} className="flex items-center space-x-1 rounded-lg p-2 text-sm text-gray-500 hover:bg-gray-100 hover:text-blue-600">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                       </svg>

@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "node scripts/aggregate.mjs && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "reprocess": "node scripts/reprocess.mjs"
   },
   "dependencies": {
     "react": "19.2.0",

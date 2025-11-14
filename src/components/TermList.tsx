@@ -72,8 +72,6 @@ export default function TermList({ initialTerms }: TermListProps) {
             id: newEntryId,
             termId: termId,
             contents: newTranslationContents,
-            submitter: 'test-user', // This should be replaced with real user data
-            created: new Date().toISOString(),
           }
         });
         count++;

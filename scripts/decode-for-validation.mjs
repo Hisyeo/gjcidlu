@@ -43,11 +43,24 @@ async function run() {
   const filePath = process.argv[2];
   try {
     const submissionContent = JSON.parse(await fs.readFile(filePath, 'utf-8'));
+    const newTerms = submissionContent.newTerms || [];
     const newEntries = submissionContent.newEntries || [];
     const votes = submissionContent.votes || [];
 
     // Create a quick summary
     let summary = '#### Summary of Contributions:\n';
+
+    if (newTerms.length > 0) {
+      summary += '##### New Terms:\n';
+      for (const term of newTerms) {
+        const termName = term.id.split('-')[0];
+        const longmanLink = `https://www.ldoceonline.com/dictionary/${termName.toLowerCase()}`;
+        summary += `- **${termName}** (${term.pos}.): *${term.description}* ([Longman's](${longmanLink}))\n`;
+      }
+    } else {
+      summary += '- No new terms.\n';
+    }
+
     if (newEntries.length > 0) {
       summary += '##### New Translations:\n';
       for (const entry of newEntries) {

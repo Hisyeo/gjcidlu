@@ -7,8 +7,8 @@ export interface Term {
 export interface Entry {
   id: string; // base64f of contents
   termId: string;
-  submitter: string;
-  created: string; // ISO 8601 date
+  submitter?: string;
+  created?: string; // ISO 8601 date
   contents: number[]; // HTF-INT
   original?: string; // if modifying
 }

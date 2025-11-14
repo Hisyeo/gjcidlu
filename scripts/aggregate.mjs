@@ -72,7 +72,7 @@ async function main() {
       if (entriesData[entry.termId] && !entriesData[entry.termId][entry.id]) {
         entriesData[entry.termId][entry.id] = {
           submitter: authorId,
-          created: entry.created,
+          created: new Date().toISOString(),
           contents: entry.contents,
           ...(entry.original && { original: entry.original }),
         };

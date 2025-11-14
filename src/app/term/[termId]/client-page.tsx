@@ -52,7 +52,7 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
 
     addToQueue({
       type: 'NEW_ENTRY',
-      payload: { ...newEntry, submitter: 'test-user', created: new Date().toISOString() }
+      payload: { ...newEntry }
     });
 
     setTranslation('');

@@ -7,7 +7,7 @@ on:
       - 'rsc/submitted/**'
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
 
 jobs:
@@ -34,56 +34,57 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0 # Fetch all history to make base.sha available for git diff
 
-      - name: 'Generate Comment Body'
-        id: generate_comment
+      - name: 'Check for Duplicate Entries'
+        id: duplicate_check
         run: |
           # Get the list of files changed in the PR
           CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
           SUBMISSION_FILE=$(echo "$CHANGED_FILES" | grep '^rsc/submitted/.*\.json$' | head -n 1)
 
           if [[ -z "$SUBMISSION_FILE" ]]; then
-            echo "comment_body=This PR does not contain a new submission file in \`rsc/submitted/\`." >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          SUBMISSION_CONTENT=$(cat "$SUBMISSION_FILE")
-          USER_SYSTEM=$(jq -r '.author.system' <<< "$SUBMISSION_CONTENT")
-          USER_ID=$(jq -r '.author.id' <<< "$SUBMISSION_CONTENT")
+          # Run the duplicate check script
+          node scripts/check-duplicates.mjs "$SUBMISSION_FILE" >> "$GITHUB_OUTPUT"
 
-          if [[ "$USER_SYSTEM" == "null" || "$USER_ID" == "null" || -z "$USER_SYSTEM" || -z "$USER_ID" ]]; then
-            COMMENT_BODY="### ⚠️ Submission Error\n\n"
-            COMMENT_BODY+="The submission file in this PR appears to be malformed or is from an outdated client.\n\n"
-            COMMENT_BODY+="**Error:** Could not find author information (\`.author.system\` or \`.author.id\`) in the submission JSON.\n\n"
-            COMMENT_BODY+="**Action Required:** Please close this PR, perform a hard refresh (Ctrl+Shift+R), and try again."
+      - name: Create Check Run
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [[ "${{ steps.duplicate_check.outputs.duplicate_found }}" == "true" ]]; then
+            CONCLUSION="action_required"
+            TITLE="Duplicate Entry Found"
+            SUMMARY="Your translation **${{ steps.duplicate_check.outputs.duplicate_entry_id }}** has already been submitted in another pending submission."
+            TEXT="Please choose one of the following options:"
+            ACTIONS='[
+              {"label": "Change to Vote", "description": "Change this entry to a vote.", "identifier": "change-to-vote"},
+              {"label": "Remove Entry", "description": "Remove this entry from your submission.", "identifier": "remove-entry"},
+              {"label": "Rerun Check", "description": "Rerun the validation check.", "identifier": "rerun-check"}
+            ]'
           else
-            # Run the Node.js script to get the decoded summary
-            DECODED_SUMMARY=$(node scripts/decode-for-validation.mjs "$SUBMISSION_FILE")
-
-            # Construct the verification link
-            if [[ "$USER_SYSTEM" == "Email" ]]; then
-              VERIFICATION_LINK="mailto:${USER_ID}?subject=Confirm Your Submission"
-            elif [[ "$USER_SYSTEM" == "Reddit" ]]; then
-              VERIFICATION_LINK="https://www.reddit.com/message/compose?to=${USER_ID}&subject=Confirm%20Your%20Submission"
-            else
-              VERIFICATION_LINK="https://discord.com/users/${USER_ID}"
-            fi
-
-            COMMENT_BODY="### Submission Review Required 🗳️\n\n"
-            COMMENT_BODY+="A new submission has been received from **${USER_SYSTEM}** user \`${USER_ID}\`.\n\n"
-            COMMENT_BODY+="${DECODED_SUMMARY}\n" # Use the summary from the script
-            COMMENT_BODY+="---\n\n#### Reviewer Action\n\nClick here to verify the user: [**Verify via ${USER_SYSTEM}**](${VERIFICATION_LINK})\n\n"
-            COMMENT_BODY+="<details><summary>Full Submission Receipt</summary>\n\n\`\`\`json\n${SUBMISSION_CONTENT}\n\`\`\`\n\n</details>" # Raw content for full receipt
+            CONCLUSION="success"
+            TITLE="Validation Successful"
+            SUMMARY="No duplicate entries found."
+            TEXT="This submission is ready for review."
+            ACTIONS="[]"
           fi
 
-          echo "comment_body<<EOF" >> "$GITHUB_OUTPUT"
-          echo -e "$COMMENT_BODY" >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
-
-      - name: 'Post PR Comment'
-        uses: peter-evans/create-or-update-comment@v4
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body: ${{ steps.generate_comment.outputs.comment_body }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-
+          curl -L \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${{ github.repository }}/check-runs" \
+            -d '{
+              "name": "Duplicate Entry Check",
+              "head_sha": "${{ github.event.pull_request.head.sha }}",
+              "status": "completed",
+              "conclusion": "'"$CONCLUSION"'",
+              "output": {
+                "title": "'"$TITLE"'",
+                "summary": "'"$SUMMARY"'",
+                "text": "'"$TEXT"'"
+              },
+              "actions": '"$ACTIONS"'
+            }'

@@ -1,0 +1,60 @@
+name: Handle Duplicate Entry
+
+on:
+  check_run:
+    types: [requested_action]
+
+jobs:
+  handle_action:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.check_run.check_suite.head_sha }}
+          repository: ${{ github.event.repository.full_name }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Configure Git
+        run: |
+          git config user.name "${{ env.GITHUB_APP_USER_NAME }}"
+          git config user.email "${{ env.GITHUB_APP_USER_EMAIL }}"
+        env:
+          GITHUB_APP_USER_NAME: "gjcidlu - Validate Bot"
+          GITHUB_APP_USER_EMAIL: "gjcidlu@hisyeo.space"
+
+      - name: "Handle 'Change entry to vote'"
+        if: github.event.action.identifier == 'change-to-vote'
+        run: |
+          # Re-run duplicate check to get the submission file and entry ID
+          DUPLICATE_INFO=$(node scripts/check-duplicates.mjs $(git diff --name-only ${{ github.event.check_run.check_suite.before }} ${{ github.event.check_run.check_suite.head_sha }} | grep '^rsc/submitted/.*\.json$' | head -n 1))
+          SUBMISSION_FILE=$(echo "$DUPLICATE_INFO" | grep 'duplicate_submission_file' | cut -d'=' -f2)
+          ENTRY_ID=$(echo "$DUPLICATE_INFO" | grep 'duplicate_entry_id' | cut -d'=' -f2)
+          node scripts/handle-duplicates.mjs "rsc/submitted/$SUBMISSION_FILE" "change-to-vote" "$ENTRY_ID"
+
+      - name: "Handle 'Remove entry'"
+        if: github.event.action.identifier == 'remove-entry'
+        run: |
+          # Re-run duplicate check to get the submission file and entry ID
+          DUPLICATE_INFO=$(node scripts/check-duplicates.mjs $(git diff --name-only ${{ github.event.check_run.check_suite.before }} ${{ github.event.check_run.check_suite.head_sha }} | grep '^rsc/submitted/.*\.json$' | head -n 1))
+          SUBMISSION_FILE=$(echo "$DUPLICATE_INFO" | grep 'duplicate_submission_file' | cut -d'=' -f2)
+          ENTRY_ID=$(echo "$DUPLICATE_INFO" | grep 'duplicate_entry_id' | cut -d'=' -f2)
+          node scripts/handle-duplicates.mjs "rsc/submitted/$SUBMISSION_FILE" "remove-entry" "$ENTRY_ID"
+
+      - name: "Handle 'Rerun check'"
+        if: github.event.action.identifier == 'rerun-check'
+        run: |
+          echo "Rerunning check..."
+          # This will be handled by the re-triggering of the validation workflow
+
+      - name: Commit and push changes
+        run: |
+          git add .
+          git commit -m "Update submission based on user action"
+          git push
+        if: github.event.action.identifier == 'change-to-vote' || github.event.action.identifier == 'remove-entry'

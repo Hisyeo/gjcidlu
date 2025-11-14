@@ -81,6 +81,20 @@
         1774,
         709
       ]
+    },
+    "xq_kot_bj_busjN": {
+      "submitter": "discord:128874964517388288",
+      "created": "2025-11-14T17:10:55.281Z",
+      "contents": [
+        2,
+        850,
+        1774,
+        728,
+        1774,
+        858,
+        1774,
+        410
+      ]
     }
   },
   "terrified-th85o": {
@@ -124,6 +138,46 @@
         839,
         1774,
         633
+      ]
+    }
+  },
+  "soup-wd3ib": {
+    "$pos": "noun",
+    "$desc": "cooked liquid food, often containing small pieces of meat, fish, or vegetables",
+    "fqCk_iN_coufN": {
+      "submitter": "reddit:MadcapJake",
+      "created": "2025-11-14T17:10:55.281Z",
+      "contents": [
+        2,
+        648,
+        1774,
+        834,
+        1774,
+        323
+      ]
+    },
+    "mkN_fqCk": {
+      "submitter": "discord:128874964517388288",
+      "created": "2025-11-14T17:10:55.281Z",
+      "contents": [
+        2,
+        791,
+        1774,
+        648
+      ]
+    }
+  },
+  "disastrous-b9lhq": {
+    "$pos": "adjective",
+    "$desc": "very bad, or ending in failure",
+    "loC_et": {
+      "submitter": "reddit:MadcapJake",
+      "created": "2025-11-14T17:10:55.281Z",
+      "contents": [
+        2,
+        822,
+        1774,
+        833
       ]
     }
   }

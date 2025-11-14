@@ -1,0 +1,70 @@
+name: Handle PR Command
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  handle_command:
+    runs-on: ubuntu-latest
+    if: github.event.issue.pull_request && (github.event.comment.user.login == github.event.issue.user.login) && (startsWith(github.event.comment.body, '/change-to-vote') || startsWith(github.event.comment.body, '/remove-entry'))
+    steps:
+      - name: Get PR data
+        id: get_pr_data
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+            core.setOutput('head_sha', pr.data.head.sha);
+            core.setOutput('base_sha', pr.data.base.sha);
+
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.get_pr_data.outputs.head_sha }}
+          fetch-depth: 0 # For git diff
+
+      - name: Configure Git
+        run: |
+          git config user.name "gjcidlu - Bot"
+          git config user.email "bot@gjcidlu.hisyeo.space"
+
+      - name: Get submission file and entry ID
+        id: get_submission_info
+        run: |
+          CHANGED_FILES=$(git diff --name-only ${{ steps.get_pr_data.outputs.base_sha }} ${{ steps.get_pr_data.outputs.head_sha }})
+          SUBMISSION_FILE=$(echo "$CHANGED_FILES" | grep '^rsc/submitted/.*\.json$' | head -n 1)
+          if [[ -z "$SUBMISSION_FILE" ]]; then
+            echo "No submission file found in this PR."
+            exit 1
+          fi
+          echo "submission_file=$SUBMISSION_FILE" >> "$GITHUB_OUTPUT"
+          
+          # Run check-duplicates to find the entry ID of the duplicate
+          DUPLICATE_INFO=$(node scripts/check-duplicates.mjs $SUBMISSION_FILE)
+          ENTRY_ID=$(echo "$DUPLICATE_INFO" | grep 'duplicate_entry_id' | cut -d'=' -f2)
+          if [[ -z "$ENTRY_ID" ]]; then
+            echo "No duplicate entry found to action upon."
+            # This could be a comment on a PR that previously had a duplicate
+            exit 0 
+          fi
+          echo "entry_id=$ENTRY_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Handle Command
+        if: steps.get_submission_info.outputs.submission_file != '' && steps.get_submission_info.outputs.entry_id != ''
+        run: |
+          COMMAND=$(echo "${{ github.event.comment.body }}" | awk '{print $1}')
+          ACTION=${COMMAND#/} # Remove the leading slash
+          
+          node scripts/handle-duplicates.mjs ${{ steps.get_submission_info.outputs.submission_file }} $ACTION ${{ steps.get_submission_info.outputs.entry_id }}
+
+      - name: Commit and push changes
+        if: steps.get_submission_info.outputs.submission_file != '' && steps.get_submission_info.outputs.entry_id != ''
+        run: |
+          git add ${{ steps.get_submission_info.outputs.submission_file }}
+          git commit -m "chore: update submission based on user command"
+          git push

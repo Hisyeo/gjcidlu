@@ -79,21 +79,21 @@ jobs:
           fi
 
           read -r -d '' JSON_PAYLOAD << EOF
-          {
-            "name": "Duplicate Entry Check",
-            "head_sha": "${{ github.event.pull_request.head.sha }}",
-            "status": "completed",
-            "conclusion": "$CONCLUSION",
-            "output": {
-              "title": "$TITLE",
-              "summary": "$SUMMARY",
-              "text": "$TEXT"
-            },
-            "actions": $ACTIONS
-          }
-          EOF
+{
+"name": "Duplicate Entry Check",
+"head_sha": "${{ github.event.pull_request.head.sha }}",
+"status": "completed",
+"conclusion": "$CONCLUSION",
+"output": {
+"title": "$TITLE",
+"summary": "$SUMMARY",
+"text": "$TEXT"
+},
+"actions": $ACTIONS
+}
+EOF
 
-          curl -L \
+          curl -L --fail \
             -X POST \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer $GITHUB_TOKEN" \

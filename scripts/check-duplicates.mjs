@@ -2,6 +2,19 @@ import fs from 'fs/promises';
 import path from 'path';
 
 const SUBMITTED_DIR = path.join(process.cwd(), 'rsc', 'submitted');
+const PROCESSED_DIR = path.join(process.cwd(), 'rsc', 'processed');
+
+async function getAllSubmissionFiles(dir) {
+  try {
+    const files = await fs.readdir(dir);
+    return files.filter(file => file.endsWith('.json')).map(file => path.join(dir, file));
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      return []; // Directory doesn't exist, return empty array
+    }
+    throw error;
+  }
+}
 
 async function run() {
   if (process.argv.length < 3) {
@@ -9,17 +22,18 @@ async function run() {
     process.exit(1);
   }
 
-  const currentSubmissionPath = process.argv[2];
+  const currentSubmissionPath = path.resolve(process.argv[2]);
   const currentSubmissionContent = JSON.parse(await fs.readFile(currentSubmissionPath, 'utf-8'));
   const currentNewEntries = currentSubmissionContent.newEntries || [];
 
-  const otherSubmissionFiles = (await fs.readdir(SUBMITTED_DIR))
-    .filter(file => path.join(SUBMITTED_DIR, file) !== currentSubmissionPath && file.endsWith('.json'));
+  const otherSubmittedFiles = await getAllSubmissionFiles(SUBMITTED_DIR);
+  const processedFiles = await getAllSubmissionFiles(PROCESSED_DIR);
+  const allOtherFiles = [...otherSubmittedFiles, ...processedFiles].filter(file => file !== currentSubmissionPath);
+
 
   for (const entry of currentNewEntries) {
-    for (const file of otherSubmissionFiles) {
-      const otherSubmissionPath = path.join(SUBMITTED_DIR, file);
-      const otherSubmissionContent = JSON.parse(await fs.readFile(otherSubmissionPath, 'utf-8'));
+    for (const otherFile of allOtherFiles) {
+      const otherSubmissionContent = JSON.parse(await fs.readFile(otherFile, 'utf-8'));
       const otherNewEntries = otherSubmissionContent.newEntries || [];
 
       const duplicate = otherNewEntries.find(otherEntry =>
@@ -30,7 +44,8 @@ async function run() {
       if (duplicate) {
         console.log(`duplicate_found=true`);
         console.log(`duplicate_entry_id=${entry.id}`);
-        console.log(`duplicate_submission_file=${file}`);
+        // output relative path for the link
+        console.log(`duplicate_submission_file=${path.relative(process.cwd(), otherFile)}`);
         process.exit(0);
       }
     }

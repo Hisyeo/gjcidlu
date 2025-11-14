@@ -61,17 +61,11 @@ jobs:
             TITLE="Duplicate Entry Found"
             SUMMARY="Your translation **${{ steps.duplicate_check.outputs.duplicate_entry_id }}** has already been submitted in [another submission](${{ github.server_url }}/${{ github.repository }}/blob/${{ github.event.pull_request.head.sha }}/${{ steps.duplicate_check.outputs.duplicate_submission_file }})."
             TEXT="Please choose one of the following options:"
-            ACTIONS='[
-              {"label": "Change to Vote", "description": "Change this entry to a vote", "identifier": "change-to-vote"},
-              {"label": "Remove Entry", "description": "Remove this entry from your submission", "identifier": "remove-entry"},
-              {"label": "Rerun Check", "description": "Rerun the validation check", "identifier": "rerun-check"}
-            ]'
           else
             CONCLUSION="success"
             TITLE="Validation Successful"
             SUMMARY="No duplicate entries found."
             TEXT="This submission is ready for review."
-            ACTIONS="[]"
           fi
 
           JSON_PAYLOAD=$(jq -n \
@@ -82,7 +76,6 @@ jobs:
             --arg title "$TITLE" \
             --arg summary "$SUMMARY" \
             --arg text "$TEXT" \
-            --argjson actions "$ACTIONS" \
             '{
               name: $name,
               head_sha: $head_sha,
@@ -93,7 +86,11 @@ jobs:
                 summary: $summary,
                 text: $text
               },
-              actions: $actions
+              actions: [
+                {"label": "Change to Vote", "description": "Change this entry to a vote", "identifier": "change-to-vote"},
+                {"label": "Remove Entry", "description": "Remove this entry from your submission", "identifier": "remove-entry"},
+                {"label": "Rerun Check", "description": "Rerun the validation check", "identifier": "rerun-check"}
+              ]
             }')
           echo $JSON_PAYLOAD
           curl -L --fail \

@@ -8,6 +8,10 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 - [ ] Show a count of how many translations have been written for the suggested alternative terms 
 - [ ] Add noun phrase grammar and spell checking before submission is allowed
 - [ ] Make the main rendering view into a window that only renders html within proximity of user's scroll location (when list of terms gets big)
+- [ ] Add a warning toast to indicate that user's prior selection was unset
+- [ ] Allow the user to open term detail page and add translation before submitting the new term
+- [ ] Allow the user to see newly added translations in the term detail page before they are submitted
+- [ ] Add a way to click on a submission queue item and navigate to that new term, new translation or voted translation
 
 ## Getting Started
 

@@ -7,53 +7,56 @@ const PUBLISHED_DIR = path.join(process.cwd(), 'rsc', 'published');
 const ENTRIES_FILE = path.join(PUBLISHED_DIR, 'entries.json');
 const VOTES_FILE = path.join(PUBLISHED_DIR, 'votes.json');
 
-// This is the initial state of the data before any submissions are processed.
-const baseEntries = {};
-const baseVotes = {};
-
-async function getAllSubmissionFiles() {
-    // Ensure directories exist to prevent errors on a clean checkout
-    await fs.mkdir(SUBMITTED_DIR, { recursive: true });
-    await fs.mkdir(PROCESSED_DIR, { recursive: true });
-    
-    const submitted = (await fs.readdir(SUBMITTED_DIR)).map(f => path.join(SUBMITTED_DIR, f));
-    const processed = (await fs.readdir(PROCESSED_DIR)).map(f => path.join(PROCESSED_DIR, f));
-    return [...submitted, ...processed];
-}
-
 async function main() {
-  console.log('Starting aggregation script for build process...');
+  console.log('Starting aggregation script...');
 
-  // Ensure output directory exists
+  // Ensure directories exist
+  await fs.mkdir(SUBMITTED_DIR, { recursive: true });
+  await fs.mkdir(PROCESSED_DIR, { recursive: true });
   await fs.mkdir(PUBLISHED_DIR, { recursive: true });
 
-  const allFiles = await getAllSubmissionFiles();
-  if (allFiles.length === 0) {
-    console.log('No submissions found. Writing empty data files.');
-    await fs.writeFile(ENTRIES_FILE, JSON.stringify(baseEntries, null, 2));
-    await fs.writeFile(VOTES_FILE, JSON.stringify(baseVotes, null, 2));
+  // Read existing data or start with empty objects
+  let entriesData, votesData;
+  try {
+    entriesData = JSON.parse(await fs.readFile(ENTRIES_FILE, 'utf-8'));
+  } catch (e) {
+    if (e.code === 'ENOENT') {
+      entriesData = {};
+    } else {
+      throw e;
+    }
+  }
+  try {
+    votesData = JSON.parse(await fs.readFile(VOTES_FILE, 'utf-8'));
+  } catch (e) {
+    if (e.code === 'ENOENT') {
+      votesData = {};
+    } else {
+      throw e;
+    }
+  }
+
+  const submissionFiles = (await fs.readdir(SUBMITTED_DIR)).filter(f => f.endsWith('.json'));
+
+  if (submissionFiles.length === 0) {
+    console.log('No new submissions to process. Exiting.');
+    // Ensure files exist even if there's nothing to do
+    await fs.writeFile(ENTRIES_FILE, JSON.stringify(entriesData, null, 2));
+    await fs.writeFile(VOTES_FILE, JSON.stringify(votesData, null, 2));
     return;
   }
 
-  console.log(`Found ${allFiles.length} total submission file(s) to process.`);
+  console.log(`Found ${submissionFiles.length} new submission file(s) to process.`);
 
-  // Start with a clean slate
-  const entriesData = JSON.parse(JSON.stringify(baseEntries));
-  const votesData = JSON.parse(JSON.stringify(baseVotes));
-  let processedCount = 0;
-
-  for (const filePath of allFiles) {
-    if(path.extname(filePath) !== '.json') continue;
-
+  for (const file of submissionFiles) {
+    const filePath = path.join(SUBMITTED_DIR, file);
     const submissionContent = JSON.parse(await fs.readFile(filePath, 'utf-8'));
     const authorObj = submissionContent.author;
     
     if (!authorObj || !authorObj.system || !authorObj.id) {
-        console.warn(`Skipping file ${path.basename(filePath)} due to missing author object.`);
+        console.warn(`Skipping file ${file} due to missing author object.`);
         continue;
     }
-
-    processedCount++;
     
     const authorId = `${authorObj.system.toLowerCase()}:${authorObj.id}`;
 
@@ -85,25 +88,25 @@ async function main() {
       if (!votesData[vote.termId][authorId]) votesData[vote.termId][authorId] = {};
       if (!votesData[vote.termId][authorId][vote.voteType]) votesData[vote.termId][authorId][vote.voteType] = [];
       
-      // For version 3 submissions, the user and voted timestamp are derived from the submission itself
-      const votedTimestamp = submissionContent.version >= 3 ? new Date().toISOString() : vote.voted;
+      const votedTimestamp = new Date().toISOString();
 
       votesData[vote.termId][authorId][vote.voteType].push({
         entry: vote.entryId,
         voted: votedTimestamp,
       });
     });
+
+    // Move processed file
+    const newPath = path.join(PROCESSED_DIR, file);
+    await fs.rename(filePath, newPath);
+    console.log(`Processed and moved ${file}.`);
   }
 
-  if (processedCount > 0) {
-    // Write the final aggregated data
-    await fs.writeFile(ENTRIES_FILE, JSON.stringify(entriesData, null, 2));
-    console.log('Successfully generated entries.json.');
-    await fs.writeFile(VOTES_FILE, JSON.stringify(votesData, null, 2));
-    console.log('Successfully generated votes.json.');
-  } else {
-    console.log('No valid submissions processed. Published data remains unchanged.');
-  }
+  // Write the final aggregated data
+  await fs.writeFile(ENTRIES_FILE, JSON.stringify(entriesData, null, 2));
+  console.log('Successfully updated entries.json.');
+  await fs.writeFile(VOTES_FILE, JSON.stringify(votesData, null, 2));
+  console.log('Successfully updated votes.json.');
 
   console.log('Aggregation script finished.');
 }

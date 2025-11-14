@@ -1,0 +1,44 @@
+{
+  "version": 3,
+  "author": {
+    "system": "Discord",
+    "id": "128874964517388288"
+  },
+  "newTerms": [
+    {
+      "id": "shoplifting-tjdut",
+      "pos": "noun",
+      "description": "the crime of stealing things from shops, for example by hiding them in a bag or under your clothes"
+    },
+    {
+      "id": "shoplift-7ia9x",
+      "pos": "verb",
+      "description": "to take something from a shop without paying for it"
+    }
+  ],
+  "newEntries": [
+    {
+      "id": "xq_kot_bj_busjN",
+      "termId": "ramble-g68oh",
+      "contents": [
+        2,
+        850,
+        1774,
+        728,
+        1774,
+        858,
+        1774,
+        410
+      ],
+      "submitter": "test-user",
+      "created": "2025-11-14T04:30:03.138Z"
+    }
+  ],
+  "votes": [
+    {
+      "termId": "ramble-g68oh",
+      "entryId": "Miw4NTAsMTc3NCw3Mjgs",
+      "voteType": "specific"
+    }
+  ]
+}

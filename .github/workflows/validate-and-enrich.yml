@@ -78,20 +78,27 @@ jobs:
             ACTIONS="[]"
           fi
 
-          read -r -d '' JSON_PAYLOAD << EOF
-{
-"name": "Duplicate Entry Check",
-"head_sha": "${{ github.event.pull_request.head.sha }}",
-"status": "completed",
-"conclusion": "$CONCLUSION",
-"output": {
-"title": "$TITLE",
-"summary": "$SUMMARY",
-"text": "$TEXT"
-},
-"actions": $ACTIONS
-}
-EOF
+          JSON_PAYLOAD=$(jq -n \
+            --arg name "Duplicate Entry Check" \
+            --arg head_sha "${{ github.event.pull_request.head.sha }}" \
+            --arg status "completed" \
+            --arg conclusion "$CONCLUSION" \
+            --arg title "$TITLE" \
+            --arg summary "$SUMMARY" \
+            --arg text "$TEXT" \
+            --argjson actions "$ACTIONS" \
+            '{
+              name: $name,
+              head_sha: $head_sha,
+              status: $status,
+              conclusion: $conclusion,
+              output: {
+                title: $title,
+                summary: $summary,
+                text: $text
+              },
+              actions: $actions
+            }')
 
           curl -L --fail \
             -X POST \

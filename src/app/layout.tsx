@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AppProvider } from "./AppContext";
+import { SettingsProvider } from "./SettingsContext"; // Import SettingsProvider
 import ClientWrapper from "@/components/ClientWrapper";
 import { getTranslationStats } from "@/lib/data";
 import entriesData from '@/../rsc/published/entries.json'; // Import entries data
@@ -34,9 +35,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 text-gray-800`}
       >
         <AppProvider>
-          <ClientWrapper stats={stats} allEntries={entriesData}>
-            {children}
-          </ClientWrapper>
+          <SettingsProvider> {/* Add SettingsProvider */}
+            <ClientWrapper stats={stats} allEntries={entriesData}>
+              {children}
+            </ClientWrapper>
+          </SettingsProvider>
         </AppProvider>
       </body>
     </html>

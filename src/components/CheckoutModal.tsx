@@ -1,20 +1,43 @@
 "use client";
 
-import React, { useState } from 'react';
-import { QueueAction, UserSystem } from '@/lib/types'; // Import UserSystem
+import React, { useState, useEffect } from 'react';
+import { QueueAction, UserSystem, Vote, VoteType } from '@/lib/types';
 import { generateSubmissionUrl } from '@/lib/submission';
-import { useToast } from '@/app/ToastContext'; // Import useToast
+import { useToast } from '@/app/ToastContext';
+import { useSettings } from '@/app/SettingsContext';
 
 interface CheckoutModalProps {
   queue: QueueAction[];
   onClose: () => void;
 }
 
+interface VotesData {
+    [termId: string]: {
+        [userIdentifier: string]: {
+            [voteType in VoteType]?: { entry: string; voted: string }[];
+        };
+    };
+}
+
 const CheckoutModal: React.FC<CheckoutModalProps> = ({ queue, onClose }) => {
+  const { settings } = useSettings();
   const [isProcessing, setProcessing] = useState(false);
-  const [userSystem, setUserSystem] = useState<'Email' | 'Discord' | 'Reddit'>('Discord'); // Added Reddit
-  const [userId, setUserId] = useState('');
-  const { showToast } = useToast(); // Use the toast hook
+  const [userSystem, setUserSystem] = useState<UserSystem>(settings.userSystem || 'Discord');
+  const [userId, setUserId] = useState(settings.userId || '');
+  const [allVotes, setAllVotes] = useState<VotesData | null>(null);
+  const { showToast } = useToast();
+
+  useEffect(() => {
+    fetch('/votes.json')
+      .then(res => {
+        if (!res.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return res.json();
+      })
+      .then(data => setAllVotes(data))
+      .catch(() => showToast('Could not load vote history for validation.', 'error'));
+  }, [showToast]);
 
   const newTermsCount = queue.filter(a => a.type === 'NEW_TERM').length;
   const newEntriesCount = queue.filter(a => a.type === 'NEW_ENTRY').length;
@@ -23,11 +46,36 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ queue, onClose }) => {
 
   const handleSubmit = () => {
     if (!userId) {
-      showToast('Please enter your User ID.', 'error'); // Replaced alert
+      showToast('Please enter your User ID.', 'error');
       return;
     }
+
+    if (allVotes) {
+      const currentUserIdentifier = `${userSystem.toLowerCase()}:${userId}`;
+      const newVotes = queue.filter((a): a is { type: 'VOTE', payload: Vote, id: string } => a.type === 'VOTE');
+      const conflicts = [];
+
+      for (const newVoteAction of newVotes) {
+        const { termId, voteType, entryId } = newVoteAction.payload;
+        const termVotes = allVotes[termId];
+        if (termVotes && termVotes[currentUserIdentifier]) {
+          const userVoteHistory = termVotes[currentUserIdentifier];
+          const lastVote = userVoteHistory[voteType as VoteType]?.slice(-1)[0];
+          if (lastVote && lastVote.entry !== entryId) {
+            conflicts.push(`Your '${voteType}' vote for term '${termId}' will overwrite your existing vote.`);
+          }
+        }
+      }
+
+      if (conflicts.length > 0) {
+        const message = `You are about to change ${conflicts.length} vote(s):\n\n${conflicts.join('\n')}\n\nAre you sure you want to continue?`;
+        if (!window.confirm(message)) {
+          return;
+        }
+      }
+    }
+
     setProcessing(true);
-    
     const errorMessage = generateSubmissionUrl(queue, userSystem, userId);
 
     if (errorMessage) {
@@ -35,9 +83,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ queue, onClose }) => {
       setProcessing(false);
       return;
     }
-
-    // If successful, the page will redirect, so no need for setTimeout here
-    // The onClose() will be handled by the page redirect
   };
 
   return (

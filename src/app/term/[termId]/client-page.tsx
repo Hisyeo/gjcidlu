@@ -5,21 +5,31 @@ import { encode, decode, encodeToSnakeCaseSyllabary } from '@/lib/htf-int';
 import { Entry, Term, Vote, VoteType, QueueAction } from '@/lib/types';
 import { addToQueue, getQueue, removeFromQueue } from '@/lib/queue';
 import { useToast } from '@/app/ToastContext';
+import { useSettings } from '@/app/SettingsContext';
 import { getPendingSubmissions, SubmissionContent, PendingSubmissionsResponse, GitHubRateLimitError } from '@/lib/github';
 
 const PENDING_DATA_CACHE_KEY = 'pendingSubmissionsCache';
 
 interface TermDetailClientViewProps {
   term: Term;
-  initialEntries: { id: string; votes: Record<VoteType, number>; contents: number[] }[];
+  initialEntries: { id: string; termId: string; votes: Record<VoteType, number>; contents: number[], submitter?: string }[];
+}
+
+interface DisplayEntry extends Entry {
+    status: 'published' | 'pending-pr' | 'pending-queue';
+    prUrl?: string;
+    votes: Record<VoteType, number>;
+    isCurrentUserSubmitter: boolean;
 }
 
 export default function TermDetailClientView({ term, initialEntries }: TermDetailClientViewProps) {
   const [translation, setTranslation] = useState('');
   const [queue, setQueue] = useState<QueueAction[]>([]);
   const { showToast } = useToast();
+  const { settings } = useSettings();
   const [pendingEntries, setPendingEntries] = useState<(Entry & { prUrl?: string })[]>([]);
-  const [isDuplicateInput, setIsDuplicateInput] = useState(false); // New state for visual feedback
+  const [isDuplicateInput, setIsDuplicateInput] = useState(false);
+  const [userVotes, setUserVotes] = useState<Record<VoteType, { entryId: string, date: string } | null>>({ overall: null, minimal: null, specific: null, humorous: null });
 
   useEffect(() => {
     const updateQueue = () => setQueue(getQueue());
@@ -66,20 +76,50 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [term.id]);
 
-  const allEntries = useMemo(() => {
-    const published = initialEntries.map(e => ({ ...e, status: 'published' as const, prUrl: undefined }));
-    const pendingFromPrs = pendingEntries.map(e => ({ ...e, status: 'pending-pr' as const, votes: { overall: 0, minimal: 0, specific: 0, humorous: 0 } }));
+  useEffect(() => {
+    const fetchUserVotes = async () => {
+      if (!settings.userId || !settings.userSystem) return;
+      
+      try {
+        const response = await fetch('/votes.json');
+        const allVotesData = await response.json();
+        const termVotes = allVotesData[term.id];
+        if (termVotes) {
+          const currentUserIdentifier = `${settings.userSystem.toLowerCase()}:${settings.userId}`;
+          const userVoteHistory = termVotes[currentUserIdentifier];
+          if (userVoteHistory) {
+            const latestVotes: Record<VoteType, { entryId: string, date: string } | null> = { overall: null, minimal: null, specific: null, humorous: null };
+            for (const voteType in userVoteHistory) {
+              const votes = userVoteHistory[voteType as VoteType];
+              if (votes && votes.length > 0) {
+                const latestVote = votes[votes.length - 1];
+                latestVotes[voteType as VoteType] = { entryId: latestVote.entry, date: latestVote.voted };
+              }
+            }
+            setUserVotes(latestVotes);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch or parse votes.json", error);
+      }
+    };
+    fetchUserVotes();
+  }, [settings, term.id]);
+
+  const allEntries: DisplayEntry[] = useMemo(() => {
+    const currentUserIdentifier = settings.userSystem && settings.userId ? `${settings.userSystem.toLowerCase()}:${settings.userId}` : null;
+
+    const published = initialEntries.map(e => ({ ...e, status: 'published' as const, prUrl: undefined, isCurrentUserSubmitter: e.submitter === currentUserIdentifier }));
+    const pendingFromPrs = pendingEntries.map(e => ({ ...e, status: 'pending-pr' as const, votes: { overall: 0, minimal: 0, specific: 0, humorous: 0 }, isCurrentUserSubmitter: e.submitter === currentUserIdentifier }));
     
     const pendingFromQueue = queue
       .filter((action): action is { type: 'NEW_ENTRY'; payload: Entry; id: string } => action.type === 'NEW_ENTRY' && action.payload.termId === term.id)
-      .map(action => ({ ...action.payload, status: 'pending-queue' as const, votes: { overall: 0, minimal: 0, specific: 0, humorous: 0 } }));
+      .map(action => ({ ...action.payload, status: 'pending-queue' as const, votes: { overall: 0, minimal: 0, specific: 0, humorous: 0 }, isCurrentUserSubmitter: true }));
 
     const combined = [...published, ...pendingFromPrs, ...pendingFromQueue];
-    
     const uniqueEntries = Array.from(new Map(combined.map(entry => [entry.id, entry])).values());
-
     return uniqueEntries;
-  }, [initialEntries, pendingEntries, queue, term.id]);
+  }, [initialEntries, pendingEntries, queue, term.id, settings]);
 
   const handleAddEntry = (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,17 +128,16 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
     const newTranslationContents = encode(translation);
     const newEntryId = encodeToSnakeCaseSyllabary(newTranslationContents);
 
-    // Check against all existing entries (published, pending PRs, and pending in queue)
     const isDuplicateInAllEntries = allEntries.some(entry => entry.id === newEntryId);
     const isDuplicateInQueue = queue.some(action => 
       action.type === 'NEW_ENTRY' && 
       action.payload.termId === term.id && 
-      action.payload.id === newEntryId // Check against the ID of the queued entry
+      action.payload.id === newEntryId
     );
 
     if (isDuplicateInAllEntries || isDuplicateInQueue) {
       showToast('This translation already exists or is pending review.', 'error');
-      setIsDuplicateInput(true); // Set state to make input red
+      setIsDuplicateInput(true);
       return;
     }
 
@@ -108,30 +147,46 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
     });
 
     setTranslation('');
-    setIsDuplicateInput(false); // Reset state
+    setIsDuplicateInput(false);
     showToast('Translation added to queue!', 'success');
   };
 
   const handleModify = (contents: number[]) => {
     setTranslation(decode(contents));
-    setIsDuplicateInput(false); // Reset duplicate status when modifying
+    setIsDuplicateInput(false);
   };
 
   const handleTranslationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTranslation(e.target.value);
-    setIsDuplicateInput(false); // Reset duplicate status when typing
+    setIsDuplicateInput(false);
   };
 
   const handleVote = (entryId: string, voteType: VoteType) => {
-    const existingVote = queue.find(
-      (action): action is { type: 'VOTE'; payload: Vote; id: string } =>
+    const existingPublishedVote = userVotes[voteType];
+    if (existingPublishedVote && existingPublishedVote.entryId === entryId) {
+      showToast('This vote has already been submitted.', 'error');
+      return;
+    }
+
+    const existingVoteInQueue = queue.find(
+      (action): action is { type: 'VOTE'; payload: Vote; id:string } =>
         action.type === 'VOTE' &&
         action.payload.termId === term.id &&
         action.payload.voteType === voteType
     );
 
-    if (existingVote) {
-      removeFromQueue(existingVote.id);
+    if (existingVoteInQueue) {
+      removeFromQueue(existingVoteInQueue.id);
+      if (existingVoteInQueue.payload.entryId === entryId) {
+        return;
+      }
+    }
+
+    if (existingPublishedVote && existingPublishedVote.entryId !== entryId) {
+      const confirmation = window.confirm(`Are you sure you want to change your '${voteType}' vote?`);
+      if (!confirmation) {
+        return;
+      }
     }
 
     addToQueue({
@@ -172,9 +227,9 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
           <input
             type="text"
             value={translation}
-            onChange={handleTranslationChange} // Use new handler
+            onChange={handleTranslationChange}
             placeholder="Add your Hîsyêô translation..."
-            className={`w-full rounded-lg border p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none ${isDuplicateInput ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'}`} // Conditional styling
+            className={`w-full rounded-lg border p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none ${isDuplicateInput ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'}`}
           />
           <button type="submit" className="mt-2 w-full rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
             Add to Submission Queue
@@ -190,6 +245,7 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
             const isPendingPr = entry.status === 'pending-pr';
             const isPendingQueue = entry.status === 'pending-queue';
             const isPending = isPendingPr || isPendingQueue;
+            const isCurrentUserSubmitter = entry.isCurrentUserSubmitter;
 
             return (
               <div key={entry.id} className={`rounded-lg border bg-white ${isPending ? 'border-yellow-400' : 'border-gray-200'}`}>
@@ -200,6 +256,11 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
                     </span>
                     {isPendingPr && entry.prUrl && <a href={entry.prUrl} target="_blank" rel="noopener noreferrer" className="font-bold hover:underline">View PR</a>}
                   </div>
+                )}
+                {isCurrentUserSubmitter && !isPending && (
+                    <div className="p-2 bg-green-100 text-green-800 text-sm rounded-t-lg">
+                        You submitted this translation.
+                    </div>
                 )}
                 <div className="p-4">
                   <div className="mb-3 flex items-center justify-between">
@@ -213,13 +274,21 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {(['overall', 'minimal', 'specific', 'humorous'] as VoteType[]).map(voteType => {
-                      const isVoted = isVotedInQueue(entry.id, voteType);
-                      const buttonClass = isVoted
-                        ? 'bg-blue-500 text-white px-3 py-1 text-sm rounded-md'
-                        : 'border border-gray-400 px-3 py-1 text-sm rounded-md';
+                      const isVotedInQueueByUser = isVotedInQueue(entry.id, voteType);
+                      const userVote = userVotes[voteType];
+                      const isVotedByCurrentUser = userVote?.entryId === entry.id;
                       
+                      let buttonClass = 'border border-gray-400 px-3 py-1 text-sm rounded-md';
+                      if (isVotedInQueueByUser) {
+                        buttonClass = 'bg-yellow-400 text-black px-3 py-1 text-sm rounded-md';
+                      } else if (isVotedByCurrentUser) {
+                        buttonClass = 'bg-blue-500 text-white px-3 py-1 text-sm rounded-md';
+                      }
+                      
+                      const title = isVotedByCurrentUser ? `You voted for this on ${new Date(userVote.date).toLocaleDateString()}` : '';
+
                       return (
-                        <button key={voteType} onClick={() => handleVote(entry.id, voteType)} className={buttonClass} disabled={isPending}>
+                        <button key={voteType} onClick={() => handleVote(entry.id, voteType)} className={buttonClass} disabled={isPending} title={title}>
                           {voteType.charAt(0).toUpperCase() + voteType.slice(1)} ({getVoteCount(entry.id, voteType)})
                         </button>
                       );

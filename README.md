@@ -12,8 +12,9 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 - [ ] Add a warning toast to indicate that user's prior selection was unset
 - [x] Allow the user to see newly added translations in the term detail page before they are submitted
 - [ ] Add a way to click on a submission queue item and navigate to that new term, new translation or voted translation
-- [ ] Either make the untranslated button clickable on all screens or only show it on the main screen
+- [ ] Make the untranslated button clickable on all screens that it's viewable on
 - [x] Make submitter not a field for submission entries because of the submission author
+- [ ] Add a ui change when the screen resolution is small: "English &rarr; Hisyeo" is removed, "X items translated" just becomes "X" and the "untranslated" label is removed
 
 ## Getting Started
 

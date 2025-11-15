@@ -4,9 +4,10 @@ import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { TermWithDetails } from '@/lib/data';
 import { useAppContext } from '@/app/AppContext';
+import { useSettings } from '@/app/SettingsContext';
 import { useToast } from '@/app/ToastContext';
 import { getPendingSubmissions, SubmissionContent, PendingSubmissionsResponse, GitHubRateLimitError } from '@/lib/github';
-import { Entry } from '@/lib/types'; // Removed Term import
+import { Entry } from '@/lib/types';
 
 interface TermListProps {
   initialTerms: TermWithDetails[];
@@ -14,16 +15,17 @@ interface TermListProps {
 
 const PENDING_DATA_CACHE_KEY = 'pendingSubmissionsCache';
 
-// Helper type for combined terms
 interface CombinedTerm extends TermWithDetails {
   status: 'published' | 'pending';
   prUrl?: string;
   entries?: (Entry & { status?: 'published' | 'pending'; prUrl?: string })[];
+  isCurrentUserSubmitter?: boolean;
 }
 
 export default function TermList({ initialTerms }: TermListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const { showUntranslated } = useAppContext();
+  const { settings } = useSettings();
   const { showToast } = useToast();
   const [pendingSubmissions, setPendingSubmissions] = useState<SubmissionContent[]>([]);
 
@@ -36,7 +38,7 @@ export default function TermList({ initialTerms }: TermListProps) {
         const result: PendingSubmissionsResponse = await getPendingSubmissions(repoUrl);
         fetchedSubmissions = result.submissions;
         localStorage.setItem(PENDING_DATA_CACHE_KEY, JSON.stringify(fetchedSubmissions));
-      } catch (error: unknown) { // Changed type to unknown
+      } catch (error: unknown) {
         console.error("Error fetching pending submissions:", error);
         if (typeof error === 'object' && error !== null && 'isRateLimitError' in error && (error as GitHubRateLimitError).isRateLimitError) {
           showToast('GitHub API rate limit exceeded. Using cached pending data.', 'error');
@@ -54,11 +56,9 @@ export default function TermList({ initialTerms }: TermListProps) {
         }
       }
 
-      // Filter out cached items that are now published
       const publishedTermIds = new Set(initialTerms.map(t => t.id));
       const filteredSubmissions = fetchedSubmissions.map(sub => {
           sub.newTerms = sub.newTerms?.filter(t => !publishedTermIds.has(t.id));
-          // A more robust implementation would also filter entries for existing terms
           return sub;
       }).filter(sub => (sub.newTerms?.length || 0) > 0 || (sub.newEntries?.length || 0) > 0);
       
@@ -70,12 +70,15 @@ export default function TermList({ initialTerms }: TermListProps) {
   }, []);
 
   const allTerms = useMemo(() => {
+    const currentUserIdentifier = settings.userSystem && settings.userId ? `${settings.userSystem.toLowerCase()}:${settings.userId}` : null;
     const pendingTermsMap = new Map<string, CombinedTerm>();
     const pendingEntriesMap = new Map<string, (Entry & { status?: 'published' | 'pending'; prUrl?: string })[]>();
 
     pendingSubmissions.forEach(submission => {
+      const submissionAuthorIdentifier = submission.author ? `${submission.author.system.toLowerCase()}:${submission.author.id}` : null;
+      const isCurrentUserSubmitter = submissionAuthorIdentifier === currentUserIdentifier;
       submission.newTerms?.forEach(term => {
-        pendingTermsMap.set(term.id, { ...term, status: 'pending', prUrl: submission.prUrl, topTranslations: { overall: null, minimal: null, specific: null, humorous: null } });
+        pendingTermsMap.set(term.id, { ...term, status: 'pending', prUrl: submission.prUrl, topTranslations: { overall: null, minimal: null, specific: null, humorous: null }, isCurrentUserSubmitter });
       });
       submission.newEntries?.forEach(entry => {
         const termId = entry.termId;
@@ -91,11 +94,10 @@ export default function TermList({ initialTerms }: TermListProps) {
       return {
         ...term,
         status: 'published',
-        entries: termEntries, // Add pending entries to published terms
+        entries: termEntries,
       };
     });
 
-    // Add pending terms that are not yet published
     pendingTermsMap.forEach((pendingTerm, termId) => {
       if (!initialTerms.some(t => t.id === termId)) {
         combinedTerms.push({
@@ -106,7 +108,7 @@ export default function TermList({ initialTerms }: TermListProps) {
     });
 
     return combinedTerms;
-  }, [initialTerms, pendingSubmissions]);
+  }, [initialTerms, pendingSubmissions, settings]);
 
   const filteredTerms = useMemo(() => {
     if (!allTerms) return [];
@@ -175,10 +177,11 @@ export default function TermList({ initialTerms }: TermListProps) {
         {filteredTerms.map(term => {
           const isPendingTerm = term.status === 'pending';
           const hasPendingEntries = term.entries?.some(e => e.status === 'pending');
+          const isCurrentUserSubmitter = term.isCurrentUserSubmitter;
 
           return (
             <div key={term.id} className={`rounded-lg border bg-white ${isPendingTerm ? 'border-yellow-400' : 'border-gray-200'}`}>
-              {isPendingTerm && (
+              {isPendingTerm && !isCurrentUserSubmitter && (
                 <div className="p-2 bg-yellow-100 text-yellow-800 text-sm rounded-t-lg flex justify-between items-center">
                   <span>This term is pending review.</span>
                   {term.prUrl && <a href={term.prUrl} target="_blank" rel="noopener noreferrer" className="font-bold hover:underline">View PR</a>}
@@ -187,6 +190,11 @@ export default function TermList({ initialTerms }: TermListProps) {
               {hasPendingEntries && !isPendingTerm && (
                 <div className="p-2 bg-blue-100 text-blue-800 text-sm rounded-t-lg">
                   This term has pending translations.
+                </div>
+              )}
+              {isCurrentUserSubmitter && isPendingTerm && (
+                <div className="p-2 bg-green-100 text-green-800 text-sm rounded-t-lg">
+                  You submitted this term.
                 </div>
               )}
               <div className="p-6">

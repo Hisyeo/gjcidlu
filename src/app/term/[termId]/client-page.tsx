@@ -12,6 +12,7 @@ import synonyms from 'synonyms';
 import { useDebounce } from '@/lib/hooks';
 import { validateNounPhrase, SyntaxError } from '@/lib/antlr';
 import { decodeUnicode } from '@/lib/utils';
+import { getEntriesForTerm } from '@/lib/data';
 
 const PENDING_DATA_CACHE_KEY = 'pendingSubmissionsCache';
 
@@ -74,11 +75,16 @@ export default function TermDetailClientView({ term, initialEntries, allTerms }:
     const related = synonyms(termName);
     const relatedWords = [...(related?.n || []), ...(related?.v || []), ...(related?.adj || []), ...(related?.adv || [])];
     
-    const relatedWithTranslations = allTerms
+    const homonyms = allTerms.filter(t => t.id !== term.id && t.id.split('-')[0] === termName);
+    const synonymsWithTranslations = allTerms
         .filter(t => t.id !== term.id && relatedWords.includes(t.id.split('-')[0]))
-        .map(t => ({ term: t, count: allTerms.filter(term => term.id.startsWith(t.id.split('-')[0] + '-')).length }))
+        .map(t => ({ term: t, count: getEntriesForTerm(t.id).length }))
         .filter(r => r.count > 0);
-    setRelatedTerms(relatedWithTranslations);
+
+    const combined = [...homonyms.map(t => ({ term: t, count: getEntriesForTerm(t.id).length })), ...synonymsWithTranslations];
+    const uniqueRelatedTerms = Array.from(new Map(combined.map(item => [item.term.id, item])).values());
+    
+    setRelatedTerms(uniqueRelatedTerms);
   }, [term, allTerms]);
 
   useEffect(() => {
@@ -263,11 +269,16 @@ export default function TermDetailClientView({ term, initialEntries, allTerms }:
         <div className="mt-6 p-4 bg-gray-100 rounded-lg">
           <h3 className="text-lg font-semibold mb-2">Related Terms</h3>
           <div className="flex flex-wrap gap-2">
-            {relatedTerms.map(({ term, count }) => (
-              <Link key={term.id} href={`/term/${term.id}`} className="text-blue-600 hover:underline">
-                {term.id.split('-')[0]} ({count} translations)
-              </Link>
-            ))}
+            {relatedTerms.map(({ term: relatedTerm, count }) => {
+              const isHomonym = relatedTerm.id.split('-')[0] === term.id.split('-')[0];
+              return (
+                <Link key={relatedTerm.id} href={`/term/${relatedTerm.id}`} className="text-blue-600 hover:underline">
+                  {relatedTerm.id.split('-')[0]}
+                  {isHomonym && <span className="text-gray-500 text-sm"> ({relatedTerm.description})</span>}
+                  {' '}({count} translations)
+                </Link>
+              );
+            })}
           </div>
         </div>
       )}

@@ -9,6 +9,7 @@ import { useToast } from '@/app/ToastContext';
 import { getPendingSubmissions, SubmissionContent, PendingSubmissionsResponse, GitHubRateLimitError } from '@/lib/github';
 import { Entry } from '@/lib/types';
 import synonyms from 'synonyms';
+import UntranslatedTerms from './UntranslatedTerms';
 import { decode } from '@/lib/htf-int';
 
 interface TermListProps {
@@ -28,7 +29,6 @@ export default function TermList({ initialTerms }: TermListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [visibleCount, setVisibleCount] = useState(10);
-  const [relatedTerms, setRelatedTerms] = useState<{ term: string, count: number }[]>([]);
   const { showUntranslated } = useAppContext();
   const { settings } = useSettings();
   const { showToast } = useToast();
@@ -57,6 +57,7 @@ export default function TermList({ initialTerms }: TermListProps) {
 
   useEffect(() => {
     const fetchPendingData = async () => {
+      setPendingSubmissions([]); // Clear pending submissions before fetching
       const repoUrl = process.env.NEXT_PUBLIC_GITHUB_REPO_URL || '';
       let fetchedSubmissions: SubmissionContent[] = [];
 
@@ -83,17 +84,21 @@ export default function TermList({ initialTerms }: TermListProps) {
       }
 
       const publishedTermIds = new Set(initialTerms.map(t => t.id));
-      const filteredSubmissions = fetchedSubmissions.map(sub => {
-          sub.newTerms = sub.newTerms?.filter(t => !publishedTermIds.has(t.id));
-          return sub;
-      }).filter(sub => (sub.newTerms?.length || 0) > 0 || (sub.newEntries?.length || 0) > 0);
+      const filteredSubmissions = fetchedSubmissions.reduce((acc, sub) => {
+        const unpublishedNewTerms = sub.newTerms?.filter(t => !publishedTermIds.has(t.id));
+        const unpublishedNewEntries = sub.newEntries?.filter(e => !publishedTermIds.has(e.termId));
+
+        if (unpublishedNewTerms?.length || unpublishedNewEntries?.length) {
+          acc.push({ ...sub, newTerms: unpublishedNewTerms, newEntries: unpublishedNewEntries });
+        }
+        return acc;
+      }, [] as SubmissionContent[]);
       
       setPendingSubmissions(filteredSubmissions);
     };
 
     fetchPendingData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [initialTerms, showToast]);
 
   const allTerms = useMemo(() => {
     const currentUserIdentifier = settings.userSystem && settings.userId ? `${settings.userSystem.toLowerCase()}:${settings.userId}` : null;
@@ -136,21 +141,30 @@ export default function TermList({ initialTerms }: TermListProps) {
     return combinedTerms;
   }, [initialTerms, pendingSubmissions, settings]);
 
+  const relatedTerms = useMemo(() => {
+    if (debouncedQuery) {
+      const related = synonyms(debouncedQuery);
+      const relatedWords = [...(related?.n || []), ...(related?.v || []), ...(related?.adj || []), ...(related?.adv || [])];
+      const relatedWithTranslations = allTerms
+        .filter(t => relatedWords.includes(t.id.split('-')[0]))
+        .map(t => ({ term: t.id.split('-')[0], count: allTerms.filter(term => term.id.startsWith(t.id.split('-')[0] + '-')).length }))
+        .filter(r => r.count > 0);
+
+      const uniqueRelatedTerms = Array.from(new Map(relatedWithTranslations.map(item => [item.term, item])).values());
+
+      return uniqueRelatedTerms;
+    }
+    return [];
+  }, [debouncedQuery, allTerms]);
+
   const filteredTerms = useMemo(() => {
     if (!allTerms) return [];
     const lowercasedQuery = debouncedQuery.toLowerCase();
     if (!lowercasedQuery) {
-        setRelatedTerms([]);
         return allTerms;
     }
 
-    const related = synonyms(lowercasedQuery);
-    const relatedWords = [...(related?.n || []), ...(related?.v || []), ...(related?.adj || []), ...(related?.adv || [])];
-    
-    const relatedWithTranslations = relatedWords
-        .map(word => ({ term: word, count: allTerms.filter(t => t.id.startsWith(word + '-')).length }))
-        .filter(r => r.count > 0);
-    setRelatedTerms(relatedWithTranslations);
+    const relatedWords = [...(synonyms(lowercasedQuery)?.n || []), ...(synonyms(lowercasedQuery)?.v || []), ...(synonyms(lowercasedQuery)?.adj || []), ...(synonyms(lowercasedQuery)?.adv || [])];
 
     return allTerms.filter(term =>
       term.id.toLowerCase().includes(lowercasedQuery) ||
@@ -199,7 +213,7 @@ export default function TermList({ initialTerms }: TermListProps) {
   };
 
   if (showUntranslated) {
-    return <div>Untranslated view not yet updated for pending data.</div>;
+    return <UntranslatedTerms terms={allTerms} />;
   }
 
   return (

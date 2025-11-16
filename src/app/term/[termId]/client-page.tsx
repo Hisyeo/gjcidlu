@@ -11,6 +11,7 @@ import { getPendingSubmissions, SubmissionContent, PendingSubmissionsResponse, G
 import synonyms from 'synonyms';
 import { useDebounce } from '@/lib/hooks';
 import { validateNounPhrase, SyntaxError } from '@/lib/antlr';
+import { decodeUnicode } from '@/lib/utils';
 
 const PENDING_DATA_CACHE_KEY = 'pendingSubmissionsCache';
 
@@ -286,7 +287,7 @@ export default function TermDetailClientView({ term, initialEntries, allTerms }:
                 <summary>Syntax errors found</summary>
                 <ul className="list-disc list-inside">
                   {syntaxErrors.map((error, i) => (
-                    <li key={i}>{error.msg}</li>
+                    <li key={i}>{decodeUnicode(error.msg)}</li>
                   ))}
                 </ul>
               </details>

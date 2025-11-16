@@ -27,6 +27,24 @@
         2,
         477
       ]
+    },
+    "xq_yStqN_noilr_muT_kN_hefiN": {
+      "submitter": "discord:128874964517388288",
+      "created": "2025-11-16T15:14:41.249Z",
+      "contents": [
+        2,
+        850,
+        1774,
+        477,
+        1774,
+        443,
+        1774,
+        795,
+        1774,
+        839,
+        1774,
+        271
+      ]
     }
   },
   "robot-10vwg": {
@@ -180,5 +198,25 @@
         833
       ]
     }
+  },
+  "warning-jgtb3": {
+    "$pos": "noun",
+    "$desc": "something, especially a statement, that tells you that something bad, dangerous, or annoying might happen so that you can be ready or avoid it"
+  },
+  "understand-b7ulh": {
+    "$pos": "verb",
+    "$desc": "to know the meaning of what someone is telling you, or the language that they speak"
+  },
+  "understand-oxl1r": {
+    "$pos": "verb",
+    "$desc": "to know or realize how a fact, process, situation etc works, especially through learning or experience"
+  },
+  "understand-lrddv": {
+    "$pos": "verb",
+    "$desc": "to realize how someone feels and why they behave the way they do, and to be sympathetic"
+  },
+  "oatmeal-iob61": {
+    "$pos": "noun",
+    "$desc": "a soft breakfast food made by boiling crushed oats"
   }
 }

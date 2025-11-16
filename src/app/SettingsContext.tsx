@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import { createContext, useState, useContext, ReactNode } from 'react';
 import { UserSystem } from '@/lib/types';
 
 export type Script = 'latin' | 'abugida' | 'syllabary';
@@ -20,24 +20,24 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 
 const SETTINGS_CACHE_KEY = 'userSettings';
 
+const defaultSettings: UserSettings = { userSystem: null, userId: null, script: 'latin' };
+
 function getInitialSettings(): UserSettings {
-    return { userSystem: null, userId: null, script: 'latin' };
+    if (typeof window !== 'undefined') {
+        const storedSettings = localStorage.getItem(SETTINGS_CACHE_KEY);
+        if (storedSettings) {
+            try {
+                return { ...defaultSettings, ...JSON.parse(storedSettings) };
+            } catch (error) {
+                console.error("Failed to parse user settings from localStorage:", error);
+            }
+        }
+    }
+    return defaultSettings;
 }
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettingsState] = useState<UserSettings>(getInitialSettings);
-
-  useEffect(() => {
-    try {
-        const storedSettings = localStorage.getItem(SETTINGS_CACHE_KEY);
-        if (storedSettings) {
-            const parsed = JSON.parse(storedSettings);
-            setSettingsState(s => ({ ...s, ...parsed }));
-        }
-    } catch (error) {
-        console.error("Failed to read user settings from localStorage:", error);
-    }
-  }, []);
 
   const setSettings = (newSettings: UserSettings) => {
     try {

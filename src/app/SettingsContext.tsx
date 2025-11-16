@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useState, useContext, ReactNode } from 'react';
+import { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { UserSystem } from '@/lib/types';
 
 export type Script = 'latin' | 'abugida' | 'syllabary';
@@ -21,30 +21,29 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 const SETTINGS_CACHE_KEY = 'userSettings';
 
 function getInitialSettings(): UserSettings {
-    const defaultSettings: UserSettings = { userSystem: null, userId: null, script: 'latin' };
-    if (typeof window === 'undefined') {
-        return defaultSettings;
-    }
-    try {
-        const storedSettings = localStorage.getItem(SETTINGS_CACHE_KEY);
-        if (storedSettings) {
-            const parsed = JSON.parse(storedSettings);
-            return { ...defaultSettings, ...parsed };
-        }
-        return defaultSettings;
-    } catch (error) {
-        console.error("Failed to read user settings from localStorage:", error);
-        return defaultSettings;
-    }
+    return { userSystem: null, userId: null, script: 'latin' };
 }
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettingsState] = useState<UserSettings>(getInitialSettings);
 
+  useEffect(() => {
+    try {
+        const storedSettings = localStorage.getItem(SETTINGS_CACHE_KEY);
+        if (storedSettings) {
+            const parsed = JSON.parse(storedSettings);
+            setSettingsState(s => ({ ...s, ...parsed }));
+        }
+    } catch (error) {
+        console.error("Failed to read user settings from localStorage:", error);
+    }
+  }, []);
+
   const setSettings = (newSettings: UserSettings) => {
     try {
-      localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify(newSettings));
-      setSettingsState(newSettings);
+      const updatedSettings = { ...settings, ...newSettings };
+      localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify(updatedSettings));
+      setSettingsState(updatedSettings);
     } catch (error) {
       console.error("Failed to save user settings to localStorage:", error);
     }

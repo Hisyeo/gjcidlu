@@ -38,6 +38,26 @@ export default function TermDetailClientView({ term, initialEntries, allTerms }:
   const [relatedTerms, setRelatedTerms] = useState<{ term: Term, count: number }[]>([]);
   const [syntaxErrors, setSyntaxErrors] = useState<SyntaxError[]>([]);
   const debouncedTranslation = useDebounce(translation, 500);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const allEntries: DisplayEntry[] = useMemo(() => {
+    const currentUserIdentifier = settings.userSystem && settings.userId ? `${settings.userSystem.toLowerCase()}:${settings.userId}` : null;
+
+    const published = initialEntries.map(e => ({ ...e, status: 'published' as const, prUrl: undefined, isCurrentUserSubmitter: e.submitter === currentUserIdentifier }));
+    const pendingFromPrs = pendingEntries.map(e => ({ ...e, status: 'pending-pr' as const, votes: { overall: 0, minimal: 0, specific: 0, humorous: 0 }, isCurrentUserSubmitter: e.submitter === currentUserIdentifier }));
+    
+    const pendingFromQueue = queue
+      .filter((action): action is { type: 'NEW_ENTRY'; payload: Entry; id: string } => action.type === 'NEW_ENTRY' && action.payload.termId === term.id)
+      .map(action => ({ ...action.payload, status: 'pending-queue' as const, votes: { overall: 0, minimal: 0, specific: 0, humorous: 0 }, isCurrentUserSubmitter: true }));
+
+    const combined = [...published, ...pendingFromPrs, ...pendingFromQueue];
+    const uniqueEntries = Array.from(new Map(combined.map(entry => [entry.id, entry])).values());
+    return uniqueEntries;
+  }, [initialEntries, pendingEntries, queue, term.id, settings]);
 
   useEffect(() => {
     if (debouncedTranslation.trim()) {
@@ -134,21 +154,6 @@ export default function TermDetailClientView({ term, initialEntries, allTerms }:
     };
     fetchUserVotes();
   }, [settings, term.id]);
-
-  const allEntries: DisplayEntry[] = useMemo(() => {
-    const currentUserIdentifier = settings.userSystem && settings.userId ? `${settings.userSystem.toLowerCase()}:${settings.userId}` : null;
-
-    const published = initialEntries.map(e => ({ ...e, status: 'published' as const, prUrl: undefined, isCurrentUserSubmitter: e.submitter === currentUserIdentifier }));
-    const pendingFromPrs = pendingEntries.map(e => ({ ...e, status: 'pending-pr' as const, votes: { overall: 0, minimal: 0, specific: 0, humorous: 0 }, isCurrentUserSubmitter: e.submitter === currentUserIdentifier }));
-    
-    const pendingFromQueue = queue
-      .filter((action): action is { type: 'NEW_ENTRY'; payload: Entry; id: string } => action.type === 'NEW_ENTRY' && action.payload.termId === term.id)
-      .map(action => ({ ...action.payload, status: 'pending-queue' as const, votes: { overall: 0, minimal: 0, specific: 0, humorous: 0 }, isCurrentUserSubmitter: true }));
-
-    const combined = [...published, ...pendingFromPrs, ...pendingFromQueue];
-    const uniqueEntries = Array.from(new Map(combined.map(entry => [entry.id, entry])).values());
-    return uniqueEntries;
-  }, [initialEntries, pendingEntries, queue, term.id, settings]);
 
   const handleAddEntry = (e: React.FormEvent) => {
     e.preventDefault();
@@ -249,7 +254,7 @@ export default function TermDetailClientView({ term, initialEntries, allTerms }:
     );
   };
 
-  const translationFontClass = settings.script === 'abugida' ? 'font-abugida' : settings.script === 'syllabary' ? 'font-syllabary' : '';
+  const translationFontClass = isMounted && settings.script === 'abugida' ? 'font-abugida' : isMounted && settings.script === 'syllabary' ? 'font-syllabary' : '';
 
   return (
     <>
@@ -324,7 +329,7 @@ export default function TermDetailClientView({ term, initialEntries, allTerms }:
                 )}
                 <div className="p-4">
                   <div className="mb-3 flex items-center justify-between">
-                    <p className={`text-2xl font-medium text-gray-900 ${translationFontClass}`}>{decode(entry.contents, settings.script)}</p>
+                    <p className={`text-2xl font-medium text-gray-900 ${translationFontClass}`}>{isMounted ? decode(entry.contents, settings.script) : decode(entry.contents, 'latin')}</p>
                     <button onClick={() => handleModify(entry.contents)} className="flex items-center space-x-1 rounded-lg p-2 text-sm text-gray-500 hover:bg-gray-100 hover:text-blue-600">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />

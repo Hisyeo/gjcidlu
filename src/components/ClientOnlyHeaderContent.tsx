@@ -50,21 +50,24 @@ const ClientOnlyHeaderContent: React.FC<ClientOnlyHeaderContentProps> = ({ stats
         </Link>
         {stats && (
           <div className="flex items-center space-x-4 pt-1">
-            <span className="text-sm text-gray-500">{stats.translatedCount} terms translated</span>
+            <span className="text-sm text-gray-500">
+              {stats.translatedCount}
+              <span className="hidden lg:inline"> terms translated</span>
+            </span>
             {stats.untranslatedCount > 0 && (
               <button onClick={onUntranslatedClick} className="flex items-center space-x-1 text-sm text-red-600 hover:text-red-800">
                 <span className="relative flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
                 </span>
-                <span>{stats.untranslatedCount} untranslated</span>
+                <span className="hidden lg:inline">{stats.untranslatedCount} untranslated</span>
               </button>
             )}
           </div>
         )}
       </div>
 
-      <div className="flex items-center space-x-2 pr-40">
+      <div className="hidden sm:flex items-center space-x-2 pr-40">
         <span className={`text-sm text-gray-500 ${isMounted ? heightAdjustment : ''}`}>English &rarr; </span>
         <span className={`text-sm text-gray-500 ${isMounted ? fontClass : ''}`} dangerouslySetInnerHTML={{ __html: isMounted ? subtitle : "Hîsyêô" }}></span>
       </div>

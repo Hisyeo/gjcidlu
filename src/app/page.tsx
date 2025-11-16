@@ -1,8 +1,6 @@
 import { getTermsWithDetailsSortedByDate } from '@/lib/data';
 import TermList from '@/components/TermList';
 
-export const revalidate = 0;
-
 export default async function Home() {
   const termsWithDetails = await getTermsWithDetailsSortedByDate();
 

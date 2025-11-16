@@ -75,6 +75,9 @@ export default function SettingsPopover() {
                   <option value="abugida">Abugida</option>
                   <option value="syllabary">Syllabary</option>
                 </select>
+                <p className="mt-1 text-xs text-gray-500">
+                  Only effects translation display, all submissions must be done in Latin script
+                </p>
               </div>
               <div className="pt-2 flex justify-end">
                 <button type="submit" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">

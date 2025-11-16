@@ -41,6 +41,11 @@
 
 .font-syllabary {
   font-family: 'HisyakuiSans', sans-serif;
+  font-size: x-large;
+}
+
+h1.font-syllabary  {
+  font-weight: normal;
 }
 
 body {

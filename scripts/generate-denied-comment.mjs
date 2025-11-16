@@ -1,8 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-const SUBMITTED_DIR = path.join(process.cwd(), 'rsc', 'submitted');
-const PROCESSED_DIR = path.join(process.cwd(), 'rsc', 'processed');
+const SUBMITTED_DIR = path.join(process.cwd(), 'rsc', 'submissions');
 const SITE_URL = process.env.SITE_URL || '';
 
 async function getAllSubmissionFiles(dir) {
@@ -41,8 +40,7 @@ async function run() {
   const { newEntries = [], newTerms = [], votes = [] } = submissionContent;
 
   const otherSubmittedFiles = await getAllSubmissionFiles(SUBMITTED_DIR);
-  const processedFiles = await getAllSubmissionFiles(PROCESSED_DIR);
-  const allOtherFiles = [...otherSubmittedFiles, ...processedFiles].filter(file => path.resolve(file) !== path.resolve(submissionFilePath));
+  const allOtherFiles = otherSubmittedFiles.filter(file => path.resolve(file) !== path.resolve(submissionFilePath));
 
   const duplicatesFound = [];
   const nonDuplicateEntries = [];

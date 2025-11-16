@@ -38,7 +38,7 @@ jobs:
         id: get_submission_info
         run: |
           CHANGED_FILES=$(git diff --name-only ${{ steps.get_pr_data.outputs.base_sha }} ${{ steps.get_pr_data.outputs.head_sha }})
-          SUBMISSION_FILE=$(echo "$CHANGED_FILES" | grep '^rsc/submitted/.*\.json$' | head -n 1)
+          SUBMISSION_FILE=$(echo "$CHANGED_FILES" | grep '^rsc/submissions/.*\.json$' | head -n 1)
           if [[ -z "$SUBMISSION_FILE" ]]; then
             echo "No submission file found in this PR."
             exit 1

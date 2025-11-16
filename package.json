@@ -4,11 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node scripts/aggregate.mjs",
     "build": "next build",
-    "prebuild": "node scripts/aggregate.mjs && cp rsc/published/votes.json public/votes.json",
     "start": "next start",
-    "lint": "eslint",
-    "reprocess": "node scripts/reprocess.mjs"
+    "lint": "eslint"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4",

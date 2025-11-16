@@ -1,6 +1,6 @@
 import { Term, VoteType, EntriesData, Entry } from './types';
-import entriesData from '../../rsc/published/entries.json';
-import votesData from '../../rsc/published/votes.json';
+import entriesData from '../../public/entries.json';
+import votesData from '../../public/votes.json';
 
 // --- Type definitions to match the JSON structure ---
 interface VotesData {

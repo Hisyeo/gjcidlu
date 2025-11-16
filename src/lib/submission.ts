@@ -46,7 +46,7 @@ export function generateSubmissionUrl(queue: QueueAction[], userSystem: UserSyst
   const timestamp = new Date().toISOString().replace(/[-:.]/g, "").slice(0, -4);
   const randomStr = Math.random().toString(36).substring(2, 8);
   const filename = `sub.${timestamp}-${randomStr}.json`;
-  const filepath = `rsc/submitted/${filename}`;
+  const filepath = `rsc/submissions/${filename}`;
 
   const url = `${repoUrl}/new/main?filename=${filepath}&value=${encodeURIComponent(jsonContent)}`;
 

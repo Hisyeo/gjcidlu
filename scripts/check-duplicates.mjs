@@ -1,8 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-const SUBMITTED_DIR = path.join(process.cwd(), 'rsc', 'submitted');
-const PROCESSED_DIR = path.join(process.cwd(), 'rsc', 'processed');
+const SUBMITTED_DIR = path.join(process.cwd(), 'rsc', 'submissions');
 
 async function getAllSubmissionFiles(dir) {
   try {
@@ -28,8 +27,7 @@ async function run() {
 
   // Check against other submission files
   const otherSubmittedFiles = await getAllSubmissionFiles(SUBMITTED_DIR);
-  const processedFiles = await getAllSubmissionFiles(PROCESSED_DIR);
-  const allOtherFiles = [...otherSubmittedFiles, ...processedFiles].filter(file => file !== currentSubmissionPath);
+  const allOtherFiles = otherSubmittedFiles.filter(file => file !== currentSubmissionPath);
 
   for (const entry of currentNewEntries) {
     for (const otherFile of allOtherFiles) {

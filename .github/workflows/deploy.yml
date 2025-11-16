@@ -31,28 +31,15 @@ jobs:
       - name: 'Install dependencies'
         run: npm install
 
-      - name: 'Aggregate data and build site'
-        run: |
-          # First, ensure the directories exist so the script doesn't fail on a clean repo
-          mkdir -p rsc/submitted rsc/processed rsc/published
-          # Then, run the build process
-          npm run build
-
-      - name: 'Prepare for deployment'
-        run: mv gen gjcidlu
-
-      - name: 'List generated files for debugging'
-        run: |
-          echo "--- Contents of rsc/published ---"
-          ls -lR rsc/published
-          echo "--- Contents of public ---"
-          ls -lR public
+      - name: 'Run prebuild and build'
+        run: npm run build
 
       - name: 'Deploy to GitHub Pages'
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./gjcidlu
+          publish_dir: ./gen
+          destination_dir: 'gjcidlu'
           # The user that makes the deployment commit
           user_name: 'github-actions[bot]'
           user_email: 'github-actions[bot]@users.noreply.github.com'

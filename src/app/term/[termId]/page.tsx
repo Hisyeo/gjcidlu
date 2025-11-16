@@ -2,7 +2,7 @@ import { getTermById, getEntriesForTerm, getAggregatedVotesForTerm, getTerms } f
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import TermDetailClientView from './client-page';
-import entriesData from '../../../../rsc/published/entries.json';
+import entriesData from '../../../../public/entries.json';
 import { EntriesData } from '@/lib/types';
 
 // Generate static pages for all terms at build time

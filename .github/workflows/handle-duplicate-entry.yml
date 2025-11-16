@@ -32,19 +32,19 @@ jobs:
         if: github.event.action.identifier == 'change-to-vote'
         run: |
           # Re-run duplicate check to get the submission file and entry ID
-          DUPLICATE_INFO=$(node scripts/check-duplicates.mjs $(git diff --name-only ${{ github.event.check_run.check_suite.before }} ${{ github.event.check_run.check_suite.head_sha }} | grep '^rsc/submitted/.*\.json$' | head -n 1))
+          DUPLICATE_INFO=$(node scripts/check-duplicates.mjs $(git diff --name-only ${{ github.event.check_run.check_suite.before }} ${{ github.event.check_run.check_suite.head_sha }} | grep '^rsc/submissions/.*\.json$' | head -n 1))
           SUBMISSION_FILE=$(echo "$DUPLICATE_INFO" | grep 'duplicate_submission_file' | cut -d'=' -f2)
           ENTRY_ID=$(echo "$DUPLICATE_INFO" | grep 'duplicate_entry_id' | cut -d'=' -f2)
-          node scripts/handle-duplicates.mjs "rsc/submitted/$SUBMISSION_FILE" "change-to-vote" "$ENTRY_ID"
+          node scripts/handle-duplicates.mjs "rsc/submissions/$SUBMISSION_FILE" "change-to-vote" "$ENTRY_ID"
 
       - name: "Handle 'Remove entry'"
         if: github.event.action.identifier == 'remove-entry'
         run: |
           # Re-run duplicate check to get the submission file and entry ID
-          DUPLICATE_INFO=$(node scripts/check-duplicates.mjs $(git diff --name-only ${{ github.event.check_run.check_suite.before }} ${{ github.event.check_run.check_suite.head_sha }} | grep '^rsc/submitted/.*\.json$' | head -n 1))
+          DUPLICATE_INFO=$(node scripts/check-duplicates.mjs $(git diff --name-only ${{ github.event.check_run.check_suite.before }} ${{ github.event.check_run.check_suite.head_sha }} | grep '^rsc/submissions/.*\.json$' | head -n 1))
           SUBMISSION_FILE=$(echo "$DUPLICATE_INFO" | grep 'duplicate_submission_file' | cut -d'=' -f2)
           ENTRY_ID=$(echo "$DUPLICATE_INFO" | grep 'duplicate_entry_id' | cut -d'=' -f2)
-          node scripts/handle-duplicates.mjs "rsc/submitted/$SUBMISSION_FILE" "remove-entry" "$ENTRY_ID"
+          node scripts/handle-duplicates.mjs "rsc/submissions/$SUBMISSION_FILE" "remove-entry" "$ENTRY_ID"
 
       - name: "Handle 'Rerun check'"
         if: github.event.action.identifier == 'rerun-check'

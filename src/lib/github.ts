@@ -73,7 +73,7 @@ export async function getPendingSubmissions(repoUrl: string): Promise<PendingSub
         const prFiles = await fetchGitHubAPI(`https://api.github.com/repos/${owner}/${repo}/pulls/${pr.number}/files`);
         if (prFiles) {
           for (const file of prFiles) {
-            if (file.filename.startsWith('rsc/submitted/') && file.filename.endsWith('.json')) {
+            if (file.filename.startsWith('rsc/submissions/') && file.filename.endsWith('.json')) {
               const fileContent = await fetchGitHubAPI(file.contents_url);
               if (fileContent) {
                 const decodedContent = Buffer.from(fileContent.content, 'base64').toString('utf-8');
@@ -82,24 +82,6 @@ export async function getPendingSubmissions(repoUrl: string): Promise<PendingSub
                   prUrl: pr.html_url,
                 });
               }
-            }
-          }
-        }
-      }
-    }
-
-    // 3. Get submissions from main branch's rsc/submitted
-    const mainSubmittedFiles = await fetchGitHubAPI(`https://api.github.com/repos/${owner}/${repo}/contents/rsc/submitted`);
-    if (mainSubmittedFiles && Array.isArray(mainSubmittedFiles)) {
-      for (const file of mainSubmittedFiles) {
-        if (file.name.endsWith('.json')) {
-          const fileContent = await fetchGitHubAPI(file.url);
-          if (fileContent && fileContent.content) {
-            const decodedContent = Buffer.from(fileContent.content, 'base64').toString('utf-8');
-            if (!submissions.some(s => s.content === decodedContent)) {
-              submissions.push({
-                content: decodedContent,
-              });
             }
           }
         }

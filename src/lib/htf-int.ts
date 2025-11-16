@@ -1,4 +1,4 @@
-import htf2 from '../../rsc/HTF0002.json';
+import htf2 from '../../rsc/encodings/HTF0002.json';
 import { Script } from '@/app/SettingsContext';
 
 interface HTFEncoding {

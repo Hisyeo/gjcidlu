@@ -1,66 +1,71 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-const SUBMITTED_DIR = path.join(process.cwd(), 'rsc', 'submitted');
-const PROCESSED_DIR = path.join(process.cwd(), 'rsc', 'processed');
-const PUBLISHED_DIR = path.join(process.cwd(), 'rsc', 'published');
-const ENTRIES_FILE = path.join(PUBLISHED_DIR, 'entries.json');
-const VOTES_FILE = path.join(PUBLISHED_DIR, 'votes.json');
+const SUBMISSIONS_DIR = path.join(process.cwd(), 'rsc', 'submissions');
+const ENCODINGS_DIR = path.join(process.cwd(), 'rsc', 'encodings');
+const PUBLIC_DIR = path.join(process.cwd(), 'public');
+const ENTRIES_FILE = path.join(PUBLIC_DIR, 'entries.json');
+const VOTES_FILE = path.join(PUBLIC_DIR, 'votes.json');
+const HTF_FILE = path.join(ENCODINGS_DIR, 'HTF0002.json'); // Assuming HTF0002 is the one to use
+
+let htfData;
+
+// Inlined function from htf-int.ts to avoid import issues in script
+function encodeToSnakeCaseSyllabary(encoded) {
+  if (!encoded || encoded.length < 1) return '';
+  const data = encoded.slice(1);
+  let result = '';
+  let prevType = null;
+  for (const index of data) {
+    if (index >= 0 && index < htfData.encodings.length) {
+      const encoding = htfData.encodings[index];
+      const currentType = encoding.type;
+      if (currentType === 'punctuation') continue;
+      if (prevType === 'syllable' && currentType === 'word') result += '_';
+      if (currentType === 'word') result += encoding.syllabary + '_';
+      else if (currentType === 'syllable') result += encoding.syllabary;
+      prevType = currentType;
+    }
+  }
+  if (result.endsWith('_')) result = result.slice(0, -1);
+  return result;
+}
 
 async function main() {
   console.log('Starting aggregation script...');
 
-  // Ensure directories exist
-  await fs.mkdir(SUBMITTED_DIR, { recursive: true });
-  await fs.mkdir(PROCESSED_DIR, { recursive: true });
-  await fs.mkdir(PUBLISHED_DIR, { recursive: true });
+  // Load HTF data for ID generation
+  htfData = JSON.parse(await fs.readFile(HTF_FILE, 'utf-8'));
 
-  // Read existing data or start with empty objects
-  let entriesData, votesData;
-  try {
-    entriesData = JSON.parse(await fs.readFile(ENTRIES_FILE, 'utf-8'));
-  } catch (e) {
-    if (e.code === 'ENOENT') {
-      entriesData = {};
-    } else {
-      throw e;
-    }
-  }
-  try {
-    votesData = JSON.parse(await fs.readFile(VOTES_FILE, 'utf-8'));
-  } catch (e) {
-    if (e.code === 'ENOENT') {
-      votesData = {};
-    } else {
-      throw e;
-    }
-  }
+  // Start with empty objects to build from scratch
+  let entriesData = {};
+  let votesData = {};
+  const idMap = new Map();
 
-  const submissionFiles = (await fs.readdir(SUBMITTED_DIR)).filter(f => f.endsWith('.json'));
+  const submissionFiles = (await fs.readdir(SUBMISSIONS_DIR)).filter(f => f.endsWith('.json'));
 
   if (submissionFiles.length === 0) {
-    console.log('No new submissions to process. Exiting.');
-    // Ensure files exist even if there's nothing to do
+    console.log('No submissions found. Writing empty files.');
     await fs.writeFile(ENTRIES_FILE, JSON.stringify(entriesData, null, 2));
     await fs.writeFile(VOTES_FILE, JSON.stringify(votesData, null, 2));
     return;
   }
 
-  console.log(`Found ${submissionFiles.length} new submission file(s) to process.`);
+  console.log(`Found ${submissionFiles.length} submission file(s) to process.`);
 
-  for (const file of submissionFiles) {
-    const filePath = path.join(SUBMITTED_DIR, file);
-    const submissionContent = JSON.parse(await fs.readFile(filePath, 'utf-8'));
+  const allSubmissions = await Promise.all(
+    submissionFiles.map(file => 
+      fs.readFile(path.join(SUBMISSIONS_DIR, file), 'utf-8').then(content => ({ file, content: JSON.parse(content) }))
+    )
+  );
+
+  // First pass: build idMap and entriesData
+  console.log('First pass: Building ID map and entries data...');
+  for (const { file, content: submissionContent } of allSubmissions) {
     const authorObj = submissionContent.author;
-    
-    if (!authorObj || !authorObj.system || !authorObj.id) {
-        console.warn(`Skipping file ${file} due to missing author object.`);
-        continue;
-    }
-    
+    if (!authorObj || !authorObj.system || !authorObj.id) continue;
     const authorId = `${authorObj.system.toLowerCase()}:${authorObj.id}`;
 
-    // Process new terms
     submissionContent.newTerms?.forEach(term => {
       if (!entriesData[term.id]) {
         entriesData[term.id] = {
@@ -70,44 +75,49 @@ async function main() {
       }
     });
 
-    // Process new entries
     submissionContent.newEntries?.forEach(entry => {
-      if (entriesData[entry.termId] && !entriesData[entry.termId][entry.id]) {
-        entriesData[entry.termId][entry.id] = {
+      const newId = encodeToSnakeCaseSyllabary(entry.contents);
+      idMap.set(entry.id, newId); // Map old ID to new ID
+
+      if (entriesData[entry.termId]) {
+        entriesData[entry.termId][newId] = {
           submitter: authorId,
-          created: new Date().toISOString(),
+          created: entry.created || new Date().toISOString(),
           contents: entry.contents,
           sourceFile: file,
           ...(entry.original && { original: entry.original }),
         };
       }
     });
+  }
 
-    // Process votes
+  // Second pass: build votesData
+  console.log('Second pass: Building votes data...');
+  for (const { content: submissionContent } of allSubmissions) {
+    const authorObj = submissionContent.author;
+    if (!authorObj || !authorObj.system || !authorObj.id) continue;
+    const authorId = `${authorObj.system.toLowerCase()}:${authorObj.id}`;
+
     submissionContent.votes?.forEach(vote => {
+      const newEntryId = idMap.get(vote.entryId) || vote.entryId;
+
       if (!votesData[vote.termId]) votesData[vote.termId] = {};
       if (!votesData[vote.termId][authorId]) votesData[vote.termId][authorId] = {};
       if (!votesData[vote.termId][authorId][vote.voteType]) votesData[vote.termId][authorId][vote.voteType] = [];
       
-      const votedTimestamp = new Date().toISOString();
+      const votedTimestamp = vote.voted || new Date().toISOString();
 
       votesData[vote.termId][authorId][vote.voteType].push({
-        entry: vote.entryId,
+        entry: newEntryId,
         voted: votedTimestamp,
       });
     });
-
-    // Move processed file
-    const newPath = path.join(PROCESSED_DIR, file);
-    await fs.rename(filePath, newPath);
-    console.log(`Processed and moved ${file}.`);
   }
 
-  // Write the final aggregated data
   await fs.writeFile(ENTRIES_FILE, JSON.stringify(entriesData, null, 2));
-  console.log('Successfully updated entries.json.');
+  console.log('Successfully generated entries.json in public/.');
   await fs.writeFile(VOTES_FILE, JSON.stringify(votesData, null, 2));
-  console.log('Successfully updated votes.json.');
+  console.log('Successfully generated votes.json in public/.');
 
   console.log('Aggregation script finished.');
 }

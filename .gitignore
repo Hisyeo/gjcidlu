@@ -33,4 +33,6 @@ yarn-error.log*
 
 # Custom build artifacts
 /gen
-# /rsc/published
+/public/entries.json
+/public/votes.json
+/rsc/published

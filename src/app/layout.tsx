@@ -5,7 +5,7 @@ import { AppProvider } from "./AppContext";
 import { SettingsProvider } from "./SettingsContext"; // Import SettingsProvider
 import ClientWrapper from "@/components/ClientWrapper";
 import { getTranslationStats } from "@/lib/data";
-import entriesData from '@/../rsc/published/entries.json'; // Import entries data
+import entriesData from '@/../public/entries.json'; // Import entries data
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

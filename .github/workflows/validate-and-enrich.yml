@@ -4,7 +4,7 @@ on:
   pull_request_target:
     types: [opened, synchronize]
     paths:
-      - 'rsc/submitted/**'
+      - 'rsc/submissions/**'
 
 permissions:
   contents: write
@@ -40,7 +40,7 @@ jobs:
         run: |
           # Get the list of files changed in the PR
           CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
-          SUBMISSION_FILE=$(echo "$CHANGED_FILES" | grep '^rsc/submitted/.*\.json$' | head -n 1)
+          SUBMISSION_FILE=$(echo "$CHANGED_FILES" | grep '^rsc/submissions/.*\.json$' | head -n 1)
           echo "submission_file=$SUBMISSION_FILE" >> "$GITHUB_OUTPUT"
 
           if [[ -z "$SUBMISSION_FILE" ]]; then

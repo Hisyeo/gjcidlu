@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/aggregate.mjs && cp rsc/published/votes.json public/votes.json && next build",
+    "build": "next build",
+    "prebuild": "node scripts/aggregate.mjs && cp rsc/published/votes.json public/votes.json",
     "start": "next start",
     "lint": "eslint",
     "reprocess": "node scripts/reprocess.mjs"

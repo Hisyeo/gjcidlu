@@ -214,22 +214,138 @@
   },
   "warning-jgtb3": {
     "$pos": "noun",
-    "$desc": "something, especially a statement, that tells you that something bad, dangerous, or annoying might happen so that you can be ready or avoid it"
+    "$desc": "something, especially a statement, that tells you that something bad, dangerous, or annoying might happen so that you can be ready or avoid it",
+    "hbiyo_bNgosi": {
+      "submitter": "discord:128874964517388288",
+      "created": "2025-11-16T21:19:44.926Z",
+      "contents": [
+        2,
+        268,
+        1774,
+        176
+      ],
+      "sourceFile": "sub.20251116T204234-9mj3d6.json"
+    }
   },
   "understand-b7ulh": {
     "$pos": "verb",
-    "$desc": "to know the meaning of what someone is telling you, or the language that they speak"
+    "$desc": "to know the meaning of what someone is telling you, or the language that they speak",
+    "xq_fjsrN_bqtid_ye_fS_rm_kot_nimu": {
+      "submitter": "discord:128874964517388288",
+      "created": "2025-11-16T21:19:44.926Z",
+      "contents": [
+        2,
+        850,
+        1774,
+        419,
+        1774,
+        398,
+        1774,
+        872,
+        1774,
+        860,
+        1774,
+        835,
+        1774,
+        728,
+        1774,
+        683
+      ],
+      "sourceFile": "sub.20251116T204234-9mj3d6.json"
+    }
   },
   "understand-oxl1r": {
     "$pos": "verb",
-    "$desc": "to know or realize how a fact, process, situation etc works, especially through learning or experience"
+    "$desc": "to know or realize how a fact, process, situation etc works, especially through learning or experience",
+    "xq_fjsrN_fS_detAi_lj_kinoxi_bj": {
+      "submitter": "discord:128874964517388288",
+      "created": "2025-11-16T21:19:44.926Z",
+      "contents": [
+        2,
+        850,
+        1774,
+        419,
+        1774,
+        860,
+        1774,
+        371,
+        1774,
+        870,
+        1774,
+        125,
+        1774,
+        858
+      ],
+      "sourceFile": "sub.20251116T204234-9mj3d6.json"
+    }
   },
   "understand-lrddv": {
     "$pos": "verb",
-    "$desc": "to realize how someone feels and why they behave the way they do, and to be sympathetic"
+    "$desc": "to realize how someone feels and why they behave the way they do, and to be sympathetic",
+    "xq_fjsrN_fS_rm_aNcemN_bj_uN_motifo_fS_nia_weilrN_tlik_ano_aNcemN_tjL_nia": {
+      "submitter": "discord:128874964517388288",
+      "created": "2025-11-16T21:19:44.926Z",
+      "contents": [
+        2,
+        850,
+        1774,
+        419,
+        1774,
+        860,
+        1774,
+        835,
+        1774,
+        92,
+        1774,
+        858,
+        1776,
+        1774,
+        837,
+        1774,
+        203,
+        1774,
+        860,
+        1774,
+        805,
+        1774,
+        217,
+        1774,
+        556,
+        1774,
+        707,
+        1776,
+        1774,
+        92,
+        1774,
+        742,
+        1774,
+        805
+      ],
+      "sourceFile": "sub.20251116T204234-9mj3d6.json"
+    }
   },
   "oatmeal-iob61": {
     "$pos": "noun",
     "$desc": "a soft breakfast food made by boiling crushed oats"
+  },
+  "dispensable-jsch4": {
+    "$pos": "adjective",
+    "$desc": "not necessary or important and so easy to get rid of"
+  },
+  "gullible-7k07s": {
+    "$pos": "adjective",
+    "$desc": "too ready to believe what other people tell you, so that you are easily tricked"
+  },
+  "annoying-s2vtn": {
+    "$pos": "adjective",
+    "$desc": "making you feel slightly angry"
+  },
+  "crooked-iotdi": {
+    "$pos": "adjective",
+    "$desc": "bent, twisted, or not in a straight line"
+  },
+  "peel-sq6fi": {
+    "$pos": "verb",
+    "$desc": "to remove the skin from fruit or vegetables"
   }
 }

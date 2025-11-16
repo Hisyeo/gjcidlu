@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
   output: 'export',
   distDir: 'gen',
+  basePath: isProd ? '/gjcidlu' : undefined,
   assetPrefix: isProd ? '/gjcidlu/' : undefined,
 };
 

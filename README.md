@@ -7,7 +7,8 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 - [x] Add a synonyms library that searches for alternatives
 - [x] When in a term detail page, search for any closely related words using synonyms and offer them to the user to navigate to
 - [x] Show a count of how many translations have been written for the suggested alternative terms 
-- [ ] Add noun phrase grammar and spell checking before submission is allowed
+- [x] Add noun phrase grammar checking before submission is allowed
+- [ ] Allow switching between latin, abugida and syllabary Hîsyêô text
 - [x] Make the main rendering view into a window that only renders html within proximity of user's scroll location (when list of terms gets big)
 - [x] Add a warning toast to indicate that user's prior selection was unset
 - [x] Allow the user to see newly added translations in the term detail page before they are submitted

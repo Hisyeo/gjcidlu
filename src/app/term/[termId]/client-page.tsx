@@ -9,6 +9,8 @@ import { useToast } from '@/app/ToastContext';
 import { useSettings } from '@/app/SettingsContext';
 import { getPendingSubmissions, SubmissionContent, PendingSubmissionsResponse, GitHubRateLimitError } from '@/lib/github';
 import synonyms from 'synonyms';
+import { useDebounce } from '@/lib/hooks';
+import { validateNounPhrase, SyntaxError } from '@/lib/antlr';
 
 const PENDING_DATA_CACHE_KEY = 'pendingSubmissionsCache';
 
@@ -34,6 +36,17 @@ export default function TermDetailClientView({ term, initialEntries, allTerms }:
   const [isDuplicateInput, setIsDuplicateInput] = useState(false);
   const [userVotes, setUserVotes] = useState<Record<VoteType, { entryId: string, date: string } | null>>({ overall: null, minimal: null, specific: null, humorous: null });
   const [relatedTerms, setRelatedTerms] = useState<{ term: Term, count: number }[]>([]);
+  const [syntaxErrors, setSyntaxErrors] = useState<SyntaxError[]>([]);
+  const debouncedTranslation = useDebounce(translation, 500);
+
+  useEffect(() => {
+    if (debouncedTranslation.trim()) {
+      const errors = validateNounPhrase(debouncedTranslation);
+      setSyntaxErrors(errors);
+    } else {
+      setSyntaxErrors([]);
+    }
+  }, [debouncedTranslation]);
 
   useEffect(() => {
     const termName = term.id.split('-')[0];
@@ -139,7 +152,7 @@ export default function TermDetailClientView({ term, initialEntries, allTerms }:
 
   const handleAddEntry = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!translation.trim()) return;
+    if (!translation.trim() || syntaxErrors.length > 0) return;
 
     const newTranslationContents = encode(translation);
     const newEntryId = encodeToSnakeCaseSyllabary(newTranslationContents);
@@ -254,12 +267,29 @@ export default function TermDetailClientView({ term, initialEntries, allTerms }:
         <form onSubmit={handleAddEntry}>
           <input
             type="text"
+            spellCheck="false"
             value={translation}
             onChange={handleTranslationChange}
             placeholder="Add your Hîsyêô translation..."
             className={`w-full rounded-lg border p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none ${isDuplicateInput ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'}`}
           />
-          <button type="submit" className="mt-2 w-full rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
+          {syntaxErrors.length > 0 && (
+            <div className="mt-2 text-sm text-red-600">
+              <details>
+                <summary>Syntax errors found</summary>
+                <ul className="list-disc list-inside">
+                  {syntaxErrors.map((error, i) => (
+                    <li key={i}>{error.msg}</li>
+                  ))}
+                </ul>
+              </details>
+            </div>
+          )}
+          <button 
+            type="submit" 
+            className="mt-2 w-full rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            disabled={!translation.trim() || syntaxErrors.length > 0}
+          >
             Add to Submission Queue
           </button>
         </form>

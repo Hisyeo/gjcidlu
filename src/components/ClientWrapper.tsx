@@ -7,6 +7,7 @@ import { getQueue } from "@/lib/queue";
 import { useAppContext } from "@/app/AppContext";
 import { ToastProvider } from "@/app/ToastContext";
 import { EntriesData } from "@/lib/types"; // Import EntriesData
+import BackToTopButton from "./BackToTopButton";
 
 interface Stats {
   translatedCount: number;
@@ -57,6 +58,7 @@ export default function ClientWrapper({
       />
       {children}
       {isQueueOpen && <SubmissionQueue toggleQueue={toggleQueue} allEntries={allEntries} />}
+      <BackToTopButton />
     </ToastProvider>
   );
 }

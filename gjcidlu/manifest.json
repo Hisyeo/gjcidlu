@@ -1,0 +1,36 @@
+{
+  "name": "yôn Gicîdolû",
+  "short_name": "Gicîdolû",
+  "description": "A git-forged local-first tool for tracking conlang compound phrases by user entry and voting.",
+  "start_url": "/gjcidlu/",
+  "display": "standalone",
+  "background_color": "#4A2A3A",
+  "theme_color": "#4A2A3A",
+  "icons": [
+    {
+      "src": "/gjcidlu/gjcidlu_64.png",
+      "sizes": "64x64",
+      "type": "image/png"
+    },
+    {
+      "src": "/gjcidlu/gjcidlu_128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "src": "/gjcidlu/gjcidlu_256.png",
+      "sizes": "256x256",
+      "type": "image/png"
+    },
+    {
+      "src": "/gjcidlu/gjcidlu_384.png",
+      "sizes": "384x384",
+      "type": "image/png"
+    },
+    {
+      "src": "/gjcidlu/gjcidlu_512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -33,9 +33,16 @@ jobs:
       - name: 'Aggregate data and build site'
         run: |
           # First, ensure the directories exist so the script doesn't fail on a clean repo
-          mkdir -p rsc/submitted rsc/processed
+          mkdir -p rsc/submitted rsc/processed rsc/published
           # Then, run the build process
           npm run build
+
+      - name: 'List generated files for debugging'
+        run: |
+          echo "--- Contents of rsc/published ---"
+          ls -lR rsc/published
+          echo "--- Contents of public ---"
+          ls -lR public
 
       - name: 'Deploy to GitHub Pages'
         uses: peaceiris/actions-gh-pages@v3

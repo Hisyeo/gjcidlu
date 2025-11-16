@@ -1,18 +1,21 @@
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import { encode, decode, encodeToSnakeCaseSyllabary } from '@/lib/htf-int';
 import { Entry, Term, Vote, VoteType, QueueAction } from '@/lib/types';
 import { addToQueue, getQueue, removeFromQueue } from '@/lib/queue';
 import { useToast } from '@/app/ToastContext';
 import { useSettings } from '@/app/SettingsContext';
 import { getPendingSubmissions, SubmissionContent, PendingSubmissionsResponse, GitHubRateLimitError } from '@/lib/github';
+import synonyms from 'synonyms';
 
 const PENDING_DATA_CACHE_KEY = 'pendingSubmissionsCache';
 
 interface TermDetailClientViewProps {
   term: Term;
   initialEntries: { id: string; termId: string; votes: Record<VoteType, number>; contents: number[], submitter?: string }[];
+  allTerms: Term[];
 }
 
 interface DisplayEntry extends Entry {
@@ -22,7 +25,7 @@ interface DisplayEntry extends Entry {
     isCurrentUserSubmitter: boolean;
 }
 
-export default function TermDetailClientView({ term, initialEntries }: TermDetailClientViewProps) {
+export default function TermDetailClientView({ term, initialEntries, allTerms }: TermDetailClientViewProps) {
   const [translation, setTranslation] = useState('');
   const [queue, setQueue] = useState<QueueAction[]>([]);
   const { showToast } = useToast();
@@ -30,6 +33,19 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
   const [pendingEntries, setPendingEntries] = useState<(Entry & { prUrl?: string })[]>([]);
   const [isDuplicateInput, setIsDuplicateInput] = useState(false);
   const [userVotes, setUserVotes] = useState<Record<VoteType, { entryId: string, date: string } | null>>({ overall: null, minimal: null, specific: null, humorous: null });
+  const [relatedTerms, setRelatedTerms] = useState<{ term: Term, count: number }[]>([]);
+
+  useEffect(() => {
+    const termName = term.id.split('-')[0];
+    const related = synonyms(termName);
+    const relatedWords = [...(related?.n || []), ...(related?.v || []), ...(related?.adj || []), ...(related?.adv || [])];
+    
+    const relatedWithTranslations = allTerms
+        .filter(t => t.id !== term.id && relatedWords.includes(t.id.split('-')[0]))
+        .map(t => ({ term: t, count: allTerms.filter(term => term.id.startsWith(t.id.split('-')[0] + '-')).length }))
+        .filter(r => r.count > 0);
+    setRelatedTerms(relatedWithTranslations);
+  }, [term, allTerms]);
 
   useEffect(() => {
     const updateQueue = () => setQueue(getQueue());
@@ -222,6 +238,18 @@ export default function TermDetailClientView({ term, initialEntries }: TermDetai
 
   return (
     <>
+      {relatedTerms.length > 0 && (
+        <div className="mt-6 p-4 bg-gray-100 rounded-lg">
+          <h3 className="text-lg font-semibold mb-2">Related Terms</h3>
+          <div className="flex flex-wrap gap-2">
+            {relatedTerms.map(({ term, count }) => (
+              <Link key={term.id} href={`/term/${term.id}`} className="text-blue-600 hover:underline">
+                {term.id.split('-')[0]} ({count} translations)
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="mt-6">
         <form onSubmit={handleAddEntry}>
           <input

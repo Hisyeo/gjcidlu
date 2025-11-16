@@ -4,12 +4,12 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 - [x] Add a guard client side that replaces a vote if the user changes to a different translation for the same category
 - [x] Add a reddit username authentication
-- [ ] Add a hunspell library that suggests the alternatives that hunspell offers (during main page search and during add new term)
+- [x] Add a hunspell library that suggests the alternatives that hunspell offers (during main page search and during add new term)
 - [ ] When in a term detail page, search for any closely related words using hunspell and offer them to the user to navigate to
-- [ ] Show a count of how many translations have been written for the suggested alternative terms 
+- [x] Show a count of how many translations have been written for the suggested alternative terms 
 - [ ] Add noun phrase grammar and spell checking before submission is allowed
-- [ ] Make the main rendering view into a window that only renders html within proximity of user's scroll location (when list of terms gets big)
-- [ ] Add a warning toast to indicate that user's prior selection was unset
+- [x] Make the main rendering view into a window that only renders html within proximity of user's scroll location (when list of terms gets big)
+- [x] Add a warning toast to indicate that user's prior selection was unset
 - [x] Allow the user to see newly added translations in the term detail page before they are submitted
 - [ ] Add a way to click on a submission queue item and navigate to that new term, new translation or voted translation
 - [ ] Make the untranslated button clickable on all screens that it's viewable on

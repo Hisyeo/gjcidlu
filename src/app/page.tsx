@@ -1,8 +1,8 @@
-import { getTermsWithDetails } from '@/lib/data';
+import { getTermsWithDetailsSortedByDate } from '@/lib/data';
 import TermList from '@/components/TermList';
 
 export default function Home() {
-  const terms = getTermsWithDetails();
+  const terms = getTermsWithDetailsSortedByDate();
 
   return (
     <main className="container mx-auto mt-8 p-4">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { TermWithDetails } from '@/lib/data';
 import { useAppContext } from '@/app/AppContext';
@@ -8,6 +8,7 @@ import { useSettings } from '@/app/SettingsContext';
 import { useToast } from '@/app/ToastContext';
 import { getPendingSubmissions, SubmissionContent, PendingSubmissionsResponse, GitHubRateLimitError } from '@/lib/github';
 import { Entry } from '@/lib/types';
+import synonyms from 'synonyms';
 
 interface TermListProps {
   initialTerms: TermWithDetails[];
@@ -24,10 +25,34 @@ interface CombinedTerm extends TermWithDetails {
 
 export default function TermList({ initialTerms }: TermListProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [visibleCount, setVisibleCount] = useState(10);
+  const [relatedTerms, setRelatedTerms] = useState<{ term: string, count: number }[]>([]);
   const { showUntranslated } = useAppContext();
   const { settings } = useSettings();
   const { showToast } = useToast();
   const [pendingSubmissions, setPendingSubmissions] = useState<SubmissionContent[]>([]);
+  const observer = useRef<IntersectionObserver | null>(null);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 300); // 300ms debounce delay
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery]);
+
+  const lastElementRef = useCallback((node: HTMLDivElement | null) => {
+    if (observer.current) observer.current.disconnect();
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting) {
+        setVisibleCount(prev => prev + 10);
+      }
+    });
+    if (node) observer.current.observe(node);
+  }, []);
 
   useEffect(() => {
     const fetchPendingData = async () => {
@@ -78,7 +103,7 @@ export default function TermList({ initialTerms }: TermListProps) {
       const submissionAuthorIdentifier = submission.author ? `${submission.author.system.toLowerCase()}:${submission.author.id}` : null;
       const isCurrentUserSubmitter = submissionAuthorIdentifier === currentUserIdentifier;
       submission.newTerms?.forEach(term => {
-        pendingTermsMap.set(term.id, { ...term, status: 'pending', prUrl: submission.prUrl, topTranslations: { overall: null, minimal: null, specific: null, humorous: null }, isCurrentUserSubmitter });
+        pendingTermsMap.set(term.id, { ...term, status: 'pending', prUrl: submission.prUrl, topTranslations: { overall: null, minimal: null, specific: null, humorous: null }, isCurrentUserSubmitter, latestEntryDate: new Date().toISOString() });
       });
       submission.newEntries?.forEach(entry => {
         const termId = entry.termId;
@@ -112,12 +137,30 @@ export default function TermList({ initialTerms }: TermListProps) {
 
   const filteredTerms = useMemo(() => {
     if (!allTerms) return [];
-    const lowercasedQuery = searchQuery.toLowerCase();
+    const lowercasedQuery = debouncedQuery.toLowerCase();
+    if (!lowercasedQuery) {
+        setRelatedTerms([]);
+        return allTerms;
+    }
+
+    const related = synonyms(lowercasedQuery);
+    const relatedWords = [...(related?.n || []), ...(related?.v || []), ...(related?.adj || []), ...(related?.adv || [])];
+    
+    const relatedWithTranslations = relatedWords
+        .map(word => ({ term: word, count: allTerms.filter(t => t.id.startsWith(word + '-')).length }))
+        .filter(r => r.count > 0);
+    setRelatedTerms(relatedWithTranslations);
+
     return allTerms.filter(term =>
       term.id.toLowerCase().includes(lowercasedQuery) ||
-      term.description.toLowerCase().includes(lowercasedQuery)
+      term.description.toLowerCase().includes(lowercasedQuery) ||
+      relatedWords.some(word => term.id.toLowerCase().includes(word))
     );
-  }, [searchQuery, allTerms]);
+  }, [debouncedQuery, allTerms]);
+
+  const visibleTerms = useMemo(() => {
+    return filteredTerms.slice(0, visibleCount);
+  }, [filteredTerms, visibleCount]);
 
   const renderTopTranslations = (topTranslations: TermWithDetails['topTranslations']) => {
     if (!topTranslations) return <p className="text-lg font-medium text-gray-500">(No votes on published entries)</p>;
@@ -173,14 +216,21 @@ export default function TermList({ initialTerms }: TermListProps) {
         </Link>
       </div>
 
+      {relatedTerms.length > 0 && (
+        <div className="mt-4 text-sm text-gray-600">
+          Related search terms: {relatedTerms.map(r => `'${r.term}' (${r.count} translations)`).join(', ')}
+        </div>
+      )}
+
       <div className="mt-6 space-y-8">
-        {filteredTerms.map(term => {
+        {visibleTerms.map((term, index) => {
+          const isLastElement = index === visibleTerms.length - 1;
           const isPendingTerm = term.status === 'pending';
           const hasPendingEntries = term.entries?.some(e => e.status === 'pending');
           const isCurrentUserSubmitter = term.isCurrentUserSubmitter;
 
           return (
-            <div key={term.id} className={`rounded-lg border bg-white ${isPendingTerm ? 'border-yellow-400' : 'border-gray-200'}`}>
+            <div key={term.id} ref={isLastElement ? lastElementRef : null} className={`rounded-lg border bg-white ${isPendingTerm ? 'border-yellow-400' : 'border-gray-200'}`}>
               {isPendingTerm && !isCurrentUserSubmitter && (
                 <div className="p-2 bg-yellow-100 text-yellow-800 text-sm rounded-t-lg flex justify-between items-center">
                   <span>This term is pending review.</span>
@@ -234,7 +284,7 @@ export default function TermList({ initialTerms }: TermListProps) {
             </div>
           );
         })}
-        {filteredTerms.length === 0 && (
+        {filteredTerms.length === 0 && debouncedQuery && (
             <div className="text-center py-10">
                 <p className="text-gray-500">No terms found matching your search.</p>
             </div>

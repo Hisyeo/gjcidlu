@@ -1,4 +1,4 @@
-import { getTermById, getEntriesForTerm, getAggregatedVotesForTerm } from '@/lib/data';
+import { getTermById, getEntriesForTerm, getAggregatedVotesForTerm, getTerms } from '@/lib/data';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import TermDetailClientView from './client-page';
@@ -24,6 +24,7 @@ export default async function TermDetailPage({ params }: { params: { termId: str
     notFound();
   }
 
+  const allTerms = getTerms();
   const entries = getEntriesForTerm(term.id);
   const votes = getAggregatedVotesForTerm(term.id);
 
@@ -51,7 +52,7 @@ export default async function TermDetailPage({ params }: { params: { termId: str
           <p className="text-lg text-gray-700 italic">&quot;{term.description}&quot;</p>
         </div>
 
-        <TermDetailClientView term={term} initialEntries={initialEntries} />
+        <TermDetailClientView term={term} initialEntries={initialEntries} allTerms={allTerms} />
       </div>
     </main>
   );

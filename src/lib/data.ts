@@ -17,6 +17,7 @@ export type AggregatedVotes = Record<string, VoteCounts>; // Record<entryId, Vot
 
 export interface TermWithDetails extends Term {
     topTranslations: Record<VoteType, string | null>;
+    latestEntryDate: string; // For sorting
 }
 
 // --- Cast the imported data to our defined types ---
@@ -91,6 +92,16 @@ export function getTermsWithDetails(): TermWithDetails[] {
         const aggregatedVotes = getAggregatedVotesForTerm(term.id);
         const entriesForTerm = getEntriesForTerm(term.id);
 
+        let latestEntryDate = '1970-01-01T00:00:00.000Z';
+        if (entriesForTerm.length > 0) {
+            latestEntryDate = entriesForTerm.reduce((latest, entry) => {
+                if (entry.created && entry.created > latest) {
+                    return entry.created;
+                }
+                return latest;
+            }, entriesForTerm[0].created || latestEntryDate);
+        }
+
         const topTranslations: Record<VoteType, string | null> = {
             overall: null,
             minimal: null,
@@ -122,10 +133,16 @@ export function getTermsWithDetails(): TermWithDetails[] {
         return {
             ...term,
             topTranslations,
+            latestEntryDate,
         };
     });
 
     return detailedTerms;
+}
+
+export function getTermsWithDetailsSortedByDate(): TermWithDetails[] {
+    const detailedTerms = getTermsWithDetails();
+    return detailedTerms.sort((a, b) => new Date(b.latestEntryDate).getTime() - new Date(a.latestEntryDate).getTime());
 }
 
 export function getTranslationStats() {

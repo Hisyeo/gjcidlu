@@ -20,7 +20,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 - [x] Add a ui change when the screen resolution is small: "English &rarr; Hisyeo" is removed, "X items translated" just becomes "X" and the "untranslated" label is removed
 - [x] Make "No username to validate" error only appear once
 - [x] Get untranslated page working again and with grammar checking
-- [ ] Add a button in the header that takes you right to the PRs for the repo
+- [x] Add a button in the header that takes you right to the PRs for the repo
 
 ## Getting Started
 

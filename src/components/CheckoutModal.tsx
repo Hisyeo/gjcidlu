@@ -28,7 +28,9 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ queue, onClose }) => {
   const { showToast } = useToast();
 
   useEffect(() => {
-    fetch('/votes.json')
+    const isProd = process.env.NODE_ENV === 'production';
+    const basePath = isProd ? '/gjcidlu' : '';
+    fetch(`${basePath}/votes.json`)
       .then(res => {
         if (!res.ok) {
           throw new Error('Network response was not ok');

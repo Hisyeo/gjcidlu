@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { getQueue, removeFromQueue } from '@/lib/queue';
 import { QueueAction, Entry, EntriesData } from '@/lib/types'; // Import EntriesData
 import CheckoutModal from './CheckoutModal';
@@ -12,6 +13,7 @@ interface SubmissionQueueProps {
 const SubmissionQueue: React.FC<SubmissionQueueProps> = ({ toggleQueue, allEntries }) => {
   const [queue, setQueue] = useState<QueueAction[]>([]);
   const [isModalOpen, setModalOpen] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const updateQueue = () => setQueue(getQueue());
@@ -20,7 +22,8 @@ const SubmissionQueue: React.FC<SubmissionQueueProps> = ({ toggleQueue, allEntri
     return () => window.removeEventListener('storage', updateQueue);
   }, []);
 
-  const handleRemove = (id: string) => {
+  const handleRemove = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation(); // Prevent navigation when clicking the remove button
     removeFromQueue(id);
   };
 
@@ -32,6 +35,13 @@ const SubmissionQueue: React.FC<SubmissionQueueProps> = ({ toggleQueue, allEntri
 
   const handleCloseModal = () => {
     setModalOpen(false);
+  };
+
+  const handleItemClick = (action: QueueAction) => {
+    if (action.type === 'NEW_ENTRY' || action.type === 'VOTE') {
+      router.push(`/term/${action.payload.termId}`);
+      toggleQueue();
+    }
   };
 
   const getTranslationForEntryId = (entryId: string): string => {
@@ -134,15 +144,22 @@ const SubmissionQueue: React.FC<SubmissionQueueProps> = ({ toggleQueue, allEntri
             {queue.length === 0 && (
               <p className="text-gray-500">Your queue is empty.</p>
             )}
-            {queue.map((action) => (
-              <div key={action.id} className="flex items-start space-x-4 p-4 border rounded-lg">
-                {getIconForAction(action)}
-                <div>
-                  {renderAction(action)}
+            {queue.map((action) => {
+              const isClickable = action.type === 'NEW_ENTRY' || action.type === 'VOTE';
+              return (
+                <div
+                  key={action.id}
+                  onClick={() => handleItemClick(action)}
+                  className={`flex items-start space-x-4 p-4 border rounded-lg ${isClickable ? 'cursor-pointer hover:bg-gray-50' : ''}`}
+                >
+                  {getIconForAction(action)}
+                  <div>
+                    {renderAction(action)}
+                  </div>
+                  <button onClick={(e) => handleRemove(e, action.id)} className="ml-auto text-gray-400 hover:text-red-500">&times;</button>
                 </div>
-                <button onClick={() => handleRemove(action.id)} className="ml-auto text-gray-400 hover:text-red-500">&times;</button>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="p-6 border-t border-gray-200 bg-gray-50">

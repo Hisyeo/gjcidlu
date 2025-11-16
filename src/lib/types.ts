@@ -11,6 +11,7 @@ export interface Entry {
   created?: string; // ISO 8601 date
   contents: number[]; // HTF-INT
   original?: string; // if modifying
+  sourceFile?: string;
 }
 
 export type VoteType = "overall" | "minimal" | "specific" | "humorous";
@@ -28,6 +29,7 @@ export interface EntryContent {
   created: string;
   contents: number[];
   original?: string;
+  sourceFile?: string;
 }
 
 export interface TermEntries {

@@ -55,6 +55,7 @@ export function getEntriesForTerm(termId: string): Entry[] {
                     contents: entry.contents || [],
                     submitter: entry.submitter,
                     created: entry.created,
+                    sourceFile: entry.sourceFile,
                 };
             }
             return { id: entryId, termId: termId, contents: [] };

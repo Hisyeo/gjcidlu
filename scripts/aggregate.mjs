@@ -77,6 +77,7 @@ async function main() {
           submitter: authorId,
           created: new Date().toISOString(),
           contents: entry.contents,
+          sourceFile: file,
           ...(entry.original && { original: entry.original }),
         };
       }

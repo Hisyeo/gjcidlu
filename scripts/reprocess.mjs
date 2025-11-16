@@ -84,9 +84,10 @@ async function main() {
 
   // First pass: build idMap and entriesData
   console.log('First pass: Building ID map and entries data...');
-  for (const submissionContent of allSubmissions) {
+  allSubmissions.forEach((submissionContent, index) => {
+    const file = submissionFiles[index]; // Get the filename
     const authorObj = submissionContent.author;
-    if (!authorObj || !authorObj.system || !authorObj.id) continue;
+    if (!authorObj || !authorObj.system || !authorObj.id) return;
     const authorId = `${authorObj.system.toLowerCase()}:${authorObj.id}`;
 
     submissionContent.newTerms?.forEach(term => {
@@ -102,16 +103,17 @@ async function main() {
       const newId = encodeToSnakeCaseSyllabary(entry.contents);
       idMap.set(entry.id, newId); // Map old ID to new ID
 
-      if (entriesData[entry.termId] && !entriesData[entry.termId][newId]) {
+      if (entriesData[entry.termId]) {
         entriesData[entry.termId][newId] = {
           submitter: authorId,
           created: entry.created || new Date().toISOString(), // Preserve original creation date if available
           contents: entry.contents,
+          sourceFile: file,
           ...(entry.original && { original: entry.original }),
         };
       }
     });
-  }
+  });
 
   // Second pass: build votesData
   console.log('Second pass: Building votes data...');

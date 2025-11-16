@@ -90,7 +90,7 @@ export async function getPendingSubmissions(repoUrl: string): Promise<PendingSub
 
     // 3. Get submissions from main branch's rsc/submitted
     const mainSubmittedFiles = await fetchGitHubAPI(`https://api.github.com/repos/${owner}/${repo}/contents/rsc/submitted`);
-    if (Array.isArray(mainSubmittedFiles)) {
+    if (mainSubmittedFiles && Array.isArray(mainSubmittedFiles)) {
       for (const file of mainSubmittedFiles) {
         if (file.name.endsWith('.json')) {
           const fileContent = await fetchGitHubAPI(file.url);

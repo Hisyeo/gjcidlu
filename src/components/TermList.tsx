@@ -33,7 +33,12 @@ export default function TermList({ initialTerms }: TermListProps) {
   const { settings } = useSettings();
   const { showToast } = useToast();
   const [pendingSubmissions, setPendingSubmissions] = useState<SubmissionContent[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
   const observer = useRef<IntersectionObserver | null>(null);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -180,7 +185,7 @@ export default function TermList({ initialTerms }: TermListProps) {
   const renderTopTranslations = (topTranslations: TermWithDetails['topTranslations']) => {
     if (!topTranslations) return <p className="text-lg font-medium text-gray-500">(No votes on published entries)</p>;
     
-    const translationFontClass = settings.script === 'abugida' ? 'font-abugida' : settings.script === 'syllabary' ? 'font-syllabary' : '';
+    const translationFontClass = isMounted && settings.script === 'abugida' ? 'font-abugida' : isMounted && settings.script === 'syllabary' ? 'font-syllabary' : '';
 
     const votedCategories = (Object.keys(topTranslations) as (keyof typeof topTranslations)[])
       .filter(cat => topTranslations[cat] !== null)
@@ -194,19 +199,19 @@ export default function TermList({ initialTerms }: TermListProps) {
       <div className="grid grid-cols-2 gap-x-4 gap-y-2">
         <div>
           <span className="text-xs text-gray-400">Overall</span>
-          <p className={`text-lg font-medium text-blue-600 ${topTranslations.overall ? translationFontClass : ''}`}>{topTranslations.overall ? decode(topTranslations.overall, settings.script) : '(No votes)'}</p>
+          <p className={`text-lg font-medium text-blue-600 ${topTranslations.overall ? translationFontClass : ''}`}>{topTranslations.overall ? decode(topTranslations.overall, isMounted ? settings.script : 'latin') : '(No votes)'}</p>
         </div>
         <div>
           <span className="text-xs text-gray-400">Minimal</span>
-          <p className={`text-lg font-medium text-blue-600 ${topTranslations.minimal ? translationFontClass : ''}`}>{topTranslations.minimal ? decode(topTranslations.minimal, settings.script) : '(No votes)'}</p>
+          <p className={`text-lg font-medium text-blue-600 ${topTranslations.minimal ? translationFontClass : ''}`}>{topTranslations.minimal ? decode(topTranslations.minimal, isMounted ? settings.script : 'latin') : '(No votes)'}</p>
         </div>
         <div>
           <span className="text-xs text-gray-400">Specific</span>
-          <p className={`text-lg font-medium text-blue-600 ${topTranslations.specific ? translationFontClass : ''}`}>{topTranslations.specific ? decode(topTranslations.specific, settings.script) : '(No votes)'}</p>
+          <p className={`text-lg font-medium text-blue-600 ${topTranslations.specific ? translationFontClass : ''}`}>{topTranslations.specific ? decode(topTranslations.specific, isMounted ? settings.script : 'latin') : '(No votes)'}</p>
         </div>
         <div>
           <span className="text-xs text-gray-400">Humorous</span>
-          <p className={`text-lg font-medium text-blue-600 ${topTranslations.humorous ? translationFontClass : ''}`}>{topTranslations.humorous ? decode(topTranslations.humorous, settings.script) : '(No votes)'}</p>
+          <p className={`text-lg font-medium text-blue-600 ${topTranslations.humorous ? translationFontClass : ''}`}>{topTranslations.humorous ? decode(topTranslations.humorous, isMounted ? settings.script : 'latin') : '(No votes)'}</p>
         </div>
       </div>
     );

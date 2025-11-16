@@ -20,10 +20,9 @@ const geistMono = Geist_Mono({
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
 export const metadata: Metadata = {
-  metadataBase: baseUrl ? new URL(baseUrl) : undefined,
   title: "yôn Gicîdolû",
   description: "A git-forged local-first tool for tracking conlang compound phrases.",
-  manifest: "/manifest.json",
+  manifest: baseUrl ? new URL('/manifest.json', baseUrl) : '/manifest.json',
 };
 
 export default function RootLayout({

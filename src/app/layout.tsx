@@ -17,12 +17,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+const isProd = process.env.NODE_ENV === 'production';
 
 export const metadata: Metadata = {
   title: "yôn Gicîdolû",
   description: "A git-forged local-first tool for tracking conlang compound phrases.",
-  manifest: baseUrl ? new URL('/manifest.json', baseUrl) : '/manifest.json',
+  manifest: isProd ? '/gjcidlu/manifest.json' : '/manifest.json',
 };
 
 export default function RootLayout({

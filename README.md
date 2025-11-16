@@ -17,9 +17,9 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 - [x] Add a way to click on a submission queue item and navigate to that new term, new translation or voted translation
 - [ ] Make the untranslated button clickable on all screens that it's viewable on
 - [x] Make submitter not a field for submission entries because of the submission author
-- [ ] Add a ui change when the screen resolution is small: "English &rarr; Hisyeo" is removed, "X items translated" just becomes "X" and the "untranslated" label is removed
+- [x] Add a ui change when the screen resolution is small: "English &rarr; Hisyeo" is removed, "X items translated" just becomes "X" and the "untranslated" label is removed
 - [x] Make "No username to validate" error only appear once
-- [ ] Get untranslated page working again and with grammar checking
+- [x] Get untranslated page working again and with grammar checking
 
 ## Getting Started
 

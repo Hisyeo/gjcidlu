@@ -15,6 +15,11 @@ const eslintConfig = defineConfig([
     "gen/**",
     "src/vendor/grammar/**",
   ]),
+  {
+    linterOptions: {
+      reportUnusedDisableDirectives: "off"
+    }
+  }
 ]);
 
 export default eslintConfig;

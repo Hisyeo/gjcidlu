@@ -10,14 +10,15 @@
     "reprocess": "node scripts/reprocess.mjs"
   },
   "dependencies": {
+    "@tailwindcss/postcss": "^4",
     "antlr4": "^4.13.2",
     "next": "16.0.2",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "synonyms": "^1.0.1"
+    "synonyms": "^1.0.1",
+    "tailwindcss": "^4"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
     "@types/antlr4": "^4.11.6",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -25,7 +26,6 @@
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.0.2",
-    "tailwindcss": "^4",
     "typescript": "^5"
   }
 }

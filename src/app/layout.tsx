@@ -20,7 +20,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "yôn Gicîdolû",
   description: "A git-forged local-first tool for tracking conlang compound phrases.",
-  manifest: "/manifest.json",
+  manifest: new URL("/manifest.json", process.env.NEXT_PUBLIC_BASE_URL),
 };
 
 export default function RootLayout({

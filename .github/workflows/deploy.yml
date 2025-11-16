@@ -38,6 +38,9 @@ jobs:
           # Then, run the build process
           npm run build
 
+      - name: 'Prepare for deployment'
+        run: mv gen gjcidlu
+
       - name: 'List generated files for debugging'
         run: |
           echo "--- Contents of rsc/published ---"
@@ -49,7 +52,7 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./gen
+          publish_dir: ./gjcidlu
           # The user that makes the deployment commit
           user_name: 'github-actions[bot]'
           user_email: 'github-actions[bot]@users.noreply.github.com'

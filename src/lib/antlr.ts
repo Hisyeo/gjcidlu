@@ -38,7 +38,8 @@ export const validateNounPhrase = (input: string): SyntaxError[] => {
   const errorListener = new HisyeoErrorListener();
 
   lexer.removeErrorListeners();
-  lexer.addErrorListener(errorListener);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  lexer.addErrorListener(errorListener as any);
   parser.removeErrorListeners();
   parser.addErrorListener(errorListener);
 

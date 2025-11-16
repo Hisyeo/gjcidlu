@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { useSettings } from '@/app/SettingsContext';
+import { useSettings, Script } from '@/app/SettingsContext';
 import { UserSystem } from '@/lib/types';
 
 export default function SettingsPopover() {
@@ -13,10 +13,12 @@ export default function SettingsPopover() {
     const form = e.target as HTMLFormElement;
     const userSystem = form.elements.namedItem('userSystem') as HTMLSelectElement;
     const userId = form.elements.namedItem('userId') as HTMLInputElement;
+    const script = form.elements.namedItem('script') as HTMLSelectElement;
 
     setSettings({
       userSystem: userSystem.value as UserSystem,
       userId: userId.value,
+      script: script.value as Script,
     });
     setIsOpen(false);
   };
@@ -60,6 +62,19 @@ export default function SettingsPopover() {
                   defaultValue={settings.userId || ''}
                   className="mt-1 w-full rounded-lg border border-gray-300 p-2"
                 />
+              </div>
+              <div>
+                <label htmlFor="script" className="block text-sm font-medium text-gray-700">Translation Script</label>
+                <select
+                  id="script"
+                  name="script"
+                  defaultValue={settings.script || 'latin'}
+                  className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2"
+                >
+                  <option value="latin">Latin</option>
+                  <option value="abugida">Abugida</option>
+                  <option value="syllabary">Syllabary</option>
+                </select>
               </div>
               <div className="pt-2 flex justify-end">
                 <button type="submit" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">

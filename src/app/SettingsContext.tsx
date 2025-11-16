@@ -3,9 +3,12 @@
 import { createContext, useState, useContext, ReactNode } from 'react';
 import { UserSystem } from '@/lib/types';
 
+export type Script = 'latin' | 'abugida' | 'syllabary';
+
 interface UserSettings {
   userSystem: UserSystem | null;
   userId: string | null;
+  script: Script;
 }
 
 interface SettingsContextType {
@@ -18,15 +21,20 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 const SETTINGS_CACHE_KEY = 'userSettings';
 
 function getInitialSettings(): UserSettings {
+    const defaultSettings: UserSettings = { userSystem: null, userId: null, script: 'latin' };
     if (typeof window === 'undefined') {
-        return { userSystem: null, userId: null };
+        return defaultSettings;
     }
     try {
         const storedSettings = localStorage.getItem(SETTINGS_CACHE_KEY);
-        return storedSettings ? JSON.parse(storedSettings) : { userSystem: null, userId: null };
+        if (storedSettings) {
+            const parsed = JSON.parse(storedSettings);
+            return { ...defaultSettings, ...parsed };
+        }
+        return defaultSettings;
     } catch (error) {
         console.error("Failed to read user settings from localStorage:", error);
-        return { userSystem: null, userId: null };
+        return defaultSettings;
     }
 }
 

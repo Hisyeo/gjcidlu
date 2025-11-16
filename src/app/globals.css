@@ -19,6 +19,30 @@
   }
 }
 
+@font-face {
+  font-family: 'HisyotoSans-Regular';
+  src: url('/HisyotoSans-Regular.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'HisyakuiSans';
+  src: url('/HisyakuiSans.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+.font-abugida {
+  font-family: 'HisyotoSans-Regular', sans-serif;
+}
+
+.font-syllabary {
+  font-family: 'HisyakuiSans', sans-serif;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

@@ -181,7 +181,7 @@ export default function TermDetailClientView({ term, initialEntries, allTerms }:
   };
 
   const handleModify = (contents: number[]) => {
-    setTranslation(decode(contents));
+    setTranslation(decode(contents, settings.script));
     setIsDuplicateInput(false);
   };
 
@@ -224,7 +224,7 @@ export default function TermDetailClientView({ term, initialEntries, allTerms }:
     });
 
     const entry = allEntries.find(e => e.id === entryId);
-    const translationText = entry ? decode(entry.contents) : entryId;
+    const translationText = entry ? decode(entry.contents, settings.script) : entryId;
     showToast(`Vote for '${voteType}' on entry '${translationText}' added to queue!`, 'success');
   };
 
@@ -248,6 +248,8 @@ export default function TermDetailClientView({ term, initialEntries, allTerms }:
         action.payload.entryId === entryId
     );
   };
+
+  const translationFontClass = settings.script === 'abugida' ? 'font-abugida' : settings.script === 'syllabary' ? 'font-syllabary' : '';
 
   return (
     <>
@@ -322,7 +324,7 @@ export default function TermDetailClientView({ term, initialEntries, allTerms }:
                 )}
                 <div className="p-4">
                   <div className="mb-3 flex items-center justify-between">
-                    <p className="text-2xl font-medium text-gray-900">{decode(entry.contents)}</p>
+                    <p className={`text-2xl font-medium text-gray-900 ${translationFontClass}`}>{decode(entry.contents, settings.script)}</p>
                     <button onClick={() => handleModify(entry.contents)} className="flex items-center space-x-1 rounded-lg p-2 text-sm text-gray-500 hover:bg-gray-100 hover:text-blue-600">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />

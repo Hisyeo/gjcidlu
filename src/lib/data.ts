@@ -1,7 +1,6 @@
 import { Term, VoteType, EntriesData, Entry } from './types';
 import entriesData from '../../rsc/published/entries.json';
 import votesData from '../../rsc/published/votes.json';
-import { decode } from './htf-int';
 
 // --- Type definitions to match the JSON structure ---
 interface VotesData {
@@ -16,7 +15,7 @@ export type VoteCounts = Record<VoteType, number>;
 export type AggregatedVotes = Record<string, VoteCounts>; // Record<entryId, VoteCounts>
 
 export interface TermWithDetails extends Term {
-    topTranslations: Record<VoteType, string | null>;
+    topTranslations: Record<VoteType, number[] | null>;
     latestEntryDate: string; // For sorting
 }
 
@@ -102,7 +101,7 @@ export function getTermsWithDetails(): TermWithDetails[] {
             }, entriesForTerm[0].created || latestEntryDate);
         }
 
-        const topTranslations: Record<VoteType, string | null> = {
+        const topTranslations: Record<VoteType, number[] | null> = {
             overall: null,
             minimal: null,
             specific: null,
@@ -125,7 +124,7 @@ export function getTermsWithDetails(): TermWithDetails[] {
             if (winnerId) {
                 const winningEntry = entriesForTerm.find(e => e.id === winnerId);
                 if (winningEntry && winningEntry.contents) {
-                    topTranslations[type] = decode(winningEntry.contents);
+                    topTranslations[type] = winningEntry.contents;
                 }
             }
         }

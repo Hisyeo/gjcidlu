@@ -1,4 +1,5 @@
 import htf2 from '../../rsc/HTF0002.json';
+import { Script } from '@/app/SettingsContext';
 
 interface HTFEncoding {
   type: 'word' | 'syllable' | 'punctuation' | 'illegal';
@@ -56,9 +57,10 @@ export function encode(text: string): number[] {
 /**
  * Decodes an array of numbers back into a string using the HTF-INT v2 data.
  * @param encoded The array of numbers to decode.
+ * @param script The script to decode to.
  * @returns The decoded string.
  */
-export function decode(encoded: number[]): string {
+export function decode(encoded: number[], script: Script = 'latin'): string {
   if (!encoded || encoded.length < 1) {
     return '';
   }
@@ -72,39 +74,9 @@ export function decode(encoded: number[]): string {
   return data
     .map(index => {
       if (index >= 0 && index < htfData.encodings.length) {
-        return htfData.encodings[index].latin;
+        return htfData.encodings[index][script];
       }
-      return htfData.encodings[0].latin; // Return illegal character for invalid indices
-    })
-    .join('');
-}
-
-/**
- * Decodes an array of numbers back into a string using the syllabary mapping.
- * @param encoded The array of numbers to decode.
- * @returns The decoded syllabary string.
- */
-export function decodeToSyllabary(encoded: number[]): string {
-  if (!encoded || encoded.length < 1) {
-    return '';
-  }
-
-  const version = encoded[0];
-  if (version !== htfData.version) {
-    console.warn(`Mismatched HTF version. Expected ${htfData.version}, got ${version}.`);
-  }
-
-  const data = encoded.slice(1);
-  return data
-    .map(index => {
-      if (index >= 0 && index < htfData.encodings.length) {
-        const encoding = htfData.encodings[index];
-        if (encoding.type === 'punctuation') {
-          return encoding.latin === ' ' ? ' ' : ''; // Keep spaces, ignore other punctuation
-        }
-        return encoding.syllabary;
-      }
-      return ''; // Return empty for invalid indices
+      return htfData.encodings[0][script]; // Return illegal character for invalid indices
     })
     .join('');
 }

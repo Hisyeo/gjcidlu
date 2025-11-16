@@ -33,4 +33,4 @@ yarn-error.log*
 
 # Custom build artifacts
 /gen
-/rsc/published
+# /rsc/published

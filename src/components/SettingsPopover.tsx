@@ -36,7 +36,7 @@ export default function SettingsPopover() {
       {isOpen && (
         <div className="absolute right-0 mt-2 w-72 rounded-lg bg-white shadow-xl border border-gray-200 z-50">
           <div className="p-4">
-            <h3 className="font-medium text-gray-900">User Settings</h3>
+            <h3 className="font-medium text-gray-900">Settings</h3>
             <p className="text-sm text-gray-500 mt-1">This information is saved in your browser.</p>
             <form onSubmit={handleSave} className="mt-4 space-y-4">
               <div>

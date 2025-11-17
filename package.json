@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node scripts/aggregate.mjs",
+    "clean": "rm -rf .next gen",
+    "prebuild": "npm run clean && node scripts/aggregate.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

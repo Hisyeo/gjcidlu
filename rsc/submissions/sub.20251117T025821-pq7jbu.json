@@ -1,0 +1,43 @@
+{
+  "version": 3,
+  "author": {
+    "system": "Reddit",
+    "id": "MadcapJake"
+  },
+  "newTerms": [
+    {
+      "id": "handsome-joaku",
+      "pos": "adjective",
+      "description": "having a pleasing appearance, good-looking, attractive"
+    }
+  ],
+  "newEntries": [
+    {
+      "id": "hbiyo_ye_bNgosi",
+      "termId": "warning-jgtb3",
+      "contents": [
+        2,
+        268,
+        1774,
+        872,
+        1774,
+        176
+      ]
+    },
+    {
+      "id": "hefiN",
+      "termId": "understand-b7ulh",
+      "contents": [
+        2,
+        271
+      ]
+    }
+  ],
+  "votes": [
+    {
+      "termId": "understand-b7ulh",
+      "entryId": "xq_fjsrN_bqtid_ye_fS_rm_kot_nimu",
+      "voteType": "specific"
+    }
+  ]
+}

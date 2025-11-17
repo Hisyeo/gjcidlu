@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "clean": "rm -rf .next gen",
+    "clean": "rm -rf .next gen node_modules/.cache",
     "prebuild": "npm run clean && node scripts/aggregate.mjs",
     "build": "next build",
     "start": "next start",

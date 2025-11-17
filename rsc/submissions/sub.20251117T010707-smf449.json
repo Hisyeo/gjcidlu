@@ -1,0 +1,37 @@
+{
+  "version": 3,
+  "author": {
+    "system": "Reddit",
+    "id": "MadcapJake"
+  },
+  "newTerms": [],
+  "newEntries": [
+    {
+      "id": "koNyeC_frNsuT",
+      "termId": "disastrous-b9lhq",
+      "contents": [
+        2,
+        119,
+        1774,
+        195
+      ]
+    }
+  ],
+  "votes": [
+    {
+      "termId": "ramble-g68oh",
+      "entryId": "xq_kot_lN_et_wkuT_bj_deS_odN",
+      "voteType": "specific"
+    },
+    {
+      "termId": "ramble-g68oh",
+      "entryId": "xq_kot_bj_busjN",
+      "voteType": "overall"
+    },
+    {
+      "termId": "soup-wd3ib",
+      "entryId": "fqCk_iN_coufN",
+      "voteType": "overall"
+    }
+  ]
+}

@@ -24,6 +24,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 - [ ] Make the untranslated button clickable on all screens that it's viewable on
 - [ ] Fix style outlines for terms that contain pending votes and entries
 - [ ] Fix for adaptive display of best translations (only show 2 sections if only 2 have top translations)
+- [ ] Show search results in order of levenstein distance from the search param
 
 ## Getting Started
 

@@ -28,6 +28,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 - [ ] Add a new JSON file for storing user merges and when aggregate script runs, it checks names against this JSON file and replaces them when they have a merge record present
 - [ ] Add a sort dropdown button on term detail to sort translations by each vote category
 - [ ] Allow user to add translation immediately upon adding a new term
+- [ ] Fix for proper name HTF-INT encoding/decoding
 
 ## Getting Started
 

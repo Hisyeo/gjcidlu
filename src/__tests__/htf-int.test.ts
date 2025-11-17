@@ -7,4 +7,10 @@ describe('htf-int', () => {
     const decoded = decode(encoded, 'latin');
     expect(decoded).toBe(testString);
   });
+
+  it('should decode a version 2 string correctly', () => {
+    const v2Encoded = [2, 247, 1774, 833];
+    const decoded = decode(v2Encoded, 'latin');
+    expect(decoded).toBe('ôsôlê êto');
+  });
 });

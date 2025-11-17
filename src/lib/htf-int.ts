@@ -1,3 +1,4 @@
+import htf2 from '../../rsc/encodings/HTF0002.json';
 import htf3 from '../../rsc/encodings/HTF0003.json';
 import { Script } from '@/app/SettingsContext';
 
@@ -13,17 +14,18 @@ interface HTFData {
   encodings: HTFEncoding[];
 }
 
-const htfData = htf3 as HTFData;
+const htfDataV2 = htf2 as HTFData;
+const htfDataV3 = htf3 as HTFData;
 
-const getEncodingsByType = (type: HTFEncoding['type']) => {
-  return htfData.encodings
+const getEncodingsByType = (data: HTFData, type: HTFEncoding['type']) => {
+  return data.encodings
     .map((encoding, index) => ({ ...encoding, index }))
     .filter(encoding => encoding.type === type);
 }
 
-const wordEncodings = getEncodingsByType('word');
-const syllableEncodings = getEncodingsByType('syllable').sort((a, b) => b.latin.length - a.latin.length);
-const punctuationEncodings = getEncodingsByType('punctuation');
+const wordEncodingsV3 = getEncodingsByType(htfDataV3, 'word');
+const syllableEncodingsV3 = getEncodingsByType(htfDataV3, 'syllable').sort((a, b) => b.latin.length - a.latin.length);
+const punctuationEncodingsV3 = getEncodingsByType(htfDataV3, 'punctuation');
 
 const isLetter = (char: string) => {
   return /[a-zA-Zôêîû]/.test(char);
@@ -33,8 +35,12 @@ const isCapital = (char: string) => {
   return /[A-Z]/.test(char);
 }
 
+const ILLEGAL_CHAR = 0;
+const CAPITAL_OPEN = 1;
+const CAPITAL_CLOSE = 2;
+
 export function encode(text: string): number[] {
-  const encoded: number[] = [htfData.version];
+  const encoded: number[] = [htfDataV3.version];
   let remainingText = text;
   let isCapitalized = false;
 
@@ -50,17 +56,17 @@ export function encode(text: string): number[] {
       }
       remainingText = remainingText.substring(i);
 
-      const wordMatch = wordEncodings.find(encoding => encoding.latin === word.toLowerCase());
+      const wordMatch = wordEncodingsV3.find(encoding => encoding.latin === word.toLowerCase());
       if (wordMatch) {
         if (isCapital(word[0]) && !isCapitalized) {
-          encoded.push(1); // Capital opener
+          encoded.push(CAPITAL_OPEN); // Capital opener
           isCapitalized = true;
         }
         encoded.push(wordMatch.index);
       } else {
         let remainingWord = word;
         if (isCapital(remainingWord[0]) && !isCapitalized) {
-          encoded.push(1); // Capital opener
+          encoded.push(CAPITAL_OPEN); // Capital opener
           isCapitalized = true;
         }
         remainingWord = remainingWord.toLowerCase();
@@ -69,7 +75,7 @@ export function encode(text: string): number[] {
           let foundSyllable = false;
           for (let length = 3; length >= 1; length--) {
             const syllable = remainingWord.substring(0, length);
-            const syllableMatch = syllableEncodings.find(encoding => encoding.latin === syllable);
+            const syllableMatch = syllableEncodingsV3.find(encoding => encoding.latin === syllable);
             if (syllableMatch) {
               encoded.push(syllableMatch.index);
               remainingWord = remainingWord.substring(length);
@@ -80,28 +86,28 @@ export function encode(text: string): number[] {
 
           if (!foundSyllable) {
             console.warn(`No encoding found for syllable: ${remainingWord[0]}`);
-            encoded.push(0); // Illegal character
+            encoded.push(ILLEGAL_CHAR); // Illegal character
             remainingWord = remainingWord.substring(1);
           }
         }
       }
     } else {
       if (isCapitalized) {
-        encoded.push(2); // Capital closer
+        encoded.push(CAPITAL_CLOSE); // Capital closer
         isCapitalized = false;
       }
-      const punctuationMatch = punctuationEncodings.find(encoding => encoding.latin === firstChar);
+      const punctuationMatch = punctuationEncodingsV3.find(encoding => encoding.latin === firstChar);
       if (punctuationMatch) {
         encoded.push(punctuationMatch.index);
       } else {
         console.warn(`No encoding found for punctuation: ${firstChar}`);
-        encoded.push(0); // Illegal character
+        encoded.push(ILLEGAL_CHAR); // Illegal character
       }
       remainingText = remainingText.substring(1);
     }
   }
   if (isCapitalized) {
-    encoded.push(2); // Capital closer
+    encoded.push(CAPITAL_CLOSE); // Capital closer
   }
 
   return encoded;
@@ -113,6 +119,8 @@ export function decode(encoded: number[], script: Script = 'latin'): string {
   }
 
   const version = encoded[0];
+  const htfData = version === 2 ? htfDataV2 : htfDataV3;
+
   if (version !== htfData.version) {
     console.warn(`Mismatched HTF version. Expected ${htfData.version}, got ${version}.`);
   }
@@ -122,24 +130,26 @@ export function decode(encoded: number[], script: Script = 'latin'): string {
   let capitalizeNext = false;
 
   for (const index of data) {
-    if (index === 1) { // Capital opener
-      if (script === 'latin') {
-        capitalizeNext = true;
-      } else {
-        result += htfData.encodings[1][script];
+    if (version === 3) { // Version 2 and lower does not have capital letter support
+      if (index === CAPITAL_OPEN) { // Capital opener
+        if (script === 'latin') {
+          capitalizeNext = true;
+        } else {
+          result += htfData.encodings[CAPITAL_OPEN][script];
+        }
+        continue;
       }
-      continue;
-    }
-    if (index === 2) { // Capital closer
-      if (script === 'latin') {
-        capitalizeNext = false;
-      } else {
-        result += htfData.encodings[2][script];
+      if (index === CAPITAL_CLOSE) { // Capital closer
+        if (script === 'latin') {
+          capitalizeNext = false;
+        } else {
+          result += htfData.encodings[CAPITAL_CLOSE][script];
+        }
+        continue;
       }
-      continue;
     }
 
-    if (index >= 0 && index < htfData.encodings.length) {
+    if (htfData.encodings.at(index) !== undefined) {
       const encoding = htfData.encodings[index];
       let value = encoding[script];
       if (script === 'latin' && capitalizeNext) {
@@ -150,7 +160,7 @@ export function decode(encoded: number[], script: Script = 'latin'): string {
       }
       result += value;
     } else {
-      result += htfData.encodings[0][script]; // Return illegal character for invalid indices
+      result += htfData.encodings[ILLEGAL_CHAR][script]; // Return illegal character for invalid indices
     }
   }
 
@@ -167,6 +177,8 @@ export function encodeToSnakeCaseSyllabary(encoded: number[]): string {
     return '';
   }
 
+  const version = encoded[0];
+  const htfData = version === 2 ? htfDataV2 : htfDataV3;
   const data = encoded.slice(1);
   let result = '';
   let prevType: HTFEncoding['type'] | null = null;

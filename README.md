@@ -15,13 +15,15 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 - [x] Add a warning toast to indicate that user's prior selection was unset
 - [x] Allow the user to see newly added translations in the term detail page before they are submitted
 - [x] Add a way to click on a submission queue item and navigate to that new term, new translation or voted translation
-- [ ] Make the untranslated button clickable on all screens that it's viewable on
 - [x] Make submitter not a field for submission entries because of the submission author
 - [x] Add a ui change when the screen resolution is small: "English &rarr; Hisyeo" is removed, "X items translated" just becomes "X" and the "untranslated" label is removed
 - [x] Make "No username to validate" error only appear once
 - [x] Get untranslated page working again and with grammar checking
 - [x] Add a button in the header that takes you right to the PRs for the repo
 - [x] Add link to submission files from translation entries in term detail pages
+- [ ] Make the untranslated button clickable on all screens that it's viewable on
+- [ ] Fix style outlines for terms that contain pending votes and entries
+- [ ] Fix for adaptive display of best translations (only show 2 sections if only 2 have top translations)
 
 ## Getting Started
 

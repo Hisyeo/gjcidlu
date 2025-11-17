@@ -1,0 +1,31 @@
+{
+  "version": 3,
+  "author": {
+    "system": "Reddit",
+    "id": "MadcapJake"
+  },
+  "newTerms": [
+    {
+      "id": "muddle-694iv",
+      "pos": "verb",
+      "description": "to confuse one person or thing with another, and make a mistake"
+    }
+  ],
+  "newEntries": [
+    {
+      "id": "hefiN",
+      "termId": "understand-lrddv",
+      "contents": [
+        2,
+        271
+      ]
+    }
+  ],
+  "votes": [
+    {
+      "termId": "understand-lrddv",
+      "entryId": "xq_fjsrN_fS_rm_aNcemN_bj_uN_motifo_fS_nia_weilrN_tlik_ano_aNcemN_tjL_nia",
+      "voteType": "specific"
+    }
+  ]
+}

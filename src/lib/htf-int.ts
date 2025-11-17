@@ -77,6 +77,12 @@ export function encode(text: string): number[] {
             const syllable = remainingWord.substring(0, length);
             const syllableMatch = syllableEncodingsV3.find(encoding => encoding.latin === syllable);
             if (syllableMatch) {
+              if (length === 3) {
+                const nextChar = remainingWord[3];
+                if (nextChar && /[oôuûiîeê]/.test(nextChar)) {
+                  continue;
+                }
+              }
               encoded.push(syllableMatch.index);
               remainingWord = remainingWord.substring(length);
               foundSyllable = true;
@@ -180,37 +186,64 @@ export function encodeToSnakeCaseSyllabary(encoded: number[]): string {
   const version = encoded[0];
   const htfData = version === 2 ? htfDataV2 : htfDataV3;
   const data = encoded.slice(1);
-  let result = '';
-  let prevType: HTFEncoding['type'] | null = null;
+  
+  const words: string[] = [];
+  let currentSyllables = '';
+  let capitalizeActive = false;
+  let isFirstSyllableInWord = true;
+
+  const commitCurrentSyllables = () => {
+    if (currentSyllables) {
+      words.push(currentSyllables);
+      currentSyllables = '';
+    }
+    isFirstSyllableInWord = true;
+  };
 
   for (const index of data) {
     if (index >= 0 && index < htfData.encodings.length) {
       const encoding = htfData.encodings[index];
-      const currentType = encoding.type;
+      const { type, syllabary, latin } = encoding;
 
-      if (currentType === 'punctuation' || currentType === 'capital') {
-        continue; // Rule 4: Skip punctuation
+      if (version === 3) {
+        if (index === CAPITAL_OPEN) {
+          capitalizeActive = true;
+          isFirstSyllableInWord = true;
+          continue;
+        }
+        if (index === CAPITAL_CLOSE) {
+          capitalizeActive = false;
+          commitCurrentSyllables();
+          continue;
+        }
       }
 
-      // Rule 1: If the preceding was a syllable and the new is a word, place an underscore
-      if (prevType === 'syllable' && currentType === 'word') {
-        result += '_';
+      if (type === 'punctuation') {
+        if (latin === ' ') {
+          commitCurrentSyllables();
+        }
+        continue;
       }
 
-      if (currentType === 'word') {
-        result += encoding.syllabary + '_'; // Rule 2: Place word followed by underscore
-      } else if (currentType === 'syllable') {
-        result += encoding.syllabary; // Rule 3: Place syllable alone
+      let processedSyllabary = syllabary;
+      if (capitalizeActive && isFirstSyllableInWord) {
+        processedSyllabary = syllabary.charAt(0).toUpperCase() + syllabary.slice(1);
+      }
+
+      if (type === 'word') {
+        commitCurrentSyllables();
+        words.push(processedSyllabary);
+      } else if (type === 'syllable') {
+        currentSyllables += processedSyllabary;
       }
       
-      prevType = currentType;
+      if (type === 'word' || type === 'syllable') {
+        isFirstSyllableInWord = false;
+      }
     }
   }
 
-  // Rule 5: If the last character is an underscore, remove it
-  if (result.endsWith('_')) {
-    result = result.slice(0, -1);
-  }
+  commitCurrentSyllables();
 
-  return result;
+  return words.join('_');
 }

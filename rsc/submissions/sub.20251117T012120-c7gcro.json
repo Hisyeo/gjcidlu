@@ -1,0 +1,31 @@
+{
+  "version": 3,
+  "author": {
+    "system": "Reddit",
+    "id": "MadcapJake"
+  },
+  "newTerms": [
+    {
+      "id": "obedient-u06si",
+      "pos": "adjective",
+      "description": "always doing what you are told to do, or what the law, a rule etc says you must do"
+    },
+    {
+      "id": "eggnog-bezru",
+      "pos": "noun",
+      "description": "a drink made from eggs, sugar, milk, and alcohol, drunk at Christmas"
+    },
+    {
+      "id": "majestic-sd1j6",
+      "pos": "adjective",
+      "description": "very big, impressive, or beautiful"
+    },
+    {
+      "id": "gruesome-xckxx",
+      "pos": "adjective",
+      "description": "very unpleasant or shocking, and involving someone being killed or badly injured"
+    }
+  ],
+  "newEntries": [],
+  "votes": []
+}

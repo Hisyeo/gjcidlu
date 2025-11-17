@@ -40,7 +40,7 @@ export function getTermById(termId: string): Term | null {
     return allTerms.find(term => term.id === termId) || null;
 }
 
-export function getEntriesForTerm(termId: string): Entry[] {
+export function getEntriesForTerm(termId: string): (Entry & { created?: string })[] {
     if (!entries || !entries[termId]) return [];
 
     const termData = entries[termId];

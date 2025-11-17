@@ -3,7 +3,7 @@ import { QueueAction, Term, Entry, Vote, UserSystem } from './types';
 
 function formatSubmission(queue: QueueAction[], userSystem: UserSystem, userId: string) {
   const submission = {
-    version: 3, // Add version field
+    version: 4, // Add version field
     author: {
       system: userSystem,
       id: userId,

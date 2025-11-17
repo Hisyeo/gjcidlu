@@ -54,14 +54,22 @@ async function main() {
   console.log(`Found ${submissionFiles.length} submission file(s) to process.`);
 
   const allSubmissions = await Promise.all(
-    submissionFiles.map(file => 
-      fs.readFile(path.join(SUBMISSIONS_DIR, file), 'utf-8').then(content => ({ file, content: JSON.parse(content) }))
-    )
+    submissionFiles.map(async file => {
+      const content = JSON.parse(await fs.readFile(path.join(SUBMISSIONS_DIR, file), 'utf-8'));
+      const timestampMatch = file.match(/sub\.(\d{8}T\d{6})-/);
+      let timestamp = new Date().toISOString(); // Default to current time if not found
+      if (timestampMatch && timestampMatch[1]) {
+        const datePart = timestampMatch[1].substring(0, 8);
+        const timePart = timestampMatch[1].substring(9, 15);
+        timestamp = `${datePart.substring(0, 4)}-${datePart.substring(4, 6)}-${datePart.substring(6, 8)}T${timePart.substring(0, 2)}:${timePart.substring(2, 4)}:${timePart.substring(4, 6)}.000Z`;
+      }
+      return { file, content, timestamp };
+    })
   );
 
   // First pass: build idMap and entriesData
   console.log('First pass: Building ID map and entries data...');
-  for (const { file, content: submissionContent } of allSubmissions) {
+  for (const { file, content: submissionContent, timestamp } of allSubmissions) {
     const authorObj = submissionContent.author;
     if (!authorObj || !authorObj.system || !authorObj.id) continue;
     const authorId = `${authorObj.system.toLowerCase()}:${authorObj.id}`;
@@ -82,7 +90,7 @@ async function main() {
       if (entriesData[entry.termId]) {
         entriesData[entry.termId][newId] = {
           submitter: authorId,
-          created: entry.created || new Date().toISOString(),
+          created: timestamp,
           contents: entry.contents,
           sourceFile: file,
           ...(entry.original && { original: entry.original }),
@@ -93,7 +101,7 @@ async function main() {
 
   // Second pass: build votesData
   console.log('Second pass: Building votes data...');
-  for (const { content: submissionContent } of allSubmissions) {
+  for (const { content: submissionContent, timestamp } of allSubmissions) {
     const authorObj = submissionContent.author;
     if (!authorObj || !authorObj.system || !authorObj.id) continue;
     const authorId = `${authorObj.system.toLowerCase()}:${authorObj.id}`;
@@ -105,7 +113,7 @@ async function main() {
       if (!votesData[vote.termId][authorId]) votesData[vote.termId][authorId] = {};
       if (!votesData[vote.termId][authorId][vote.voteType]) votesData[vote.termId][authorId][vote.voteType] = [];
       
-      const votedTimestamp = vote.voted || new Date().toISOString();
+      const votedTimestamp = timestamp;
 
       votesData[vote.termId][authorId][vote.voteType].push({
         entry: newEntryId,

@@ -8,7 +8,6 @@ export interface Entry {
   id: string; // snake_case_syllabary of contents
   termId: string;
   submitter?: string;
-  created?: string; // ISO 8601 date
   contents: number[]; // HTF-INT
   original?: string; // if modifying
   sourceFile?: string;
@@ -21,7 +20,6 @@ export interface Vote {
   entryId: string;
   voteType: VoteType;
   user?: string; // Made optional for client-side queue
-  voted?: string; // Made optional for client-side queue
 }
 
 export interface EntryContent {

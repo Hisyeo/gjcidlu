@@ -1,26 +1,55 @@
 import fs from 'fs/promises';
 import htf2 from '../rsc/encodings/HTF0002.json' assert { type: 'json' };
+import htf3 from '../rsc/encodings/HTF0003.json' assert { type: 'json' };
 
 // --- Start of duplicated logic ---
-const htfData = htf2;
+const ILLEGAL_CHAR = 0;
+const CAPITAL_OPEN = 1;
+const CAPITAL_CLOSE = 2;
 
 function decode(encoded) {
   if (!encoded || encoded.length < 1) {
     return '';
   }
   const version = encoded[0];
+  const htfData = version === 2 ? htf2 : htf3;
+
   if (version !== htfData.version) {
     console.error(`Mismatched HTF version. Expected ${htfData.version}, got ${version}.`);
   }
+
   const data = encoded.slice(1);
-  return data
-    .map(index => {
-      if (index >= 0 && index < htfData.encodings.length) {
-        return htfData.encodings[index].latin;
+  let result = '';
+  let capitalizeNext = false;
+
+  for (const index of data) {
+    if (version === 3) {
+      if (index === CAPITAL_OPEN) {
+        capitalizeNext = true;
+        continue;
       }
-      return htfData.encodings[0].latin; // Return illegal character for invalid indices
-    })
-    .join('');
+      if (index === CAPITAL_CLOSE) {
+        capitalizeNext = false;
+        continue;
+      }
+    }
+
+    if (index >= 0 && index < htfData.encodings.length) {
+      const encoding = htfData.encodings[index];
+      let value = encoding.latin;
+      if (capitalizeNext) {
+        if (encoding.type === 'word' || encoding.type === 'syllable') {
+          value = value.charAt(0).toUpperCase() + value.slice(1);
+          capitalizeNext = false;
+        }
+      }
+      result += value;
+    } else {
+      result += htfData.encodings[ILLEGAL_CHAR].latin; // Return illegal character for invalid indices
+    }
+  }
+
+  return result;
 }
 // --- End of duplicated logic ---
 

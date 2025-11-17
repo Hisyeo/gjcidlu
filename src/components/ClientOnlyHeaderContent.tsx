@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSettings } from '@/app/SettingsContext';
+import { usePathname } from 'next/navigation';
 
 interface Stats {
   translatedCount: number;
@@ -18,6 +19,8 @@ interface ClientOnlyHeaderContentProps {
 const ClientOnlyHeaderContent: React.FC<ClientOnlyHeaderContentProps> = ({ stats, onUntranslatedClick, onTitleClick }) => {
   const { settings } = useSettings();
   const [isMounted, setIsMounted] = useState(false);
+  const pathname = usePathname();
+  const isTermDetailPage = pathname.includes('/term/');
 
   useEffect(() => {
     setIsMounted(true);
@@ -54,7 +57,7 @@ const ClientOnlyHeaderContent: React.FC<ClientOnlyHeaderContentProps> = ({ stats
               {stats.translatedCount}
               <span className="hidden lg:inline"> terms translated</span>
             </span>
-            {stats.untranslatedCount > 0 && (
+            {stats.untranslatedCount > 0 && !isTermDetailPage && (
               <button onClick={onUntranslatedClick} className="flex items-center space-x-1 text-sm text-red-600 hover:text-red-800">
                 <span className="relative flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>

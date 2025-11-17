@@ -21,7 +21,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 - [x] Get untranslated page working again and with grammar checking
 - [x] Add a button in the header that takes you right to the PRs for the repo
 - [x] Add link to submission files from translation entries in term detail pages
-- [ ] Make the untranslated button clickable on all screens that it's viewable on
+- [x] Make the untranslated button clickable on all screens that it's viewable on
 - [ ] Fix style outlines for terms that contain pending votes and entries
 - [ ] Fix for adaptive display of best translations (only show 2 sections if only 2 have top translations)
 - [ ] Show search results in order of levenstein distance from the search param

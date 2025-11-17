@@ -1,5 +1,5 @@
 import fs from 'fs/promises';
-import htf2 from '../rsc/HTF0002.json' assert { type: 'json' };
+import htf2 from '../rsc/encodings/HTF0002.json' assert { type: 'json' };
 
 // --- Start of duplicated logic ---
 const htfData = htf2;

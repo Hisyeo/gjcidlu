@@ -1,0 +1,27 @@
+{
+  "version": 3,
+  "author": {
+    "system": "Reddit",
+    "id": "MadcapJake"
+  },
+  "newTerms": [
+    {
+      "id": "devilish-lkq3j",
+      "pos": "adjective",
+      "description": "seeming likely to cause trouble, but in a way that is amusing or attractive"
+    }
+  ],
+  "newEntries": [],
+  "votes": [
+    {
+      "termId": "disastrous-b9lhq",
+      "entryId": "loC_et",
+      "voteType": "minimal"
+    },
+    {
+      "termId": "disastrous-b9lhq",
+      "entryId": "koNyeC_frNsuT",
+      "voteType": "overall"
+    }
+  ]
+}

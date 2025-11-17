@@ -16,7 +16,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 - [x] Allow the user to see newly added translations in the term detail page before they are submitted
 - [x] Add a way to click on a submission queue item and navigate to that new term, new translation or voted translation
 - [x] Make submitter not a field for submission entries because of the submission author
-- [x] Add a ui change when the screen resolution is small: "English &rarr; Hisyeo" is removed, "X items translated" just becomes "X" and the "untranslated" label is removed
+- [x] Add a ui change when the screen resolution is small: "English &rarr; Hisyeo" is removed, "X items translated" just becomes "X" and the "untranslated" label is removed ôêîû
 - [x] Make "No username to validate" error only appear once
 - [x] Get untranslated page working again and with grammar checking
 - [x] Add a button in the header that takes you right to the PRs for the repo
@@ -29,7 +29,9 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 - [ ] Add a sort dropdown button on term detail to sort translations by each vote category
 - [ ] Allow user to add translation immediately upon adding a new term
 - [ ] Fix for proper name HTF-INT encoding/decoding
-
+kûôcyo Konodu li xôn
+umo Zik li lôc
+ôfo li uyo Uyo Ko
 ## Getting Started
 
 First, set your github repo in `.env.local`:

@@ -6,41 +6,95 @@ const ENCODINGS_DIR = path.join(process.cwd(), 'rsc', 'encodings');
 const PUBLIC_DIR = path.join(process.cwd(), 'public');
 const ENTRIES_FILE = path.join(PUBLIC_DIR, 'entries.json');
 const VOTES_FILE = path.join(PUBLIC_DIR, 'votes.json');
-const HTF_FILE = path.join(ENCODINGS_DIR, 'HTF0002.json'); // Assuming HTF0002 is the one to use
 
-let htfData;
+let htf2Data, htf3Data;
+
+const CAPITAL_OPEN = 1;
+const CAPITAL_CLOSE = 2;
 
 // Inlined function from htf-int.ts to avoid import issues in script
 function encodeToSnakeCaseSyllabary(encoded) {
-  if (!encoded || encoded.length < 1) return '';
+  if (!encoded || encoded.length < 1) {
+    return '';
+  }
+
+  const version = encoded[0];
+  const htfData = version === 2 ? htf2Data : htf3Data;
   const data = encoded.slice(1);
-  let result = '';
-  let prevType = null;
+  
+  const words = [];
+  let currentSyllables = '';
+  let capitalizeActive = false;
+  let isFirstSyllableInWord = true;
+
+  const commitCurrentSyllables = () => {
+    if (currentSyllables) {
+      words.push(currentSyllables);
+      currentSyllables = '';
+    }
+    isFirstSyllableInWord = true;
+  };
+
   for (const index of data) {
     if (index >= 0 && index < htfData.encodings.length) {
       const encoding = htfData.encodings[index];
-      const currentType = encoding.type;
-      if (currentType === 'punctuation') continue;
-      if (prevType === 'syllable' && currentType === 'word') result += '_';
-      if (currentType === 'word') result += encoding.syllabary + '_';
-      else if (currentType === 'syllable') result += encoding.syllabary;
-      prevType = currentType;
+      const { type, syllabary, latin } = encoding;
+
+      if (version === 3) {
+        if (index === CAPITAL_OPEN) {
+          capitalizeActive = true;
+          isFirstSyllableInWord = true;
+          continue;
+        }
+        if (index === CAPITAL_CLOSE) {
+          capitalizeActive = false;
+          commitCurrentSyllables();
+          continue;
+        }
+      }
+
+      if (type === 'punctuation') {
+        if (latin === ' ') {
+          commitCurrentSyllables();
+        }
+        continue;
+      }
+
+      let processedSyllabary = syllabary;
+      if (capitalizeActive && isFirstSyllableInWord) {
+        processedSyllabary = syllabary.charAt(0).toUpperCase() + syllabary.slice(1);
+      }
+
+      if (type === 'word') {
+        commitCurrentSyllables();
+        words.push(processedSyllabary);
+      } else if (type === 'syllable') {
+        currentSyllables += processedSyllabary;
+      }
+      
+      if (type === 'word' || type === 'syllable') {
+        isFirstSyllableInWord = false;
+      }
     }
   }
-  if (result.endsWith('_')) result = result.slice(0, -1);
-  return result;
+
+  commitCurrentSyllables();
+
+  return words.join('_');
 }
 
 async function main() {
   console.log('Starting aggregation script...');
 
   // Load HTF data for ID generation
-  htfData = JSON.parse(await fs.readFile(HTF_FILE, 'utf-8'));
+  htf2Data = JSON.parse(await fs.readFile(path.join(ENCODINGS_DIR, 'HTF0002.json'), 'utf-8'));
+  htf3Data = JSON.parse(await fs.readFile(path.join(ENCODINGS_DIR, 'HTF0003.json'), 'utf-8'));
 
   // Start with empty objects to build from scratch
   let entriesData = {};
   let votesData = {};
   const idMap = new Map();
+  const termToNewEntryMap = new Map();
 
   const submissionFiles = (await fs.readdir(SUBMISSIONS_DIR)).filter(f => f.endsWith('.json'));
 
@@ -87,6 +141,11 @@ async function main() {
       const newId = encodeToSnakeCaseSyllabary(entry.contents);
       idMap.set(entry.id, newId); // Map old ID to new ID
 
+      if (!termToNewEntryMap.has(entry.termId)) {
+        termToNewEntryMap.set(entry.termId, []);
+      }
+      termToNewEntryMap.get(entry.termId).push(entry);
+
       if (entriesData[entry.termId]) {
         entriesData[entry.termId][newId] = {
           submitter: authorId,
@@ -107,7 +166,17 @@ async function main() {
     const authorId = `${authorObj.system.toLowerCase()}:${authorObj.id}`;
 
     submissionContent.votes?.forEach(vote => {
-      const newEntryId = idMap.get(vote.entryId) || vote.entryId;
+      let newEntryId = idMap.get(vote.entryId) || vote.entryId;
+
+      if (!idMap.has(vote.entryId)) {
+        const newEntriesForTerm = termToNewEntryMap.get(vote.termId);
+        if (newEntriesForTerm && newEntriesForTerm.length === 1) {
+          const correctEntryId = newEntriesForTerm[0].id;
+          const correctNewId = idMap.get(correctEntryId);
+          console.log(`Correcting entryId for vote on term ${vote.termId}. Was ${vote.entryId}, should be ${correctNewId}`);
+          newEntryId = correctNewId;
+        }
+      }
 
       if (!votesData[vote.termId]) votesData[vote.termId] = {};
       if (!votesData[vote.termId][authorId]) votesData[vote.termId][authorId] = {};

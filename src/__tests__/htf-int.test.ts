@@ -27,4 +27,11 @@ describe('htf-int', () => {
     const snaked = encodeToSnakeCaseSyllabary(encoded)
     expect(snaked).toBe('iSko_Fu_BL_BS_lj_xoN')
   })
+
+  it('should encode "côûfon fecko" to "coufN_fqCk"', () => {
+    const testString = "côûfon fecko";
+    const encoded = encode(testString);
+    const snaked = encodeToSnakeCaseSyllabary(encoded);
+    expect(snaked).toBe("coufN_fqCk");
+  });
 });

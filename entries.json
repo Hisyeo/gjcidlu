@@ -731,7 +731,42 @@
   },
   "compare-dloey": {
     "$pos": "verb",
-    "$desc": "to consider two or more things or people, in order to show how they are similar or different"
+    "$desc": "to consider two or more things or people, in order to show how they are similar or different",
+    "xq_fhs_yAuti_ry_tjL_xq_yStqN_titN_fS_nia_lj_srmN_yd_besr": {
+      "submitter": "reddit:MadcapJake",
+      "created": "2025-11-18T14:49:44.000Z",
+      "contents": [
+        3,
+        852,
+        1777,
+        789,
+        1777,
+        477,
+        1777,
+        838,
+        1777,
+        744,
+        1777,
+        852,
+        1777,
+        479,
+        1777,
+        562,
+        1777,
+        862,
+        1777,
+        807,
+        1777,
+        872,
+        1777,
+        595,
+        1777,
+        873,
+        1777,
+        636
+      ],
+      "sourceFile": "sub.20251118T144944-at7v67.json"
+    }
   },
   "borrow-og2d8": {
     "$pos": "verb",
@@ -744,6 +779,21 @@
         211
       ],
       "sourceFile": "sub.20251118T025813-t5pt4p.json"
+    }
+  },
+  "inconclusive-pa3cc": {
+    "$pos": "adjective",
+    "$desc": "not leading to a clear decision or result",
+    "deS_mulu": {
+      "submitter": "reddit:MadcapJake",
+      "created": "2025-11-18T14:49:44.000Z",
+      "contents": [
+        3,
+        771,
+        1777,
+        672
+      ],
+      "sourceFile": "sub.20251118T144944-at7v67.json"
     }
   }
 }

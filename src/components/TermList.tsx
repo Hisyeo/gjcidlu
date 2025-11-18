@@ -201,6 +201,30 @@ export default function TermList({ initialTerms }: TermListProps) {
       return <p className="text-lg font-medium text-gray-500">(No votes on published entries)</p>;
     }
 
+    if (votedCategories.length === 1) {
+      const { category, translation } = votedCategories[0];
+      return (
+        <div>
+          <span className="text-xs text-gray-400">{category.charAt(0).toUpperCase() + category.slice(1)}</span>
+          <p className={`text-lg font-medium text-blue-600 ${translationFontClass}`}>{decode(translation, isMounted ? settings.script : 'latin')}</p>
+        </div>
+      );
+    }
+
+    if (votedCategories.length === 2) {
+      return (
+        <div className="grid grid-cols-2 gap-x-4">
+          {votedCategories.map(({ category, translation }) => (
+            <div key={category}>
+              <span className="text-xs text-gray-400">{category.charAt(0).toUpperCase() + category.slice(1)}</span>
+              <p className={`text-lg font-medium text-blue-600 ${translationFontClass}`}>{decode(translation, isMounted ? settings.script : 'latin')}</p>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    // For 3 or 4 categories, use the 2x2 grid
     return (
       <div className="grid grid-cols-2 gap-x-4 gap-y-2">
         <div>

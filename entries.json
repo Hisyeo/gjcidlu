@@ -648,7 +648,20 @@
   },
   "devilish-lkq3j": {
     "$pos": "adjective",
-    "$desc": "seeming likely to cause trouble, but in a way that is amusing or attractive"
+    "$desc": "seeming likely to cause trouble, but in a way that is amusing or attractive",
+    "fx_ibuwe_ceNbo": {
+      "submitter": "discord:128874964517388288",
+      "created": "2025-11-18T02:58:13.000Z",
+      "contents": [
+        3,
+        861,
+        1777,
+        256,
+        1777,
+        326
+      ],
+      "sourceFile": "sub.20251118T025813-t5pt4p.json"
+    }
   },
   "handsome-joaku": {
     "$pos": "adjective",
@@ -693,5 +706,18 @@
   "compare-dloey": {
     "$pos": "verb",
     "$desc": "to consider two or more things or people, in order to show how they are similar or different"
+  },
+  "borrow-og2d8": {
+    "$pos": "verb",
+    "$desc": "to use something that belongs to someone else and that you must give back to them later",
+    "nqigjN": {
+      "submitter": "discord:128874964517388288",
+      "created": "2025-11-18T02:58:13.000Z",
+      "contents": [
+        3,
+        211
+      ],
+      "sourceFile": "sub.20251118T025813-t5pt4p.json"
+    }
   }
 }

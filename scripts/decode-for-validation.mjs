@@ -40,7 +40,6 @@ function decode(encoded) {
       if (capitalizeNext) {
         if (encoding.type === 'word' || encoding.type === 'syllable') {
           value = value.charAt(0).toUpperCase() + value.slice(1);
-          capitalizeNext = false;
         }
       }
       result += value;

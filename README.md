@@ -1,8 +1,50 @@
 # yôn Gicîdolû
 
+A community-generated conlang dictionary system for minimalist languages that make heavy use of compound phrases.
+
+## Features
+
+### Search & Related Terms
+
+Find out how other Hîsyêô speakers are saying complicated English terms. The
+search also looks for related terms to try to help you find a suitable
+translation fast.
+
+### Community-Generated
+
+Community members can add new terms, translations and votes for existing
+translations and they get processed through a [Pull
+Request](https://github.blog/developer-skills/github/beginners-guide-to-github-creating-a-pull-request/)
+to this project's code repository.
+
+### Four Voting Categories
+
+Votes can be provided to indicate which is the best overall, most succinct, most
+specific, and funniest translations.
+
+### Personal Verification
+
+To add new content, you must provide a verification method and a moderator will
+personally reach out to you to verify the validity of your entries.
+
+### Publicly Available JSON Data
+
+No data is locked in a database. The entries and votes are exposed directly for
+consumption by other services.
+
+### HTF-INT
+
+Due to Hîsyêô's strict orthography, a word/syllable encoding was built to reduce
+translation submission size by at least 50% which increases the maximum
+submission size.
+
+### 
+
+## Development
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## TODO
+### TODO
 
 - [x] Add a guard client side that replaces a vote if the user changes to a different translation for the same category
 - [x] Add a reddit username authentication

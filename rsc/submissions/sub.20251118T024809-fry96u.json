@@ -1,0 +1,83 @@
+{
+  "version": 4,
+  "author": {
+    "system": "Discord",
+    "id": "128874964517388288"
+  },
+  "newTerms": [
+    {
+      "id": "yarn-xqgr8",
+      "pos": "noun",
+      "description": "thick thread made of cotton or wool, which is used to knit things"
+    },
+    {
+      "id": "compare-dloey",
+      "pos": "verb",
+      "description": "to consider two or more things or people, in order to show how they are similar or different"
+    }
+  ],
+  "newEntries": [
+    {
+      "id": "mkN",
+      "termId": "muddle-694iv",
+      "contents": [
+        3,
+        793
+      ]
+    },
+    {
+      "id": "jljK_mkN",
+      "termId": "majestic-sd1j6",
+      "contents": [
+        3,
+        507,
+        1777,
+        793
+      ]
+    },
+    {
+      "id": "dAi_coT_ye_twe_yone_yd_twe_gS",
+      "termId": "yarn-xqgr8",
+      "contents": [
+        3,
+        768,
+        1777,
+        749,
+        1777,
+        874,
+        1777,
+        743,
+        1777,
+        706,
+        1777,
+        873,
+        1777,
+        743,
+        1777,
+        843
+      ],
+      "created": "2025-11-18T02:48:00.505Z"
+    },
+    {
+      "id": "hsiN",
+      "termId": "handsome-joaku",
+      "contents": [
+        3,
+        518
+      ],
+      "created": "2025-11-18T02:48:00.505Z"
+    }
+  ],
+  "votes": [
+    {
+      "termId": "obedient-u06si",
+      "entryId": "xq_hAi_moi_wkuT_tur_fS_hukrN_fS_nimu_tur",
+      "voteType": "specific"
+    },
+    {
+      "termId": "majestic-sd1j6",
+      "entryId": "ceNbo_kuzAu",
+      "voteType": "specific"
+    }
+  ]
+}

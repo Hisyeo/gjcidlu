@@ -837,5 +837,24 @@
       ],
       "sourceFile": "sub.20251118T193855-lehm4u.json"
     }
+  },
+  "poke-3nn31": {
+    "$pos": "verb",
+    "$desc": "to quickly push your finger or some other pointed object into something or someone"
+  },
+  "robust-jshqi": {
+    "$pos": "adjective",
+    "$desc": "strong and healthy",
+    "shAu_gioN": {
+      "submitter": "reddit:MadcapJake",
+      "created": "2025-11-18T20:00:11.000Z",
+      "contents": [
+        3,
+        580,
+        1777,
+        550
+      ],
+      "sourceFile": "sub.20251118T200011-x18efa.json"
+    }
   }
 }

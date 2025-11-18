@@ -55,6 +55,6 @@ You could fork this repository and build submission JSON files directly, but our
 4.  **Pull Request:** After creating your fork, you will then be asked to generate a pull request. Feel free to add any justification for your additions in the Pull Request description.
 5.  **Review:** After PR submission, a moderator for the project will review your additions and reach out to you using the user ID you provided to confirm the validity of your additions.
 
-**Note:** Translations can be added before submission for any newly submitted terms by going to the **Untranslated** page.
+**Note:** Translations can be added before submission for any newly queued terms by going to the **Untranslated** page.
 
 Thank you for helping us build the greatest minimalist language there ever was!

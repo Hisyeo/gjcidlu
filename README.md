@@ -28,7 +28,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 - [x] Fix for proper name HTF-INT encoding/decoding
 - [x] Add a sort dropdown button on term detail to sort translations by each vote category
 - [x] Allow user to add translation immediately upon adding a new term
-- [ ] When clicking modify, only copy the latin text up into the new translation field
+- [x] When clicking modify, only copy the latin text up into the new translation field
 - [ ] Add a new JSON file for storing user merges and when aggregate script runs, it checks names against this JSON file and replaces them when they have a merge record present
 
 ## Getting Started

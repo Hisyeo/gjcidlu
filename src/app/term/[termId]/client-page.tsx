@@ -234,7 +234,7 @@ export default function TermDetailClientView({ term, initialEntries, allTerms }:
   };
 
   const handleModify = (contents: number[]) => {
-    setTranslation(decode(contents, settings.script));
+    setTranslation(decode(contents, 'latin'));
     setIsDuplicateInput(false);
   };
 

@@ -1,0 +1,63 @@
+{
+  "version": 4,
+  "author": {
+    "system": "Reddit",
+    "id": "MadcapJake"
+  },
+  "newTerms": [
+    {
+      "id": "inconclusive-pa3cc",
+      "pos": "adjective",
+      "description": "not leading to a clear decision or result"
+    }
+  ],
+  "newEntries": [
+    {
+      "id": "deS_mulu",
+      "termId": "inconclusive-pa3cc",
+      "contents": [
+        3,
+        771,
+        1777,
+        672
+      ],
+      "created": "2025-11-18T14:49:39.144Z"
+    },
+    {
+      "id": "xq_fhs_yAuti_ry_tjL_xq_yStqN_titN_fS_nia_lj_srmN_yd_besr",
+      "termId": "compare-dloey",
+      "contents": [
+        3,
+        852,
+        1777,
+        789,
+        1777,
+        477,
+        1777,
+        838,
+        1777,
+        744,
+        1777,
+        852,
+        1777,
+        479,
+        1777,
+        562,
+        1777,
+        862,
+        1777,
+        807,
+        1777,
+        872,
+        1777,
+        595,
+        1777,
+        873,
+        1777,
+        636
+      ],
+      "created": "2025-11-18T14:49:39.144Z"
+    }
+  ],
+  "votes": []
+}

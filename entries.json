@@ -670,7 +670,18 @@
   },
   "gruesome-xckxx": {
     "$pos": "adjective",
-    "$desc": "very unpleasant or shocking, and involving someone being killed or badly injured"
+    "$desc": "very unpleasant or shocking, and involving someone being killed or badly injured",
+    "gLfN_yrmN": {
+      "submitter": "reddit:MadcapJake",
+      "created": "2025-11-18T20:08:45.000Z",
+      "contents": [
+        3,
+        546,
+        1777,
+        707
+      ],
+      "sourceFile": "sub.20251118T200845-y4cmf8.json"
+    }
   },
   "devilish-lkq3j": {
     "$pos": "adjective",
@@ -798,11 +809,78 @@
   },
   "stain-6td1f": {
     "$pos": "verb",
-    "$desc": "to accidentally make a mark on something, especially one that cannot be removed"
+    "$desc": "to accidentally make a mark on something, especially one that cannot be removed",
+    "xq_bj_fAuT_koS_trbo_fS_koi_lj_ea_fNmT_ole": {
+      "submitter": "reddit:MadcapJake",
+      "created": "2025-11-18T20:08:45.000Z",
+      "contents": [
+        3,
+        852,
+        1777,
+        860,
+        1777,
+        646,
+        1777,
+        731,
+        1777,
+        564,
+        1777,
+        862,
+        1777,
+        729,
+        1777,
+        872,
+        1777,
+        834,
+        1777,
+        648,
+        1777,
+        714
+      ],
+      "sourceFile": "sub.20251118T200845-y4cmf8.json"
+    }
   },
   "stain-2z8pm": {
     "$pos": "verb",
-    "$desc": "to change the colour of something, especially something made of wood, by using a special liquid"
+    "$desc": "to change the colour of something, especially something made of wood, by using a special liquid",
+    "xq_di_ea_lNgj_besr_ole_ry_fS_bj_sdlrN_suN_nmu_to_fqCk_wixeS": {
+      "submitter": "reddit:MadcapJake",
+      "created": "2025-11-18T20:08:45.000Z",
+      "contents": [
+        3,
+        852,
+        1777,
+        854,
+        1777,
+        834,
+        1777,
+        696,
+        1777,
+        636,
+        1777,
+        714,
+        1777,
+        838,
+        1777,
+        862,
+        1777,
+        860,
+        1777,
+        343,
+        1777,
+        762,
+        1777,
+        804,
+        1779,
+        1777,
+        846,
+        1777,
+        650,
+        1777,
+        462
+      ],
+      "sourceFile": "sub.20251118T200845-y4cmf8.json"
+    }
   },
   "stain-2b32v": {
     "$pos": "noun",

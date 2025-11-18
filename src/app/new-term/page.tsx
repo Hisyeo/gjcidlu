@@ -7,13 +7,15 @@ import { addToQueue, getQueue } from '@/lib/queue';
 import { Term, Entry, QueueAction } from '@/lib/types';
 import { useToast } from '@/app/ToastContext';
 import { validateNounPhrase, SyntaxError } from '@/lib/antlr';
-import { encode, encodeToSnakeCaseSyllabary } from '@/lib/htf-int';
+import { encode, decode, encodeToSnakeCaseSyllabary } from '@/lib/htf-int';
 import { decodeUnicode } from '@/lib/utils';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 function NewTermForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialTermName = searchParams.get('name') || '';
+  const existingSubmissionTermId = searchParams.get('existing-submission-term-id');
   const { showToast } = useToast();
 
   const [termName, setTermName] = useState(initialTermName);
@@ -22,17 +24,67 @@ function NewTermForm() {
   const [translation, setTranslation] = useState('');
   const [syntaxErrors, setSyntaxErrors] = useState<SyntaxError[]>([]);
   const [existingTerm, setExistingTerm] = useState<Term | null>(null);
+  const [duplicateTerms, setDuplicateTerms] = useState<Term[]>([]);
+  const [translations, setTranslations] = useState<Entry[]>([]);
+  const [showAddTranslationModal, setShowAddTranslationModal] = useState(false);
+  const [showExistingTermModal, setShowExistingTermModal] = useState(false);
+  const [newlyAddedTerm, setNewlyAddedTerm] = useState<Term | null>(null);
+  const [isTermInQueue, setIsTermInQueue] = useState(false);
 
   useEffect(() => {
     const queue = getQueue();
-    const termFromQueue = queue
-      .filter((action): action is { type: 'NEW_TERM'; payload: Term; id: string } => action.type === 'NEW_TERM')
-      .find(action => action.payload.id.startsWith(termName.toLowerCase().replace(/\s+/g, '-')));
-    
-    if (termFromQueue) {
-      setExistingTerm(termFromQueue.payload);
+    let termFromQueue: { payload: Term } | undefined;
+
+    if (existingSubmissionTermId) {
+      termFromQueue = queue
+        .filter((action): action is { type: 'NEW_TERM'; payload: Term; id: string } => action.type === 'NEW_TERM')
+        .find(action => action.payload.id === existingSubmissionTermId);
+    } else if (initialTermName) {
+      const trimmedTermName = initialTermName.trim();
+      if (trimmedTermName) {
+        // Do not auto-load term details for 'name' query param to allow alternative meanings.
+        setTermName(initialTermName);
+        setPos('');
+        setDescription('');
+        setTranslations([]);
+        setExistingTerm(null);
+        return;
+      }
     }
-  }, [termName]);
+
+    if (termFromQueue) {
+      const term = termFromQueue.payload;
+      setExistingTerm(term);
+      setTermName(term.id.split('-')[0]);
+      setPos(term.pos);
+      setDescription(term.description);
+      const existingTranslations = queue
+        .filter((action): action is { type: 'NEW_ENTRY'; payload: Entry; id: string } => action.type === 'NEW_ENTRY' && action.payload.termId === term.id);
+      setTranslations(existingTranslations.map(a => a.payload));
+    } else {
+      setExistingTerm(null);
+      setTranslations([]);
+      setTermName(initialTermName);
+      setPos('');
+      setDescription('');
+    }
+  }, [existingSubmissionTermId, initialTermName]);
+
+  useEffect(() => {
+    const queue = getQueue();
+    const trimmedTermName = termName.trim();
+    if (trimmedTermName && description) {
+      const termFromQueue = queue
+        .filter((action): action is { type: 'NEW_TERM'; payload: Term; id: string } => action.type === 'NEW_TERM')
+        .find(action => 
+          action.payload.id.startsWith(trimmedTermName.toLowerCase().replace(/\s+/g, '-')) &&
+          action.payload.description === description
+        );
+      setIsTermInQueue(!!termFromQueue);
+    } else {
+      setIsTermInQueue(false);
+    }
+  }, [termName, description]);
 
   useEffect(() => {
     if (translation.trim()) {
@@ -58,11 +110,33 @@ function NewTermForm() {
     };
 
     addToQueue({ type: 'NEW_ENTRY', payload: newEntry });
-    router.push(`/term/${existingTerm.id}`);
+    setTranslations([...translations, newEntry]);
+    setTranslation('');
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const trimmedTermName = termName.trim();
+    if (trimmedTermName) {
+      const queue = getQueue();
+      const termsFromQueue = queue
+        .filter((action): action is { type: 'NEW_TERM'; payload: Term; id: string } => action.type === 'NEW_TERM' && action.payload.id.startsWith(trimmedTermName.toLowerCase().replace(/\s+/g, '-')));
+
+      if (termsFromQueue.length > 0) {
+        if (termsFromQueue.length === 1 && termsFromQueue[0].payload.description === description) {
+          // Exact match, do nothing
+        } else if (termsFromQueue.length === 1) {
+          setExistingTerm(termsFromQueue[0].payload);
+          setShowExistingTermModal(true);
+        } else {
+          setDuplicateTerms(termsFromQueue.map(t => t.payload));
+          setShowExistingTermModal(true);
+        }
+        return;
+      }
+    }
+
     if (!termName || !pos || !description) {
       showToast('Please fill out all fields.', 'error');
       return;
@@ -77,56 +151,43 @@ function NewTermForm() {
     };
 
     addToQueue({ type: 'NEW_TERM', payload: newTerm });
-    router.push('/');
+    setNewlyAddedTerm(newTerm);
+    setShowAddTranslationModal(true);
   };
-
-  if (existingTerm) {
-    return (
-      <main className="container mx-auto mt-8 p-4">
-        <div className="mx-auto max-w-xl">
-          <Link href="/" className="mb-4 block text-sm text-blue-600 hover:underline">
-            &larr; Back to all terms
-          </Link>
-
-          <div className="rounded-lg border border-gray-200 bg-white p-6">
-            <h2 className="text-2xl font-semibold">Add Translation for &quot;{existingTerm.id.split('-')[0]}&quot;</h2>
-            <p className="mt-1 text-gray-500">This term is in your submission queue. Add a translation for it.</p>
-
-            <form onSubmit={handleAddTranslation} className="mt-6 space-y-4">
-              <div>
-                <label htmlFor="translation" className="block text-sm font-medium text-gray-700"> Translation </label>
-                <input
-                  type="text"
-                  id="translation"
-                  value={translation}
-                  onChange={(e) => setTranslation(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-gray-300 p-2 focus:ring-2 focus:ring-blue-500"
-                />
-                {syntaxErrors.length > 0 && (
-                  <div className="mt-2 text-sm text-red-600">
-                    <details>
-                      <summary>Syntax errors found</summary>
-                      <ul className="list-disc list-inside">
-                        {syntaxErrors.map((error, i) => (
-                          <li key={i}>{decodeUnicode(error.msg)}</li>
-                        ))}
-                      </ul>
-                    </details>
-                  </div>
-                )}
-              </div>
-              <div className="pt-4">
-                <button type="submit" className="w-full rounded-lg bg-green-600 px-6 py-3 font-medium text-white hover:bg-green-700" disabled={!translation.trim() || syntaxErrors.length > 0}>Add Translation to Queue</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </main>
-    );
-  }
 
   return (
     <main className="container mx-auto mt-8 p-4">
+      {showAddTranslationModal && newlyAddedTerm && (
+        <ConfirmationModal
+          title="Term Added"
+          message="Would you like to add a translation for this term?"
+          buttons={[
+            {
+              text: 'Translate',
+              onClick: () => {
+                setShowAddTranslationModal(false);
+                router.push(`/new-term?existing-submission-term-id=${newlyAddedTerm.id}`);
+              },
+            },
+          ]}
+          onClose={() => {
+            setShowAddTranslationModal(false);
+            router.push('/'); // Navigate to main page
+          }}
+        />
+      )}
+      {showExistingTermModal && (
+        <ConfirmationModal
+          title="Term Exists"
+          message="This term is already in the submission queue."
+          terms={duplicateTerms.length > 0 ? duplicateTerms : (existingTerm ? [existingTerm] : [])}
+          onClose={() => {
+            setShowExistingTermModal(false);
+            setDuplicateTerms([]);
+            setExistingTerm(null);
+          }}
+        />
+      )}
       <div className="mx-auto max-w-xl">
         <Link href="/" className="mb-4 block text-sm text-blue-600 hover:underline">
           &larr; Back to all terms
@@ -177,10 +238,62 @@ function NewTermForm() {
             </div>
 
             <div className="pt-4">
-              <button type="submit" className="w-full rounded-lg bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700">Add to Submission Queue</button>
+              <button 
+                type="submit" 
+                className="w-full rounded-lg bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                disabled={isTermInQueue || !termName || !pos || !description}
+              >
+                {isTermInQueue ? 'Already in submission queue' : 'Add to Submission Queue'}
+              </button>
             </div>
           </form>
         </div>
+
+        {existingTerm && (
+          <div className="mt-8 rounded-lg border border-gray-200 bg-white p-6">
+            <h3 className="text-xl font-semibold">Translations for &quot;{existingTerm.id.split('-')[0]}&quot;</h3>
+            <p className="mt-1 text-gray-500 italic">&quot;{existingTerm.description}&quot;</p>
+            <form onSubmit={handleAddTranslation} className="mt-6 space-y-4">
+              <div>
+                <label htmlFor="translation" className="block text-sm font-medium text-gray-700"> New Translation </label>
+                <input
+                  spellCheck="false"
+                  type="text"
+                  id="translation"
+                  value={translation}
+                  onChange={(e) => setTranslation(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-gray-300 p-2 focus:ring-2 focus:ring-blue-500"
+                />
+                {syntaxErrors.length > 0 && (
+                  <div className="mt-2 text-sm text-red-600">
+                    <details>
+                      <summary>Syntax errors found</summary>
+                      <ul className="list-disc list-inside">
+                        {syntaxErrors.map((error, i) => (
+                          <li key={i}>{decodeUnicode(error.msg)}</li>
+                        ))}
+                      </ul>
+                    </details>
+                  </div>
+                )}
+              </div>
+              <div className="pt-4">
+                <button type="submit" className="w-full rounded-lg bg-green-600 px-6 py-3 font-medium text-white hover:bg-green-700" disabled={!translation.trim() || syntaxErrors.length > 0}>Add Translation</button>
+              </div>
+            </form>
+
+            {translations.length > 0 && (
+              <div className="mt-6">
+                <h4 className="font-semibold">Pending Translations:</h4>
+                <ul className="list-disc list-inside mt-2">
+                  {translations.map(t => (
+                    <li key={t.id}>{decode(t.contents, 'latin')}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </main>
   );

@@ -2,17 +2,19 @@
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { TermWithDetails } from '@/lib/data';
 import { useAppContext } from '@/app/AppContext';
 import { useSettings } from '@/app/SettingsContext';
 import { useToast } from '@/app/ToastContext';
 import { getPendingSubmissions, SubmissionContent, PendingSubmissionsResponse, GitHubRateLimitError } from '@/lib/github';
-import { Entry, QueueAction } from '@/lib/types';
+import { Entry, QueueAction, Term } from '@/lib/types';
 import { getQueue } from '@/lib/queue';
 import { levenshtein } from '@/lib/utils';
 import synonyms from 'synonyms';
 import UntranslatedTerms from './UntranslatedTerms';
 import { decode } from '@/lib/htf-int';
+import ConfirmationModal from './ConfirmationModal';
 
 interface TermListProps {
   initialTerms: TermWithDetails[];
@@ -39,6 +41,9 @@ export default function TermList({ initialTerms }: TermListProps) {
   const [queue, setQueue] = useState<QueueAction[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   const observer = useRef<IntersectionObserver | null>(null);
+  const router = useRouter();
+  const [showExistingTermModal, setShowExistingTermModal] = useState(false);
+  const [duplicateTerms, setDuplicateTerms] = useState<Term[]>([]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -198,6 +203,23 @@ export default function TermList({ initialTerms }: TermListProps) {
     return filteredTerms.slice(0, visibleCount);
   }, [filteredTerms, visibleCount]);
 
+  const handleSubmitNew = () => {
+    const trimmedQuery = searchQuery.trim();
+    if (trimmedQuery) {
+      const termsFromQueue = queue
+        .filter((action): action is { type: 'NEW_TERM'; payload: Term; id: string } => action.type === 'NEW_TERM' && action.payload.id.startsWith(trimmedQuery.toLowerCase().replace(/\s+/g, '-')));
+
+      if (termsFromQueue.length > 0) {
+        setDuplicateTerms(termsFromQueue.map(t => t.payload));
+        setShowExistingTermModal(true);
+      } else {
+        router.push(`/new-term?name=${encodeURIComponent(trimmedQuery)}`);
+      }
+    } else {
+      router.push('/new-term');
+    }
+  };
+
   const renderTopTranslations = (topTranslations: TermWithDetails['topTranslations']) => {
     if (!topTranslations) return <p className="text-lg font-medium text-gray-500">(No votes on published entries)</p>;
     
@@ -263,6 +285,17 @@ export default function TermList({ initialTerms }: TermListProps) {
 
   return (
     <>
+      {showExistingTermModal && (
+        <ConfirmationModal
+          title="Term Exists"
+          message="A term with this name already exists in the submission queue."
+          terms={duplicateTerms}
+          onClose={() => {
+            setShowExistingTermModal(false);
+            setDuplicateTerms([]);
+          }}
+        />
+      )}
       <div className="flex space-x-2">
         <input
           type="text"
@@ -271,12 +304,12 @@ export default function TermList({ initialTerms }: TermListProps) {
           onChange={(e) => setSearchQuery(e.target.value)}
           className="flex-grow rounded-lg border border-gray-300 p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
         />
-        <Link
-          href={`/new-term?name=${encodeURIComponent(searchQuery)}`}
+        <button
+          onClick={handleSubmitNew}
           className="rounded-lg bg-blue-600 px-5 py-3 font-medium text-white hover:bg-blue-700"
         >
           Submit New
-        </Link>
+        </button>
       </div>
 
       {relatedTerms.filter(r => r.term != searchQuery).length > 0 && (

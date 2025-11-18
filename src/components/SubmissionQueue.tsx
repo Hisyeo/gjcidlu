@@ -41,6 +41,9 @@ const SubmissionQueue: React.FC<SubmissionQueueProps> = ({ toggleQueue, allEntri
     if (action.type === 'NEW_ENTRY' || action.type === 'VOTE') {
       router.push(`/term/${action.payload.termId}`);
       toggleQueue();
+    } else if (action.type === 'NEW_TERM') {
+      router.push(`/new-term?existing-submission-term-id=${action.payload.id}`);
+      toggleQueue();
     }
   };
 

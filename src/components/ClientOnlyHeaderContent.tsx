@@ -70,7 +70,7 @@ const ClientOnlyHeaderContent: React.FC<ClientOnlyHeaderContentProps> = ({ stats
         )}
       </div>
 
-      <div className="hidden sm:flex items-center space-x-2 pr-40">
+      <div className="hidden sm:flex items-center space-x-2 pr-20 lg:pr-40">
         <span className={`text-sm text-gray-500 ${isMounted ? heightAdjustment : ''}`}>English &rarr; </span>
         <span className={`text-sm text-gray-500 ${isMounted ? fontClass : ''}`} dangerouslySetInnerHTML={{ __html: isMounted ? subtitle : "Hîsyêô" }}></span>
       </div>

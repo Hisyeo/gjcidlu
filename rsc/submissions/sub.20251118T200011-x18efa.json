@@ -1,0 +1,33 @@
+{
+  "version": 4,
+  "author": {
+    "system": "Reddit",
+    "id": "MadcapJake"
+  },
+  "newTerms": [
+    {
+      "id": "poke-3nn31",
+      "pos": "verb",
+      "description": "to quickly push your finger or some other pointed object into something or someone"
+    },
+    {
+      "id": "robust-jshqi",
+      "pos": "adjective",
+      "description": "strong and healthy"
+    }
+  ],
+  "newEntries": [
+    {
+      "id": "shAu_gioN",
+      "termId": "robust-jshqi",
+      "contents": [
+        3,
+        580,
+        1777,
+        550
+      ],
+      "created": "2025-11-18T20:00:04.097Z"
+    }
+  ],
+  "votes": []
+}

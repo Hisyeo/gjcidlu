@@ -7,7 +7,8 @@ import { useAppContext } from '@/app/AppContext';
 import { useSettings } from '@/app/SettingsContext';
 import { useToast } from '@/app/ToastContext';
 import { getPendingSubmissions, SubmissionContent, PendingSubmissionsResponse, GitHubRateLimitError } from '@/lib/github';
-import { Entry } from '@/lib/types';
+import { Entry, QueueAction } from '@/lib/types';
+import { getQueue } from '@/lib/queue';
 import synonyms from 'synonyms';
 import UntranslatedTerms from './UntranslatedTerms';
 import { decode } from '@/lib/htf-int';
@@ -33,11 +34,16 @@ export default function TermList({ initialTerms }: TermListProps) {
   const { settings } = useSettings();
   const { showToast } = useToast();
   const [pendingSubmissions, setPendingSubmissions] = useState<SubmissionContent[]>([]);
+  const [queue, setQueue] = useState<QueueAction[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   const observer = useRef<IntersectionObserver | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
+    const updateQueue = () => setQueue(getQueue());
+    updateQueue();
+    window.addEventListener('storage', updateQueue);
+    return () => window.removeEventListener('storage', updateQueue);
   }, []);
 
   useEffect(() => {
@@ -252,8 +258,24 @@ export default function TermList({ initialTerms }: TermListProps) {
           const hasPendingEntries = term.entries?.some(e => e.status === 'pending');
           const isCurrentUserSubmitter = term.isCurrentUserSubmitter;
 
+          const hasPendingVoteInQueue = queue.some(action => action.type === 'VOTE' && action.payload.termId === term.id);
+          const hasPendingEntryInQueue = queue.some(action => action.type === 'NEW_ENTRY' && action.payload.termId === term.id);
+
+          let outlineClass = 'border-gray-200';
+          if (hasPendingEntryInQueue && hasPendingVoteInQueue) {
+            outlineClass = 'border-purple-400';
+          } else if (hasPendingEntryInQueue) {
+            outlineClass = 'border-green-400';
+          } else if (hasPendingVoteInQueue) {
+            outlineClass = 'border-blue-400';
+          }
+
+          if (isPendingTerm) {
+            outlineClass = 'border-yellow-400';
+          }
+
           return (
-            <div key={term.id} ref={isLastElement ? lastElementRef : null} className={`rounded-lg border bg-white ${isPendingTerm ? 'border-yellow-400' : 'border-gray-200'}`}>
+            <div key={term.id} ref={isLastElement ? lastElementRef : null} className={`rounded-lg border bg-white ${outlineClass}`}>
               {isPendingTerm && !isCurrentUserSubmitter && (
                 <div className="p-2 bg-yellow-100 text-yellow-800 text-sm rounded-t-lg flex justify-between items-center">
                   <span>This term is pending review.</span>

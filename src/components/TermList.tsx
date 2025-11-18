@@ -9,6 +9,7 @@ import { useToast } from '@/app/ToastContext';
 import { getPendingSubmissions, SubmissionContent, PendingSubmissionsResponse, GitHubRateLimitError } from '@/lib/github';
 import { Entry, QueueAction } from '@/lib/types';
 import { getQueue } from '@/lib/queue';
+import { levenshtein } from '@/lib/utils';
 import synonyms from 'synonyms';
 import UntranslatedTerms from './UntranslatedTerms';
 import { decode } from '@/lib/htf-int';
@@ -177,11 +178,19 @@ export default function TermList({ initialTerms }: TermListProps) {
 
     const relatedWords = [...(synonyms(lowercasedQuery)?.n || []), ...(synonyms(lowercasedQuery)?.v || []), ...(synonyms(lowercasedQuery)?.adj || []), ...(synonyms(lowercasedQuery)?.adv || [])];
 
-    return allTerms.filter(term =>
+    const filtered = allTerms.filter(term =>
       term.id.toLowerCase().includes(lowercasedQuery) ||
       term.description.toLowerCase().includes(lowercasedQuery) ||
       relatedWords.some(word => term.id.toLowerCase().includes(word))
     );
+
+    return filtered.sort((a, b) => {
+      const termA = a.id.split('-')[0];
+      const termB = b.id.split('-')[0];
+      const distA = levenshtein(termA, lowercasedQuery);
+      const distB = levenshtein(termB, lowercasedQuery);
+      return distA - distB;
+    });
   }, [debouncedQuery, allTerms]);
 
   const visibleTerms = useMemo(() => {
@@ -269,9 +278,9 @@ export default function TermList({ initialTerms }: TermListProps) {
         </Link>
       </div>
 
-      {relatedTerms.length > 0 && (
+      {relatedTerms.filter(r => r.term != searchQuery).length > 0 && (
         <div className="mt-4 text-sm text-gray-600">
-          Related search terms: {relatedTerms.map(r => `'${r.term}' (${r.count} translations)`).join(', ')}
+          Related search terms: {relatedTerms.filter(r => r.term != searchQuery).map(r => `'${r.term}' (${r.count} translations)`).join(', ')}
         </div>
       )}
 

@@ -4,7 +4,6 @@ import "./globals.css";
 import { AppProvider } from "./AppContext";
 import { SettingsProvider } from "./SettingsContext"; // Import SettingsProvider
 import ClientWrapper from "@/components/ClientWrapper";
-import { getTranslationStats } from "@/lib/data";
 import entriesData from '@/../public/entries.json'; // Import entries data
 
 const geistSans = Geist({
@@ -30,8 +29,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const stats = getTranslationStats();
-
   return (
     <html lang="en">
       <body
@@ -39,7 +36,7 @@ export default function RootLayout({
       >
         <AppProvider>
           <SettingsProvider> {/* Add SettingsProvider */}
-            <ClientWrapper stats={stats} allEntries={entriesData}>
+            <ClientWrapper allEntries={entriesData}>
               {children}
             </ClientWrapper>
           </SettingsProvider>

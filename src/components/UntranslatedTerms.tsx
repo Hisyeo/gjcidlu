@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { getEntriesForTerm } from '@/lib/data';
 import { validateNounPhrase, SyntaxError } from '@/lib/antlr';
 import { useQueue } from '@/lib/hooks';
 import { TermWithDetails } from '@/lib/data';
 import { encode, encodeToSnakeCaseSyllabary } from '@/lib/htf-int';
 import { decodeUnicode } from '@/lib/utils';
+import { getQueue } from '@/lib/queue';
+import { Term, QueueAction } from '@/lib/types';
 
 interface UntranslatedTermsProps {
   terms: TermWithDetails[];
@@ -20,10 +22,33 @@ interface TranslationInput {
 export default function UntranslatedTerms({ terms }: UntranslatedTermsProps) {
   const [translations, setTranslations] = useState<Record<string, TranslationInput>>({});
   const { addToQueue } = useQueue();
+  const [queue, setQueue] = useState<QueueAction[]>([]);
+
+  useEffect(() => {
+    const updateQueue = () => setQueue(getQueue());
+    updateQueue();
+    window.addEventListener('storage', updateQueue);
+    return () => window.removeEventListener('storage', updateQueue);
+  }, []);
 
   const untranslatedTerms = useMemo(() => {
-    return terms.filter(term => getEntriesForTerm(term.id).length === 0);
-  }, [terms]);
+    const newTermsInQueue = queue
+      .filter((action): action is { type: 'NEW_TERM'; payload: Term; id: string } => action.type === 'NEW_TERM')
+      .map(action => action.payload);
+
+    const newEntriesInQueue = queue
+      .filter((action): action is { type: 'NEW_ENTRY'; payload: any; id: string } => action.type === 'NEW_ENTRY')
+      .map(action => action.payload);
+
+    const allTerms = [...terms, ...newTermsInQueue.map(t => ({ ...t, topTranslations: { overall: null, minimal: null, specific: null, humorous: null }, latestEntryDate: new Date().toISOString(), totalTranslationsCount: 0 }))];
+    const uniqueTerms = Array.from(new Map(allTerms.map(item => [item.id, item])).values());
+
+    return uniqueTerms.filter(term => {
+      const hasPublishedEntry = getEntriesForTerm(term.id).length > 0;
+      const hasQueuedEntry = newEntriesInQueue.some(entry => entry.termId === term.id);
+      return !hasPublishedEntry && !hasQueuedEntry;
+    });
+  }, [terms, queue]);
 
   const handleInputChange = (termId: string, value: string) => {
     const errors = validateNounPhrase(value);

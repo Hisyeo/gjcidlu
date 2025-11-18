@@ -8,6 +8,7 @@ import { useAppContext } from "@/app/AppContext";
 import { ToastProvider } from "@/app/ToastContext";
 import { EntriesData } from "@/lib/types"; // Import EntriesData
 import BackToTopButton from "./BackToTopButton";
+import { getTranslationStats } from "@/lib/data";
 
 interface Stats {
   translatedCount: number;
@@ -16,27 +17,27 @@ interface Stats {
 
 export default function ClientWrapper({
   children,
-  stats,
   allEntries,
 }: {
   children: React.ReactNode;
-  stats: Stats | null;
   allEntries: EntriesData; // Use the specific type
 }) {
   const [isQueueOpen, setQueueOpen] = useState(false);
   const [queueCount, setQueueCount] = useState(0);
+  const [stats, setStats] = useState<Stats | null>(null);
   const { setShowUntranslated } = useAppContext();
 
   const toggleQueue = () => setQueueOpen(!isQueueOpen);
 
   useEffect(() => {
-    const updateQueueCount = () => {
+    const updateQueue = () => {
       const queue = getQueue();
       setQueueCount(queue.length);
+      setStats(getTranslationStats(queue));
     };
-    updateQueueCount();
-    window.addEventListener("storage", updateQueueCount);
-    return () => window.removeEventListener("storage", updateQueueCount);
+    updateQueue();
+    window.addEventListener("storage", updateQueue);
+    return () => window.removeEventListener("storage", updateQueue);
   }, []);
 
   const handleUntranslatedClick = () => {

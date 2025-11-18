@@ -1,4 +1,4 @@
-import { Term, VoteType, EntriesData, Entry } from './types';
+import { Term, VoteType, EntriesData, Entry, QueueAction } from './types';
 import entriesData from '../../public/entries.json';
 import votesData from '../../public/votes.json';
 
@@ -148,14 +148,25 @@ export function getTermsWithDetailsSortedByDate(): TermWithDetails[] {
     return detailedTerms.sort((a, b) => new Date(b.latestEntryDate).getTime() - new Date(a.latestEntryDate).getTime());
 }
 
-export function getTranslationStats() {
-    const allTerms = getTerms();
-    const totalTerms = allTerms.length;
-    let translatedCount = 0;
+export function getTranslationStats(queue: QueueAction[] = []) {
+    const publishedTerms = getTerms();
+    const newTermsInQueue = queue
+        .filter((action): action is { type: 'NEW_TERM'; payload: Term; id: string } => action.type === 'NEW_TERM')
+        .map(action => action.payload);
 
-    for (const term of allTerms) {
-        const entries = getEntriesForTerm(term.id);
-        if (entries.length > 0) {
+    const allTerms = [...publishedTerms, ...newTermsInQueue];
+    const uniqueTerms = Array.from(new Map(allTerms.map(item => [item.id, item])).values());
+    const totalTerms = uniqueTerms.length;
+
+    const newEntriesInQueue = queue
+        .filter((action): action is { type: 'NEW_ENTRY'; payload: Entry; id: string } => action.type === 'NEW_ENTRY')
+        .map(action => action.payload);
+
+    let translatedCount = 0;
+    for (const term of uniqueTerms) {
+        const hasPublishedEntry = getEntriesForTerm(term.id).length > 0;
+        const hasQueuedEntry = newEntriesInQueue.some(entry => entry.termId === term.id);
+        if (hasPublishedEntry || hasQueuedEntry) {
             translatedCount++;
         }
     }

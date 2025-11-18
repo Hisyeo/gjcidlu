@@ -17,6 +17,13 @@ translations and they get processed through a [Pull
 Request](https://github.blog/developer-skills/github/beginners-guide-to-github-creating-a-pull-request/)
 to this project's code repository.
 
+## Three Scripts
+
+You can view translation text in either the Latin, Abugida, or Syllabary
+scripts. Note that this doesn't work for translation entry, only Latin is
+supported for submitting new translations because the gramamr checker currently
+only works for the Latin script.
+
 ### Four Voting Categories
 
 Votes can be provided to indicate which is the best overall, most succinct, most

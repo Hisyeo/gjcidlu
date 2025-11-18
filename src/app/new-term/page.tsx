@@ -117,24 +117,8 @@ function NewTermForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const trimmedTermName = termName.trim();
-    if (trimmedTermName) {
-      const queue = getQueue();
-      const termsFromQueue = queue
-        .filter((action): action is { type: 'NEW_TERM'; payload: Term; id: string } => action.type === 'NEW_TERM' && action.payload.id.startsWith(trimmedTermName.toLowerCase().replace(/\s+/g, '-')));
-
-      if (termsFromQueue.length > 0) {
-        if (termsFromQueue.length === 1 && termsFromQueue[0].payload.description === description) {
-          // Exact match, do nothing
-        } else if (termsFromQueue.length === 1) {
-          setExistingTerm(termsFromQueue[0].payload);
-          setShowExistingTermModal(true);
-        } else {
-          setDuplicateTerms(termsFromQueue.map(t => t.payload));
-          setShowExistingTermModal(true);
-        }
-        return;
-      }
+    if (isTermInQueue) {
+      return;
     }
 
     if (!termName || !pos || !description) {

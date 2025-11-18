@@ -34,13 +34,13 @@ export default function UntranslatedTerms({ terms }: UntranslatedTermsProps) {
   const untranslatedTerms = useMemo(() => {
     const newTermsInQueue = queue
       .filter((action): action is { type: 'NEW_TERM'; payload: Term; id: string } => action.type === 'NEW_TERM')
-      .map(action => action.payload);
+      .map(action => ({ ...action.payload, fromQueue: true }));
 
     const newEntriesInQueue = queue
       .filter((action): action is { type: 'NEW_ENTRY'; payload: any; id: string } => action.type === 'NEW_ENTRY')
       .map(action => action.payload);
 
-    const allTerms = [...terms, ...newTermsInQueue.map(t => ({ ...t, topTranslations: { overall: null, minimal: null, specific: null, humorous: null }, latestEntryDate: new Date().toISOString(), totalTranslationsCount: 0 }))];
+    const allTerms = [...terms.map(t => ({ ...t, fromQueue: false })), ...newTermsInQueue.map(t => ({ ...t, topTranslations: { overall: null, minimal: null, specific: null, humorous: null }, latestEntryDate: new Date().toISOString(), totalTranslationsCount: 0 }))];
     const uniqueTerms = Array.from(new Map(allTerms.map(item => [item.id, item])).values());
 
     return uniqueTerms.filter(term => {
@@ -99,7 +99,7 @@ export default function UntranslatedTerms({ terms }: UntranslatedTermsProps) {
         </button>
       </div>
       {untranslatedTerms.map(term => (
-        <div key={term.id} className="rounded-lg border border-gray-200 bg-white p-6">
+        <div key={term.id} className={`rounded-lg border bg-white p-6 ${term.fromQueue ? 'border-purple-400' : 'border-gray-200'}`}>
           <h2 className="text-2xl font-semibold text-gray-900">{term.id.split('-')[0]}</h2>
           <p className="mb-1 font-mono text-gray-500">({term.pos.slice(0, 1)}.)</p>
           <p className="mb-4 text-gray-700 italic">{term.description}</p>

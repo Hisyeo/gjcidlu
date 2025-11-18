@@ -25,6 +25,7 @@ interface CombinedTerm extends TermWithDetails {
   prUrl?: string;
   entries?: (Entry & { status?: 'published' | 'pending'; prUrl?: string })[];
   isCurrentUserSubmitter?: boolean;
+  totalTranslationsCount: number;
 }
 
 export default function TermList({ initialTerms }: TermListProps) {
@@ -121,7 +122,7 @@ export default function TermList({ initialTerms }: TermListProps) {
       const submissionAuthorIdentifier = submission.author ? `${submission.author.system.toLowerCase()}:${submission.author.id}` : null;
       const isCurrentUserSubmitter = submissionAuthorIdentifier === currentUserIdentifier;
       submission.newTerms?.forEach(term => {
-        pendingTermsMap.set(term.id, { ...term, status: 'pending', prUrl: submission.prUrl, topTranslations: { overall: null, minimal: null, specific: null, humorous: null }, isCurrentUserSubmitter, latestEntryDate: new Date().toISOString() });
+        pendingTermsMap.set(term.id, { ...term, status: 'pending', prUrl: submission.prUrl, topTranslations: { overall: null, minimal: null, specific: null, humorous: null }, isCurrentUserSubmitter, latestEntryDate: new Date().toISOString(), totalTranslationsCount: 0 });
       });
       submission.newEntries?.forEach(entry => {
         const termId = entry.termId;
@@ -353,8 +354,11 @@ export default function TermList({ initialTerms }: TermListProps) {
                       View Translations &rarr;
                     </span>
                   ) : (
-                    <Link href={`/term/${term.id}`} className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200">
-                      View Translations &rarr;
+                    <Link href={`/term/${term.id}`} className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 flex items-center space-x-1">
+                      <span>Translations</span>
+                      <span className={`inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-blue-100 rounded-full ${term.totalTranslationsCount === 0 ? 'bg-gray-400' : 'bg-blue-600'}`}>
+                        {term.totalTranslationsCount}
+                      </span>
                     </Link>
                   )}
                 </div>

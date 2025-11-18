@@ -17,6 +17,7 @@ export type AggregatedVotes = Record<string, VoteCounts>; // Record<entryId, Vot
 export interface TermWithDetails extends Term {
     topTranslations: Record<VoteType, number[] | null>;
     latestEntryDate: string; // For sorting
+    totalTranslationsCount: number; // Add this new property
 }
 
 // --- Cast the imported data to our defined types ---
@@ -91,6 +92,7 @@ export function getTermsWithDetails(): TermWithDetails[] {
     const detailedTerms = allTerms.map(term => {
         const aggregatedVotes = getAggregatedVotesForTerm(term.id);
         const entriesForTerm = getEntriesForTerm(term.id);
+        const totalTranslationsCount = entriesForTerm.length; // Calculate total translations
 
         let latestEntryDate = '1970-01-01T00:00:00.000Z';
         if (entriesForTerm.length > 0) {
@@ -134,6 +136,7 @@ export function getTermsWithDetails(): TermWithDetails[] {
             ...term,
             topTranslations,
             latestEntryDate,
+            totalTranslationsCount, // Add to the returned object
         };
     });
 

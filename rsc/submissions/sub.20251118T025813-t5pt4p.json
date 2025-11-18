@@ -1,0 +1,39 @@
+{
+  "version": 4,
+  "author": {
+    "system": "Discord",
+    "id": "128874964517388288"
+  },
+  "newTerms": [
+    {
+      "id": "borrow-og2d8",
+      "pos": "verb",
+      "description": "to use something that belongs to someone else and that you must give back to them later"
+    }
+  ],
+  "newEntries": [
+    {
+      "id": "mrNyrf",
+      "termId": "borrow-og2d8",
+      "contents": [
+        3,
+        211
+      ],
+      "created": "2025-11-18T02:55:36.692Z"
+    },
+    {
+      "id": "fk_ixolo_comeL",
+      "termId": "devilish-lkq3j",
+      "contents": [
+        3,
+        861,
+        1777,
+        256,
+        1777,
+        326
+      ],
+      "created": "2025-11-18T02:57:56.855Z"
+    }
+  ],
+  "votes": []
+}

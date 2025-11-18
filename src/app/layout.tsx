@@ -38,7 +38,7 @@ export default function RootLayout({
           <SettingsProvider> {/* Add SettingsProvider */}
             <ClientWrapper allEntries={entriesData}>
               {children}
-              <footer className="bg-gray-100 text-center text-gray-600 text-sm p-4 mt-8">
+              <footer className="fixed bottom-0 w-full bg-gray-100 text-center text-gray-600 text-sm p-4 mt-8">
                 © 2025 Copyright:{" "}
                 <a href="https://hisyeo.github.io" className="text-blue-600 hover:underline">
                   Hîsyêô Institute

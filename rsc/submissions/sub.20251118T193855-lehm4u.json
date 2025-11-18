@@ -1,0 +1,64 @@
+{
+  "version": 4,
+  "author": {
+    "system": "Reddit",
+    "id": "MadcapJake"
+  },
+  "newTerms": [
+    {
+      "id": "stain-6td1f",
+      "pos": "verb",
+      "description": "to accidentally make a mark on something, especially one that cannot be removed"
+    },
+    {
+      "id": "stain-2z8pm",
+      "pos": "verb",
+      "description": "to change the colour of something, especially something made of wood, by using a special liquid"
+    },
+    {
+      "id": "stain-2b32v",
+      "pos": "noun",
+      "description": "a mark that is difficult to remove, especially one made by a liquid such as blood, coffee, or ink"
+    },
+    {
+      "id": "plain-rimph",
+      "pos": "adjective",
+      "description": "very clear, and easy to understand or recognize"
+    }
+  ],
+  "newEntries": [
+    {
+      "id": "iN_hefiN_ye_abrNyrN_et",
+      "termId": "plain-rimph",
+      "contents": [
+        3,
+        836,
+        1777,
+        273,
+        1777,
+        874,
+        1777,
+        18,
+        1777,
+        835
+      ],
+      "created": "2025-11-18T19:37:46.570Z"
+    },
+    {
+      "id": "trbo",
+      "termId": "stain-2b32v",
+      "contents": [
+        3,
+        564
+      ],
+      "created": "2025-11-18T19:38:38.441Z"
+    }
+  ],
+  "votes": [
+    {
+      "termId": "devilish-lkq3j",
+      "entryId": "fx_ibuwe_ceNbo",
+      "voteType": "minimal"
+    }
+  ]
+}

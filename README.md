@@ -17,7 +17,7 @@ translations and they get processed through a [Pull
 Request](https://github.blog/developer-skills/github/beginners-guide-to-github-creating-a-pull-request/)
 to this project's code repository.
 
-## Three Scripts
+### Three Scripts
 
 You can view translation text in either the Latin, Abugida, or Syllabary
 scripts. Note that this doesn't work for translation entry, only Latin is

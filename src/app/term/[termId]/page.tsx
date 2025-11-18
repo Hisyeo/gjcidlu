@@ -36,6 +36,7 @@ export default async function TermDetailPage({ params }: { params: { termId: str
       contents: entry.contents,
       votes: entryVotes,
       sourceFile: entry.sourceFile,
+      created: entry.created, // Add created timestamp
       status: 'published' as const, // Always published on this page
     };
   });

@@ -46,6 +46,7 @@ export default function UntranslatedTerms({ terms }: UntranslatedTermsProps) {
               id,
               termId: term.id,
               contents,
+              created: new Date().toISOString(),
             },
           });
         }

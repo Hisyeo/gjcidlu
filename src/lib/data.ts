@@ -40,26 +40,26 @@ export function getTermById(termId: string): Term | null {
     return allTerms.find(term => term.id === termId) || null;
 }
 
-export function getEntriesForTerm(termId: string): (Entry & { created?: string })[] {
+export function getEntriesForTerm(termId: string): Entry[] {
     if (!entries || !entries[termId]) return [];
 
     const termData = entries[termId];
     return Object.keys(termData)
         .filter(key => !key.startsWith('$'))
-        .map(entryId => {
+        .reduce<Entry[]>((acc, entryId) => {
             const entry = termData[entryId];
-            if (typeof entry !== 'string' && 'contents' in entry) {
-                return {
+            if (typeof entry !== 'string' && 'contents' in entry && 'created' in entry) {
+                acc.push({
                     id: entryId,
                     termId: termId,
                     contents: entry.contents || [],
                     submitter: entry.submitter,
                     created: entry.created,
                     sourceFile: entry.sourceFile,
-                };
+                });
             }
-            return { id: entryId, termId: termId, contents: [] };
-        });
+            return acc;
+        }, []);
 }
 
 export function getAggregatedVotesForTerm(termId: string): AggregatedVotes {

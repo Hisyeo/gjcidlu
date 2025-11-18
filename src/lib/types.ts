@@ -11,6 +11,7 @@ export interface Entry {
   contents: number[]; // HTF-INT
   original?: string; // if modifying
   sourceFile?: string;
+  created: string; // Add created timestamp
 }
 
 export type VoteType = "overall" | "minimal" | "specific" | "humorous";

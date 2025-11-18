@@ -25,10 +25,10 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 - [x] Fix style outlines for terms that contain pending votes and entries
 - [x] Fix for adaptive display of best translations (only show 2 sections if only 2 have top translations)
 - [x] Show search results in order of levenstein distance from the search param
-- [ ] Add a new JSON file for storing user merges and when aggregate script runs, it checks names against this JSON file and replaces them when they have a merge record present
-- [ ] Add a sort dropdown button on term detail to sort translations by each vote category
-- [ ] Allow user to add translation immediately upon adding a new term
 - [x] Fix for proper name HTF-INT encoding/decoding
+- [x] Add a sort dropdown button on term detail to sort translations by each vote category
+- [ ] Allow user to add translation immediately upon adding a new term
+- [ ] Add a new JSON file for storing user merges and when aggregate script runs, it checks names against this JSON file and replaces them when they have a merge record present
 
 ## Getting Started
 

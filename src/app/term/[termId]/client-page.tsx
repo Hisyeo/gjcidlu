@@ -18,7 +18,7 @@ const PENDING_DATA_CACHE_KEY = 'pendingSubmissionsCache';
 
 interface TermDetailClientViewProps {
   term: Term;
-  initialEntries: { id: string; termId: string; votes: Record<VoteType, number>; contents: number[], submitter?: string, sourceFile?: string }[];
+  initialEntries: (Entry & { votes: Record<VoteType, number>; status?: 'published' })[];
   allTerms: Term[];
 }
 
@@ -27,7 +27,6 @@ interface DisplayEntry extends Entry {
     prUrl?: string;
     votes: Record<VoteType, number>;
     isCurrentUserSubmitter: boolean;
-    sourceFile?: string;
 }
 
 export default function TermDetailClientView({ term, initialEntries, allTerms }: TermDetailClientViewProps) {
@@ -42,6 +41,7 @@ export default function TermDetailClientView({ term, initialEntries, allTerms }:
   const [syntaxErrors, setSyntaxErrors] = useState<SyntaxError[]>([]);
   const debouncedTranslation = useDebounce(translation, 500);
   const [isMounted, setIsMounted] = useState(false);
+  const [sortOrder, setSortOrder] = useState<string>('newest');
 
   useEffect(() => {
     setIsMounted(true);
@@ -61,6 +61,46 @@ export default function TermDetailClientView({ term, initialEntries, allTerms }:
     const uniqueEntries = Array.from(new Map(combined.map(entry => [entry.id, entry])).values());
     return uniqueEntries;
   }, [initialEntries, pendingEntries, queue, term.id, settings]);
+
+  const getVoteCount = (entryId: string, voteType: VoteType) => {
+    const initialCount = allEntries.find(e => e.id === entryId)?.votes[voteType] ?? 0;
+    const queueCount = queue.filter(
+      action =>
+        action.type === 'VOTE' &&
+        action.payload.entryId === entryId &&
+        action.payload.voteType === voteType
+    ).length;
+    return initialCount + queueCount;
+  };
+
+  const sortedEntries = useMemo(() => {
+    let sortableEntries = [...allEntries];
+
+    switch (sortOrder) {
+      case 'newest':
+        return sortableEntries.sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime());
+      case 'oldest':
+        return sortableEntries.sort((a, b) => new Date(a.created).getTime() - new Date(b.created).getTime());
+      case 'overall-most':
+        return sortableEntries.sort((a, b) => getVoteCount(b.id, 'overall') - getVoteCount(a.id, 'overall'));
+      case 'overall-least':
+        return sortableEntries.sort((a, b) => getVoteCount(a.id, 'overall') - getVoteCount(b.id, 'overall'));
+      case 'minimal-most':
+        return sortableEntries.sort((a, b) => getVoteCount(b.id, 'minimal') - getVoteCount(a.id, 'minimal'));
+      case 'minimal-least':
+        return sortableEntries.sort((a, b) => getVoteCount(a.id, 'minimal') - getVoteCount(b.id, 'minimal'));
+      case 'specific-most':
+        return sortableEntries.sort((a, b) => getVoteCount(b.id, 'specific') - getVoteCount(a.id, 'specific'));
+      case 'specific-least':
+        return sortableEntries.sort((a, b) => getVoteCount(a.id, 'specific') - getVoteCount(b.id, 'specific'));
+      case 'humorous-most':
+        return sortableEntries.sort((a, b) => getVoteCount(b.id, 'humorous') - getVoteCount(a.id, 'humorous'));
+      case 'humorous-least':
+        return sortableEntries.sort((a, b) => getVoteCount(a.id, 'humorous') - getVoteCount(b.id, 'humorous'));
+      default:
+        return sortableEntries;
+    }
+  }, [allEntries, sortOrder]);
 
   useEffect(() => {
     if (debouncedTranslation.trim()) {
@@ -185,7 +225,7 @@ export default function TermDetailClientView({ term, initialEntries, allTerms }:
 
     addToQueue({
       type: 'NEW_ENTRY',
-      payload: { id: newEntryId, termId: term.id, contents: newTranslationContents }
+      payload: { id: newEntryId, termId: term.id, contents: newTranslationContents, created: new Date().toISOString() }
     });
 
     setTranslation('');
@@ -239,17 +279,6 @@ export default function TermDetailClientView({ term, initialEntries, allTerms }:
     const entry = allEntries.find(e => e.id === entryId);
     const translationText = entry ? decode(entry.contents, settings.script) : entryId;
     showToast(`Vote for '${voteType}' on entry '${translationText}' added to queue!`, 'success');
-  };
-
-  const getVoteCount = (entryId: string, voteType: VoteType) => {
-    const initialCount = allEntries.find(e => e.id === entryId)?.votes[voteType] ?? 0;
-    const queueCount = queue.filter(
-      action =>
-        action.type === 'VOTE' &&
-        action.payload.entryId === entryId &&
-        action.payload.voteType === voteType
-    ).length;
-    return initialCount + queueCount;
   };
 
   const isVotedInQueue = (entryId: string, voteType: VoteType) => {
@@ -317,9 +346,27 @@ export default function TermDetailClientView({ term, initialEntries, allTerms }:
 
       <div className="mx-auto max-w-2xl">
         <div className="mt-8 space-y-4">
-          <h3 className="text-xl font-semibold">All Translations ({allEntries.length})</h3>
+          <div className="flex justify-between items-center">
+            <h3 className="text-xl font-semibold">All Translations ({allEntries.length})</h3>
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="rounded-lg border border-gray-300 p-2"
+            >
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="overall-most">Overall (Most Votes)</option>
+              <option value="overall-least">Overall (Least Votes)</option>
+              <option value="minimal-most">Minimal (Most Votes)</option>
+              <option value="minimal-least">Minimal (Least Votes)</option>
+              <option value="specific-most">Specific (Most Votes)</option>
+              <option value="specific-least">Specific (Least Votes)</option>
+              <option value="humorous-most">Humorous (Most Votes)</option>
+              <option value="humorous-least">Humorous (Least Votes)</option>
+            </select>
+          </div>
 
-          {allEntries.map(entry => {
+          {sortedEntries.map(entry => {
             const isPendingPr = entry.status === 'pending-pr';
             const isPendingQueue = entry.status === 'pending-queue';
             const isPending = isPendingPr || isPendingQueue;

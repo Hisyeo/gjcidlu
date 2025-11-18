@@ -13,6 +13,7 @@ import { useDebounce } from '@/lib/hooks';
 import { validateNounPhrase, SyntaxError } from '@/lib/antlr';
 import { decodeUnicode } from '@/lib/utils';
 import { getEntriesForTerm } from '@/lib/data';
+import VoteCategoryHelpPopover from '@/components/VoteCategoryHelpPopover';
 
 const PENDING_DATA_CACHE_KEY = 'pendingSubmissionsCache';
 
@@ -347,7 +348,10 @@ export default function TermDetailClientView({ term, initialEntries, allTerms }:
       <div className="mx-auto max-w-2xl">
         <div className="mt-8 space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-xl font-semibold">All Translations ({allEntries.length})</h3>
+            <div className="flex items-center space-x-2">
+              <h3 className="text-xl font-semibold">All Translations ({allEntries.length})</h3>
+              <VoteCategoryHelpPopover />
+            </div>
             <select
               value={sortOrder}
               onChange={(e) => setSortOrder(e.target.value)}

@@ -1,0 +1,100 @@
+{
+  "version": 4,
+  "author": {
+    "system": "Reddit",
+    "id": "MadcapJake"
+  },
+  "newTerms": [
+    {
+      "id": "nerve-3t93z",
+      "pos": "noun",
+      "description": "nerves are parts inside your body which look like threads and carry messages between the brain and other parts of the body"
+    },
+    {
+      "id": "nerve-grod1",
+      "pos": "noun",
+      "description": "courage and confidence in a dangerous, difficult, or frightening situation"
+    },
+    {
+      "id": "carpenter-gak3o",
+      "pos": "noun",
+      "description": "someone whose job is making and repairing wooden objects"
+    },
+    {
+      "id": "ant-uzkvr",
+      "pos": "noun",
+      "description": "a small insect that lives in large groups"
+    }
+  ],
+  "newEntries": [
+    {
+      "id": "dAi_ye_kunNti_durNciT",
+      "termId": "nerve-3t93z",
+      "contents": [
+        3,
+        768,
+        1777,
+        874,
+        1777,
+        131,
+        1777,
+        67
+      ],
+      "created": "2025-11-19T04:11:19.541Z"
+    },
+    {
+      "id": "mofi_ye_sikiN_ye_bNgosi_yd_krtjN_yd_osole",
+      "termId": "nerve-grod1",
+      "contents": [
+        3,
+        662,
+        1777,
+        874,
+        1777,
+        354,
+        1777,
+        874,
+        1777,
+        178,
+        1777,
+        873,
+        1777,
+        290,
+        1777,
+        873,
+        1777,
+        249
+      ],
+      "created": "2025-11-19T04:12:51.354Z"
+    },
+    {
+      "id": "fk_miebjL",
+      "termId": "carpenter-gak3o",
+      "contents": [
+        3,
+        861,
+        1777,
+        209
+      ],
+      "created": "2025-11-19T04:14:26.449Z"
+    },
+    {
+      "id": "muxi_miTm_ye_cuti_et",
+      "termId": "ant-uzkvr",
+      "contents": [
+        3,
+        671,
+        1777,
+        666,
+        1777,
+        874,
+        1777,
+        577,
+        1777,
+        835
+      ],
+      "created": "2025-11-19T04:15:24.993Z"
+    }
+  ],
+  "votes": []
+}

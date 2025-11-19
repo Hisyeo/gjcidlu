@@ -1,0 +1,71 @@
+{
+  "version": 4,
+  "author": {
+    "system": "Reddit",
+    "id": "MadcapJake"
+  },
+  "newTerms": [
+    {
+      "id": "tap-s0acg",
+      "pos": "verb",
+      "description": "to make a regular pattern of sounds with your fingers or feet, especially when you are listening to music"
+    },
+    {
+      "id": "tap-g524c",
+      "pos": "noun",
+      "description": "a piece of equipment for controlling the flow of water, gas etc from a pipe or container"
+    },
+    {
+      "id": "file-71n56",
+      "pos": "noun",
+      "description": "a set of papers, records etc that contain information about a particular person or subject"
+    }
+  ],
+  "newEntries": [
+    {
+      "id": "xq_bj_fiki_gufio_zixitu_yd_oni_bjNdu_muT_rm_yd_ry",
+      "termId": "poke-3nn31",
+      "contents": [
+        3,
+        852,
+        1777,
+        860,
+        1777,
+        651,
+        1777,
+        307,
+        1777,
+        175,
+        1777,
+        873,
+        1777,
+        713,
+        1777,
+        403,
+        1777,
+        797,
+        1777,
+        837,
+        1777,
+        873,
+        1777,
+        838
+      ],
+      "created": "2025-11-18T20:14:01.073Z"
+    },
+    {
+      "id": "zuNl_ye_gl",
+      "termId": "file-71n56",
+      "contents": [
+        3,
+        624,
+        1777,
+        874,
+        1777,
+        844
+      ],
+      "created": "2025-11-19T01:57:30.344Z"
+    }
+  ],
+  "votes": []
+}

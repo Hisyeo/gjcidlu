@@ -990,5 +990,89 @@
       ],
       "sourceFile": "sub.20251119T015734-o1bnvo.json"
     }
+  },
+  "nerve-3t93z": {
+    "$pos": "noun",
+    "$desc": "nerves are parts inside your body which look like threads and carry messages between the brain and other parts of the body",
+    "dAi_ye_kunNti_durNciT": {
+      "submitter": "reddit:MadcapJake",
+      "created": "2025-11-19T04:15:30.000Z",
+      "contents": [
+        3,
+        768,
+        1777,
+        874,
+        1777,
+        131,
+        1777,
+        67
+      ],
+      "sourceFile": "sub.20251119T041530-xjv8ol.json"
+    }
+  },
+  "nerve-grod1": {
+    "$pos": "noun",
+    "$desc": "courage and confidence in a dangerous, difficult, or frightening situation",
+    "mofi_ye_sikiN_ye_bNgosi_yd_krtjN_yd_osole": {
+      "submitter": "reddit:MadcapJake",
+      "created": "2025-11-19T04:15:30.000Z",
+      "contents": [
+        3,
+        662,
+        1777,
+        874,
+        1777,
+        354,
+        1777,
+        874,
+        1777,
+        178,
+        1777,
+        873,
+        1777,
+        290,
+        1777,
+        873,
+        1777,
+        249
+      ],
+      "sourceFile": "sub.20251119T041530-xjv8ol.json"
+    }
+  },
+  "carpenter-gak3o": {
+    "$pos": "noun",
+    "$desc": "someone whose job is making and repairing wooden objects",
+    "fk_miebjL": {
+      "submitter": "reddit:MadcapJake",
+      "created": "2025-11-19T04:15:30.000Z",
+      "contents": [
+        3,
+        861,
+        1777,
+        209
+      ],
+      "sourceFile": "sub.20251119T041530-xjv8ol.json"
+    }
+  },
+  "ant-uzkvr": {
+    "$pos": "noun",
+    "$desc": "a small insect that lives in large groups",
+    "muxi_miTm_ye_cuti_et": {
+      "submitter": "reddit:MadcapJake",
+      "created": "2025-11-19T04:15:30.000Z",
+      "contents": [
+        3,
+        671,
+        1777,
+        666,
+        1777,
+        874,
+        1777,
+        577,
+        1777,
+        835
+      ],
+      "sourceFile": "sub.20251119T041530-xjv8ol.json"
+    }
   }
 }
